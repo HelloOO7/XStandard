@@ -15,7 +15,7 @@ public class ResourceAccess {
 
 	public static ResourceFile getResourceFile(String pathname) {
 		ResourceTable.ResourceInfo i = resTbl.getResInfo(pathname);
-		if (i == null){
+		if (i == null) {
 			throw new NullPointerException(pathname + " is not a valid resource.");
 		}
 		return new ResourceFile(i);
@@ -55,6 +55,13 @@ public class ResourceAccess {
 	}
 
 	public static ResourceTable readResourceTable() {
-		return new ResourceTable(getStream("res.tbl"));
+		InputStream stm = getStream("res.tbl");
+		try {
+			stm.available();
+			return new ResourceTable(stm);
+		} catch (Exception ex) {
+			return null;
+
+		}
 	}
 }
