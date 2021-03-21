@@ -1,6 +1,8 @@
 package ctrmap.stdlib.gui.components;
 
 import ctrmap.stdlib.gui.FormattingUtils;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.event.ChangeEvent;
@@ -10,6 +12,8 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 
 	private DefaultComboBoxModel<String> mdl = new DefaultComboBoxModel<String>();
 	private boolean doChanges = true;
+	
+	private List<ChangeListener> listeners = new ArrayList<>();
 
 	/**
 	 * Creates new form ComboBoxAndSpinner
@@ -27,6 +31,9 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 						comboBox.setSelectedIndex(val);
 					} else {
 						comboBox.setSelectedIndex(-1);
+					}
+					for (ChangeListener l : listeners){
+						l.stateChanged(e);
 					}
 					doChanges = true;
 				}
@@ -66,7 +73,9 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 	}
 
 	public void addChangeListener(ChangeListener cl) {
-		spinner.addChangeListener(cl);
+		if (cl != null && !listeners.contains(cl)){
+			listeners.add(cl);
+		}
 	}
 
 	public int getValueCB() {
@@ -130,6 +139,9 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 		if (doChanges) {
 			doChanges = false;
 			spinner.setValue(comboBox.getSelectedIndex());
+			for (ChangeListener l : listeners){
+				l.stateChanged(new ChangeEvent(this));
+			}
 			doChanges = true;
 		}
     }//GEN-LAST:event_comboBoxActionPerformed

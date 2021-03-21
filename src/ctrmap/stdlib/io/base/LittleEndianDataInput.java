@@ -29,7 +29,7 @@ public class LittleEndianDataInput implements PositionedDataInput, DataInputEx {
 		position += 3;
 		return BitUtils.readUInt24LE(dis);
 	}
-	
+
 	public int readInt24() throws IOException {
 		return BitUtils.signExtend(readUInt24(), 24);
 	}

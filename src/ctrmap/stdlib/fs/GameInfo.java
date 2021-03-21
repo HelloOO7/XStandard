@@ -1,20 +1,37 @@
 package ctrmap.stdlib.fs;
 
-public interface GameInfo {
+public abstract class GameInfo {
 
 	public abstract Game getGame();
 	public abstract SubGame getSubGame();
 
-	public boolean isXY();
+	public boolean isXY(){
+		return getGame() == Game.XY;
+	}
 
-	public boolean isOA();
+	public boolean isOA(){
+		return getGame() == Game.ORAS || getGame() == Game.ORAS_DEMO;
+	}
 
-	public boolean isOADemo();
+	public boolean isOADemo(){
+		return getGame() == Game.ORAS_DEMO;
+	}
+	
+	public boolean isGenV(){
+		return getGame() == Game.BW || getGame() == Game.BW2;
+	}
+	
+	public boolean isBW2(){
+		return getGame() == Game.BW2;
+	}
 
 	public enum Game {
 		XY(true),
 		ORAS(true),
-		ORAS_DEMO(false);
+		ORAS_DEMO(false),
+		
+		BW(true),
+		BW2(true);
 		
 		public final boolean isStandalone;
 		
@@ -24,14 +41,25 @@ public interface GameInfo {
 	}
 	
 	public enum SubGame{
-		X,
-		Y,
-		ALPHA,
-		OMEGA,
-		DEMO
+		X(Game.XY),
+		Y(Game.XY),
+		ALPHA(Game.ORAS),
+		OMEGA(Game.ORAS),
+		DEMO(Game.ORAS_DEMO),
+		
+		B(Game.BW),
+		W(Game.BW),
+		B2(Game.BW2),
+		W2(Game.BW2);
+		
+		public final Game game;
+		
+		private SubGame(Game game){
+			this.game = game;
+		}
 	}
 
-	public static class DefaultGameManager implements GameInfo {
+	public static class DefaultGameManager extends GameInfo {
 
 		private Game game;
 		private SubGame subGame;
@@ -45,22 +73,7 @@ public interface GameInfo {
 		public GameInfo.Game getGame() {
 			return game;
 		}
-
-		@Override
-		public boolean isXY() {
-			return game == Game.XY;
-		}
-
-		@Override
-		public boolean isOA() {
-			return !isXY();
-		}
-
-		@Override
-		public boolean isOADemo() {
-			return game == Game.ORAS_DEMO;
-		}
-
+		
 		@Override
 		public SubGame getSubGame() {
 			return subGame;

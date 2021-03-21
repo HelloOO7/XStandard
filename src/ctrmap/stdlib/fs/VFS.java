@@ -222,7 +222,7 @@ public class VFS {
 			} else {
 				currentParent = currentParent.getChild(thing);
 			}
-			if (afa.isArcFile(currentParent)){
+			if (afa != null && afa.isArcFile(currentParent)){
 				currentParent = new ArcFile(currentParent, afa);
 				if (i + 1 < refPath.length()){
 					return currentParent.getChild(refPath.substring(i + 1));

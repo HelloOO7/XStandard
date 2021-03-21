@@ -21,7 +21,7 @@ public class ArcFile extends FSFile{
 		if (forName.startsWith(".")){
 			return null;
 		}
-		System.out.println("ArcFile getChild requested " + this + "/" + forName);
+		//System.out.println("ArcFile getChild requested " + this + "/" + forName);
 		return new ArcFileMember(this, FSUtil.cleanPath(forName), accessor);
 	}
 

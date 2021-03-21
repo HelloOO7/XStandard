@@ -79,7 +79,8 @@ public abstract class FSFile {
 	public static String getPathRelativeTo(String path, String relPath) {
 		relPath += "/";
 		if (path.startsWith(relPath)) {
-			return path.replaceFirst(relPath, "");
+			String str = path.replace(relPath, "");
+			return str;
 		}
 		return path;
 	}

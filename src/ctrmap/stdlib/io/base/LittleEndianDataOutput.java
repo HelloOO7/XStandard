@@ -30,6 +30,10 @@ public class LittleEndianDataOutput implements PositionedDataOutput, DataOutputE
 		position += 4;
 		dos.writeInt(v);
 	}
+	
+	public void writeFX32(float val) throws IOException {
+		writeInt((int)(val * 4096));
+	}
 
 	@Override
 	public void writeShort(int v) throws IOException {
