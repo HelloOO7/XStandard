@@ -7,6 +7,7 @@ import java.util.function.UnaryOperator;
 
 public class ListenableList<T> extends ArrayList<T> {
 
+	@ReflectionHashIgnore
 	private List<EntityChangeListener> listeners = new ArrayList<>();
 
 	public void addListener(EntityChangeListener l) {
