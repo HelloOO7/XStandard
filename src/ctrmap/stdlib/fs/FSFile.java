@@ -72,6 +72,14 @@ public abstract class FSFile {
 		return getName();
 	}
 
+	@Override
+	public boolean equals(Object o){
+		if (o != null && o instanceof FSFile){
+			return ((FSFile)o).getPath().equals(getPath());
+		}
+		return false;
+	}
+	
 	public String getPathRelativeTo(FSFile relativeTo) {
 		return getPathRelativeTo(getPath(), relativeTo.getPath());
 	}

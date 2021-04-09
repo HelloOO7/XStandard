@@ -26,12 +26,23 @@ public class FormattingUtils {
 		return new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
 	}
 	
+	public static String stripStringOfQuotations(String str){
+		if (str.startsWith("\"") && str.endsWith("\"")){
+			return str.substring(1, str.length() - 1);
+		}
+		return str;
+	}
+	
 	public static String getIntWithLeadingZeros(int zeroCount, int value) {
+		return getStrWithLeadingZeros(zeroCount, String.valueOf(value));
+	}
+	
+	public static String getStrWithLeadingZeros(int zeroCount, String value) {
 		StringBuilder zeroSB = new StringBuilder();
 		for (int i = 0; i < zeroCount; i++) {
 			zeroSB.append("0");
 		}
-		String v = String.valueOf(value);
+		String v = value;
 		return zeroSB.substring(v.length()) + v;
 	}
 
@@ -62,14 +73,13 @@ public class FormattingUtils {
 	public static String getFriendlyEnum(Enum e) {
 		String lc = e.toString().toLowerCase();
 		StringBuilder sb = new StringBuilder();
-		boolean isNextUpperCase = false;
+		boolean isNextUpperCase = true;
 		for (int i = 0; i < lc.length(); i++) {
 			char c = lc.charAt(i);
-			boolean isUpperCase = i == 0 || isNextUpperCase;
 			if (c == '_') {
 				isNextUpperCase = true;
 			} else {
-				sb.append(isUpperCase ? Character.toUpperCase(c) : c);
+				sb.append(isNextUpperCase ? Character.toUpperCase(c) : c);
 				isNextUpperCase = false;
 			}
 		}

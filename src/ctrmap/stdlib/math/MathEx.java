@@ -4,6 +4,12 @@ package ctrmap.stdlib.math;
 import ctrmap.stdlib.math.vec.Vec3f;
 
 public class MathEx {
+	
+	public static final float PI = (float)Math.PI;
+	public static final float HALF_PI = PI / 2f;
+	public static final float QUARTER_PI = PI / 4f;
+	public static final float HALF_PI_NEG = -HALF_PI;
+	public static final float TWO_PI = 2 * PI;
 
 	public static float getAngleByCosineLaw(float adj1, float adj2, float opp){
 		return (float)Math.acos(cosineLaw(adj1, adj2, opp));

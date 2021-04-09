@@ -70,15 +70,19 @@ public class MatrixUtil {
 	}
 
 	public static Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s) {
+		return rotationFromMatrix(mtx, s, new Vec3f());
+	}
+	
+	public static Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s, Vec3f r) {
 		float[] mtx4x4 = mtx.getMatrix();
 		return rotationFromMatrixImpl(new float[]{
 			mtx4x4[0] / s.x, mtx4x4[4] / s.y, mtx4x4[8] / s.z,
 			mtx4x4[1] / s.x, mtx4x4[5] / s.y, mtx4x4[9] / s.z,
-			mtx4x4[2] / s.x, mtx4x4[6] / s.y, mtx4x4[10] / s.z
-		});
+			mtx4x4[2] / s.x, mtx4x4[6] / s.y, mtx4x4[10] / s.z,
+		}, r);
 	}
 
-	private static Vec3f rotationFromMatrixImpl(float[] mtx) {
+	private static Vec3f rotationFromMatrixImpl(float[] mtx, Vec3f r) {
 		//M11 M12 M13	mtx[0] mtx[1] mtx[2]
 		//M21 M22 M23	mtx[3] mtx[4] mtx[5]
 		//M31 M32 M33	mtx[6] mtx[7] mtx[8]
@@ -93,7 +97,9 @@ public class MatrixUtil {
 			double x2 = Math.atan2(mtx[7] / Math.cos(y2), mtx[8] / Math.cos(y2));
 			double z1 = Math.atan2(mtx[3] / Math.cos(y1), mtx[0] / Math.cos(y1));
 			double z2 = Math.atan2(mtx[3] / Math.cos(y2), mtx[0] / Math.cos(y2));
-			return new Vec3f((float) x1, (float) y1, (float) z1);
+			r.x = (float)x1;
+			r.y = (float)y1;
+			r.z = (float)z1;
 		} else {
 			z = 0;
 			if (mtx[6] == -1) {
@@ -103,8 +109,11 @@ public class MatrixUtil {
 				y = -Math.PI / 2.0;
 				x = Math.atan2(-mtx[1], -mtx[2]);
 			}
-			return new Vec3f((float) x, (float) y, (float) z);
+			r.x = (float)x;
+			r.y = (float)y;
+			r.z = (float)z;
 		}
+		return r;
 	}
 
 	public static Matrix4 getMatrix4(float[] mtx) {

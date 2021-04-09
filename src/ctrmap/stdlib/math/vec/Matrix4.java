@@ -101,6 +101,10 @@ public class Matrix4 extends Matrix4f{
 		return MatrixUtil.rotationFromMatrix(this, getScale());
 	}
 	
+	public Vec3f getRotationTo(Vec3f vec){
+		return MatrixUtil.rotationFromMatrix(this, getScale(), vec);
+	}
+	
 	public Vec3f getRotation(Vec3f scale){
 		return MatrixUtil.rotationFromMatrix(this, scale);
 	}

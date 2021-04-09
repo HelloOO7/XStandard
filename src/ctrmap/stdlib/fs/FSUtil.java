@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -48,7 +49,9 @@ public class FSUtil {
 			if (!f1.isDirectory() && !f2.isDirectory()) {
 				if (f1.length() == f2.length()) {
 					if (f1.length() < bufferThreshold) {
-						return Arrays.equals(readFileToBytes(f2), readFileToBytes(f1));
+						byte[] b1 = readFileToBytes(f1);
+						byte[] b2 = readFileToBytes(f2);
+						return Arrays.equals(b1, b2);
 					} else {
 						try {
 							InputStream is1 = f1.getInputStream();
@@ -56,14 +59,18 @@ public class FSUtil {
 							int b0 = 0;
 							int b1 = 0;
 							int size = is1.available();
+							boolean b = true;
 							for (int i = 0; i < size; i++) {
 								b0 = is1.read();
 								b1 = is2.read();
 								if (b0 != b1) {
-									return false;
+									b = false;
+									break;
 								}
 							}
-							return true;
+							is1.close();
+							is2.close();
+							return b;
 						} catch (IOException ex) {
 							Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
 						}
@@ -88,16 +95,18 @@ public class FSUtil {
 
 	public static void writeBytesToFile(FSFile f, byte[] bytes) {
 		//This won't get any optimizations with NIO stuff as it's actually faster than that
-		writeBytesToStream(bytes, f.getOutputStream());
+		OutputStream os = f.getOutputStream();
+		writeBytesToStream(bytes, os);
 	}
-	
-	public static void writeStringToFile(FSFile f, String str){
+
+	public static void writeStringToFile(FSFile f, String str) {
 		writeBytesToFile(f, str.getBytes(Charset.forName("UTF-8")));
 	}
 
 	public static byte[] readFileToBytes(File f) {
 		try {
-			return Files.readAllBytes(f.toPath());
+			Path pth = f.toPath();
+			return Files.readAllBytes(pth);
 		} catch (IOException ex) {
 			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
@@ -109,6 +118,7 @@ public class FSUtil {
 		if (f == null) {
 			return null;
 		}
+
 		if (f instanceof DiskFile) {
 			DiskFile df = (DiskFile) f;
 			return readFileToBytes(df.getFile());
@@ -155,14 +165,32 @@ public class FSUtil {
 		}
 	}
 
+	public static String getParentFileName(String path) {
+		int end = path.replace('\\', '/').lastIndexOf("/");
+		if (end != -1) {
+			return path.substring(0, end);
+		}
+		return null;
+	}
+
 	public static String getFileName(String path) {
 		int start = path.replace('\\', '/').lastIndexOf("/") + 1;
 		return path.substring(start, path.length());
 	}
+	
+	public static String getFileExtension(String fileName){
+		int lioDot = getLastDotIndexInName(fileName);
+		return lioDot == -1 ? "" : fileName.substring(lioDot + 1);
+	}
 
 	public static String getFileNameWithoutExtension(String fileName) {
-		String name = fileName;
-		int lioDot = name.lastIndexOf(".");
-		return lioDot != -1 ? name.substring(0, lioDot) : name;
+		int lioDot = getLastDotIndexInName(fileName);
+		return lioDot != -1 ? fileName.substring(0, lioDot) : fileName;
+	}
+	
+	private static int getLastDotIndexInName(String fileName){
+		int slash = fileName.indexOf("/");
+		int lioDot = fileName.lastIndexOf(".");
+		return lioDot > slash ? lioDot : -1;
 	}
 }

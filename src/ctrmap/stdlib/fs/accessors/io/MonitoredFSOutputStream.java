@@ -3,8 +3,12 @@ package ctrmap.stdlib.fs.accessors.io;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.VFSFile;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MonitoredFSOutputStream extends OutputStream {
 
@@ -39,13 +43,14 @@ public class MonitoredFSOutputStream extends OutputStream {
 	public void close() throws IOException {
 		os.close();
 		if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
-			System.out.println("is blacklist " + vfsf);
-			System.out.println(vfsf.getBaseFile().getClass());
-			/*FSUtil.writeBytesToFile(new File("D:/_REWorkspace/h3d_debug/" + vfsf.getName() + "_base"), vfsf.getBaseFile().getBytes());
-			FSUtil.writeBytesToFile(new File("D:/_REWorkspace/h3d_debug/" + vfsf.getName() + "_ov"), vfsf.getOvFile().getBytes());*/
+			System.out.println("File " + vfsf + " is in the blacklist, checking for changes.");
 			if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
-				System.out.println("remove bl " + vfsf);
-				System.out.println(vfsf.getBaseFile().length() + "/" + vfsf.getOvFile().length());
+				System.out.println("File " + vfsf + " has changed. Removing from blacklist.");
+				int baseLen = vfsf.getBaseFile().length();
+				int ovLen = vfsf.getOvFile().length();
+				if (baseLen != ovLen){
+					System.out.println("(length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
+				}
 				vfsf.getVFS().notifyFileChange(vfsf.getPath());
 			}
 		}

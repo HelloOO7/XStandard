@@ -17,8 +17,7 @@ public class Quaternion extends Quaternionf {
 	}
 	
 	public Quaternion(Vec3f euler){
-		super();
-		rotateXYZ(euler);
+		this(euler.x, euler.y, euler.z);
 	}
 	
 	public Quaternion(DataInput in) throws IOException {
@@ -30,9 +29,12 @@ public class Quaternion extends Quaternionf {
 	
 	public Quaternion(float x, float y, float z){
 		super();
-		super.rotateXYZ(x, y, z);
+		rotateLocalX(x);
+		rotateLocalY(y);
+		rotateLocalZ(z);
 	}	
 	
+	@Override
 	public Quaternion clone(){
 		return new Quaternion(this);
 	}

@@ -101,7 +101,7 @@ public class StringUtils {
 	}
 
 	public static boolean checkMagic(byte[] data, String magic) {
-		if (magic.length() > data.length) {
+		if (data == null || magic.length() > data.length) {
 			return false;
 		}
 		byte[] test = Arrays.copyOfRange(data, 0, magic.length());
