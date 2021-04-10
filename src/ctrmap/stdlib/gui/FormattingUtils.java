@@ -26,9 +26,12 @@ public class FormattingUtils {
 		return new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
 	}
 	
-	public static String stripStringOfQuotations(String str){
+	public static String makeStringFromLiteral(String str){
+		if (str.equals("null")){
+			return null;
+		}
 		if (str.startsWith("\"") && str.endsWith("\"")){
-			return str.substring(1, str.length() - 1);
+			str = str.substring(1, str.length() - 1);
 		}
 		return str;
 	}
@@ -42,7 +45,7 @@ public class FormattingUtils {
 		for (int i = 0; i < zeroCount; i++) {
 			zeroSB.append("0");
 		}
-		String v = value;
+		String v = value.substring(0, Math.min(value.length(), zeroCount));
 		return zeroSB.substring(v.length()) + v;
 	}
 

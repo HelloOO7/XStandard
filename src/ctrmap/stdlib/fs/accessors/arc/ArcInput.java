@@ -1,4 +1,3 @@
-
 package ctrmap.stdlib.fs.accessors.arc;
 
 import ctrmap.stdlib.fs.FSFile;
@@ -38,7 +37,11 @@ public class ArcInput {
 	}
 
 	public int getTargetEntryNum() {
-		return Integer.parseInt(targetPath.split("/")[0]);
+		try {
+			return Integer.parseInt(targetPath.split("/")[0]);
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
 	}
 
 	public ArcLanguage getTargetLangId() {

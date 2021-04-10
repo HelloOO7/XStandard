@@ -25,6 +25,10 @@ public class YamlNode {
 	public YamlNode(String key, String value){
 		this(new KeyValuePair(key, value));
 	}
+	
+	public YamlNode(String value){
+		this(new Value(value));
+	}
 
 	public int getParentLevel() {
 		if (parent == null) {
@@ -33,6 +37,10 @@ public class YamlNode {
 		return parent.getParentLevel() + 1;
 	}
 
+	public void removeAllChildren(){
+		children.clear();
+	}
+	
 	public void addChild(YamlNode n) {
 		children.add(n);
 		n.parent = this;

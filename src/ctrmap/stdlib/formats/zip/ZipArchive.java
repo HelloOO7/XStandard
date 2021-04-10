@@ -28,6 +28,8 @@ import java.util.zip.ZipInputStream;
  */
 public class ZipArchive extends FSFile {
 
+	public static final String MAGIC = "PK\u0004\u0003";
+	
 	private FSFile source;
 
 	protected List<ZipEntry> entries = new ArrayList<>();
@@ -58,6 +60,10 @@ public class ZipArchive extends FSFile {
 		} catch (IOException ex) {
 			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+	
+	public static boolean isZip(FSFile fsf){
+		return FSUtil.checkFileMagic(fsf, MAGIC);
 	}
 
 	@Override

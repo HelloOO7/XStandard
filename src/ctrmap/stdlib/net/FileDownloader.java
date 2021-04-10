@@ -1,6 +1,9 @@
 
 package ctrmap.stdlib.net;
 
+import ctrmap.stdlib.fs.FSUtil;
+import ctrmap.stdlib.fs.accessors.MemoryFile;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +27,10 @@ public class FileDownloader {
 			Logger.getLogger(FileDownloader.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return null;
+	}
+	
+	public static MemoryFile downloadToMemory(String url){
+		return new MemoryFile(url, FSUtil.readStreamToBytes(new BufferedInputStream(getNetworkStream(url))));
 	}
 	
 	public static void downloadToFile(File f, String url){

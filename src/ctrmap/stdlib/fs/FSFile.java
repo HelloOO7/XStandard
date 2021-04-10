@@ -64,6 +64,10 @@ public abstract class FSFile {
 		
 		return hidden;
 	}
+	
+	public boolean isFile(){
+		return exists() && !isDirectory();
+	}
 
 	public String getPath() {
 		if (getParent() != null) {

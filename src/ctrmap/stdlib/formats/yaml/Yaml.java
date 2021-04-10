@@ -4,13 +4,14 @@ import ctrmap.stdlib.fs.FSFile;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
+import java.util.Stack;
 
 /**
  *
  */
 public class Yaml {
 
-	private FSFile document;
+	protected FSFile document;
 
 	public String documentName;
 
@@ -37,6 +38,9 @@ public class Yaml {
 		Scanner scanner = new Scanner(strm);
 
 		YamlNode currentNode = root;
+		
+		Stack<Integer> parentLevels = new Stack<>();
+		parentLevels.push(-1);
 
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine();
@@ -44,14 +48,13 @@ public class Yaml {
 				continue;
 			}
 
-			int tabs = 0;
 			int spaces = 0;
 			OUTER:
 			for (int i = 0; i < line.length(); i++) {
 				char c = line.charAt(i);
 				switch (c) {
 					case 0x09:
-						tabs++;
+						spaces += 4;
 						break;
 					case 0x20:
 						spaces++;
@@ -60,20 +63,36 @@ public class Yaml {
 						break OUTER;
 				}
 			}
-			tabs += spaces / 4;
-
-			int cpr = currentNode.getParentLevel();
-
-			if (tabs > cpr) {
+			
+			int peek = parentLevels.peek();
+			if (spaces > peek){
+				parentLevels.push(spaces);
 				currentNode = currentNode.addChild();
-			} else if (tabs == cpr) {
+			}
+			else if (spaces == peek){
+				currentNode = currentNode.addSibling();
+			}
+			else {
+				YamlNode parent = currentNode;
+				while (parentLevels.peek() > spaces){
+					parentLevels.pop();
+					parent = parent.parent;
+				}
+				
+				currentNode = parent.addSibling();
+			}
+
+			/*if (spaces > cpr) {
+				currentNode = currentNode.addChild();
+			} else if (spaces == cpr) {
 				currentNode = currentNode.addSibling();
 			} else {
 				currentNode = currentNode.parent.addSibling();
-			}
-
+			}*/
 			String trim = line.trim();
 			if (trim.startsWith("-")) {
+				parentLevels.push(spaces + 2);
+
 				currentNode.content = new YamlListElement(currentNode);
 				currentNode = currentNode.addChild();
 				trim = trim.substring(1, trim.length()).trim();
@@ -95,16 +114,16 @@ public class Yaml {
 
 		scanner.close();
 	}
-	
-	public YamlNode getEnsureRootNodeKeyNode(String key){
+
+	public YamlNode getEnsureRootNodeKeyNode(String key) {
 		return root.getOrCreateChildKeyByName(key);
 	}
 
 	public YamlNode getRootNodeKeyNode(String key) {
 		return root.getChildByName(key);
 	}
-	
-	public void removeRootNodeKeyNode(String key){
+
+	public void removeRootNodeKeyNode(String key) {
 		root.removeChildByName(key);
 	}
 
@@ -141,15 +160,14 @@ public class Yaml {
 		YamlNode last = node.children.get(node.children.size() - 1);
 		int nextLevel = level + 1;
 		String indent = "";
-		for (int i = 0; i < level * 4; i++) {
+		for (int i = 0; i < level * 2; i++) {
 			indent += " ";
 		}
 		boolean beganListElem = !writeAsListElem;
 		for (YamlNode child : node.children) {
 			if (beganListElem) {
 				out.print(indent);
-			}
-			else {
+			} else {
 				beganListElem = true;
 			}
 			boolean childBeginAsList = false;

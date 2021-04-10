@@ -14,6 +14,8 @@ import javax.swing.event.ChangeListener;
 
 public class ComboBoxAndSpinner extends javax.swing.JPanel {
 
+	private boolean allowOutOfBoxValues = true;
+
 	private boolean doChanges = true;
 	private List<ChangeListener> listeners = new ArrayList<>();
 
@@ -27,7 +29,12 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 					doChanges = false;
 					int val = ((Number) spinner.getValue()).intValue();
 					if (val < 0 || val >= comboBox.getItemCountEx()) {
-						comboBox.setSelectedIndexEx(-1);
+						if (allowOutOfBoxValues) {
+							comboBox.setSelectedIndexEx(-1);
+							comboBox.repaint();
+						} else {
+							spinner.setValue(comboBox.getSelectedIndexEx());
+						}
 					} else {
 						comboBox.setSelectedIndexEx(val);
 					}
@@ -38,9 +45,12 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 
 		comboBox.addListener((Object selectedItem) -> {
 			doChanges = false;
-			spinner.setValue(comboBox.getSelectedIndexEx());
-			for (ChangeListener l : listeners) {
-				l.stateChanged(new ChangeEvent(ComboBoxAndSpinner.this));
+			int idx = comboBox.getSelectedIndexEx();
+			if (idx != -1) {
+				spinner.setValue(comboBox.getSelectedIndexEx());
+				for (ChangeListener l : listeners) {
+					l.stateChanged(new ChangeEvent(ComboBoxAndSpinner.this));
+				}
 			}
 			doChanges = true;
 		});
@@ -49,9 +59,17 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 	public JComboBox getCB() {
 		return comboBox;
 	}
+	
+	public void setAllowOutOfBoxValues(boolean v){
+		allowOutOfBoxValues = v;
+	}
+	
+	public boolean getAllowOutOfBoxValues(){
+		return allowOutOfBoxValues;
+	}
 
 	public void setEditable(boolean v) {
-		this.comboBox.setEditable(v);
+		comboBox.setEditable(v);
 	}
 
 	public void setAutoComplete(boolean v) {

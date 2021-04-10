@@ -12,6 +12,7 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 /**
  *
@@ -31,10 +32,17 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 
 	@Override
 	public void setParent(MutableTreeNode parent) {
-		if (parent instanceof CustomJTreeRootNode) {
-			iconProvider = ((CustomJTreeRootNode) parent).iconProvider;
+		if (parent instanceof CustomJTreeNode) {
+			iconProvider = ((CustomJTreeNode) parent).iconProvider;
 			if (iconProvider != null) {
 				loadRenderingComponents();
+			}
+		}
+		super.setParent(parent);
+		for (int ch = 0; ch < getChildCount(); ch++){
+			TreeNode n = getChildAt(ch);
+			if (n instanceof CustomJTreeNode){
+				((CustomJTreeNode) n).setParent(this);
 			}
 		}
 	}

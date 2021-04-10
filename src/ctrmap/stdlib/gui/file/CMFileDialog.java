@@ -17,13 +17,17 @@ public class CMFileDialog {
 	private static Preferences prefs = Preferences.userRoot().node("CMFileDialog");
 
 	public static File openDirectoryDialog() {
-		return openDirectoryDialog(null);
+		return openDirectoryDialog((String)null);
 	}
 
 	public static File openDirectoryDialog(String title) {
 		return openDirectoryDialog(title, null);
 	}
 
+	public static File openDirectoryDialog(File initDirectory) {
+		return openDirectoryDialog(null, initDirectory);
+	}
+	
 	public static File openDirectoryDialog(String title, File initDirectory) {
 		List<File> r = openFileDialog(title, false, true, false, initDirectory, null, new ExtensionFilter[0]);
 		if (r.isEmpty()) {
@@ -94,7 +98,7 @@ public class CMFileDialog {
 				}
 			});
 		} catch (IllegalStateException e) {
-
+			e.printStackTrace();
 		}
 	}
 

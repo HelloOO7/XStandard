@@ -11,6 +11,8 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.NumberFormatter;
@@ -19,6 +21,14 @@ import javax.swing.text.NumberFormatter;
  *
  */
 public class ComponentUtils {
+	
+	public static void setSystemNativeLookAndFeel(){
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+			Logger.getLogger(ComponentUtils.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
 
 	public static void setComponentsEnabled(boolean v, Component... components) {
 		for (Component c : components) {

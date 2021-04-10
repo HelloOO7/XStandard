@@ -15,8 +15,8 @@ public class Value extends YamlContent {
 	}
 	
 	public static Value trySet(String line) {
-		if (!line.contains(":")) {
-			return new Value(FormattingUtils.stripStringOfQuotations(line.trim()));
+		if (KeyValuePair.getDDotIdx(line) == -1) {
+			return new Value(FormattingUtils.makeStringFromLiteral(line.trim()));
 		}
 		return null;
 	}
@@ -28,7 +28,14 @@ public class Value extends YamlContent {
 
 	@Override
 	public void print(PrintStream out) {
+		boolean printQuotes = value != null && (value.contains(" ") || value.contains(":"));
+		if (printQuotes){
+			out.print("\"");
+		}
 		out.print(value);
+		if (printQuotes){
+			out.print("\"");
+		}
 	}
 
 	@Override

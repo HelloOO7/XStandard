@@ -28,7 +28,7 @@ public class ReflectionHash {
 			return 0;
 		}
 		Class cls = o.getClass();
-		boolean isPrimitiveOrEnum = cls.isPrimitive() || cls.isEnum();
+		boolean isPrimitiveOrEnum = cls.isPrimitive() || cls.isEnum() || o instanceof Number;
 		if (!isPrimitiveOrEnum) {
 			if (!cache.contains(o)) {
 				cache.add(o);
@@ -36,7 +36,7 @@ public class ReflectionHash {
 				return 0;
 			}
 		}
-		if (isPrimitiveOrEnum || o instanceof Number) {
+		if (isPrimitiveOrEnum) {
 			return Objects.hashCode(o);
 		} else if (cls.isArray()) {
 			int len = Array.getLength(o);
@@ -93,6 +93,7 @@ public class ReflectionHash {
 	public boolean recalculate() {
 		try {
 			int newHash = hashObj(object, new ArrayList<>());
+
 			if (newHash != hash) {
 				hash = newHash;
 				changedFlag = true;

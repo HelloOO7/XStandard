@@ -29,6 +29,11 @@ public class CustomJTree extends JTree {
 		setShowsRootHandles(true);
 	}
 	
+	public void removeAllChildren(){
+		root.removeAllChildren();
+		model.reload(root);
+	}
+	
 	public CustomJTreeRootNode getRootNode(){
 		return root;
 	}

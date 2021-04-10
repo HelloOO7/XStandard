@@ -33,7 +33,7 @@ public class DialogUtils {
 	}
 	
 	public static void showInfoMessage(String title, String message) {
-		showErrorMessage(null, title, message);
+		showInfoMessage(null, title, message);
 	}
 	
 	public static void showInfoMessage(Component parent, String title, String message) {
@@ -45,7 +45,11 @@ public class DialogUtils {
 	}
 	
 	public static boolean showYesNoDialog(String title, String message){
-		return JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+		return showYesNoDialog(null, title, message);
+	}
+	
+	public static boolean showYesNoDialog(Component parent, String title, String message){
+		return JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
 	}
 
 	public static int showSaveConfirmationDialog(Component parent, String changeSubject) {

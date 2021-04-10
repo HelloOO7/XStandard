@@ -17,18 +17,29 @@ public class KeyValuePair extends YamlContent {
 	}
 	
 	public static KeyValuePair trySet(String line){
-		if (line.contains(":")){
-			String[] values = line.trim().split(":");
+		int ddotIdx = getDDotIdx(line);
+		if (ddotIdx != -1){
+			String[] values = splitToKeyAndValue(ddotIdx, line);
 			
 			if (values.length == 2){
 				String key = values[0].trim();
-				String value = FormattingUtils.stripStringOfQuotations(values[1].trim());
-				if (!key.isEmpty() && !value.isEmpty()){
+				String value = FormattingUtils.makeStringFromLiteral(values[1].trim());
+				if (!key.isEmpty() && (value == null || !value.isEmpty())){
 					return new KeyValuePair(key, value);
 				}
 			}
 		}
 		return null;
+	}
+	
+	public static String[] splitToKeyAndValue(int idx, String str){
+		return new String[]{str.substring(0, idx), str.substring(idx + 1, str.length())};
+	}
+	
+	public static int getDDotIdx(String line){
+		int quoteIdx = line.indexOf('"');
+		int ddotIdx = line.indexOf(':');
+		return (quoteIdx > ddotIdx || quoteIdx == -1) ? ddotIdx : -1;
 	}
 	
 	@Override
@@ -40,7 +51,14 @@ public class KeyValuePair extends YamlContent {
 	public void print(PrintStream out) {
 		out.print(key);
 		out.print(": ");
+		boolean printQuotes = value != null && (value.contains(" ") || value.contains(":"));
+		if (printQuotes){
+			out.print("\"");
+		}
 		out.print(value);
+		if (printQuotes){
+			out.print("\"");
+		}
 	}
 
 	@Override

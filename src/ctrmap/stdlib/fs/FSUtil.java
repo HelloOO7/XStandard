@@ -2,6 +2,8 @@ package ctrmap.stdlib.fs;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.fs.accessors.MemoryFile;
+import ctrmap.stdlib.io.util.StringUtils;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +19,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FSUtil {
+	
+	public static boolean checkFileMagic(FSFile fsf, String magic){
+		if (!fsf.isFile()){
+			return false;
+		}
+		try {
+			DataInputStream dis = new DataInputStream(fsf.getInputStream());
+			if (dis.available() >= magic.length()){
+				return StringUtils.checkMagic(dis, magic);
+			}
+			return false;
+		} catch (IOException ex) {
+			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return false;
+	}
 
 	public static String cleanPath(String path) {
 		if (path.startsWith("/")) {

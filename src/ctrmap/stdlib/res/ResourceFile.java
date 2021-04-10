@@ -62,12 +62,26 @@ public class ResourceFile extends FSFile{
 
 	@Override
 	public FSFile getChild(String forName) {
-		for (ResourceTable.ResourceInfo i : info.listFiles()){
-			if (i.resourceName.equals(forName)){
-				return new ResourceFile(i);
+		String[] elems = forName.split("/");
+		ResourceFile cur = this;
+		for (int i = 0; i < elems.length; i++){
+			if (cur == null){
+				break;
+			}
+			List<ResourceTable.ResourceInfo> lf = cur.info.listFiles();
+			boolean found = false;
+			for (ResourceTable.ResourceInfo resInfo : lf){
+				if (resInfo.resourceName.equals(elems[i])){
+					cur = new ResourceFile(resInfo);
+					found = true;
+					break;
+				}
+			}
+			if (!found){
+				return null;
 			}
 		}
-		return null;
+		return cur;
 	}
 
 	@Override

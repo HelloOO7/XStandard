@@ -11,9 +11,10 @@ public class Key extends YamlContent {
 	}
 
 	public static Key trySet(String line) {
-		if (line.contains(":")) {
-			String[] values = line.trim().split(":");
-			if (values.length == 1) {
+		int ddotIdx = KeyValuePair.getDDotIdx(line);
+		if (ddotIdx != -1) {
+			String[] values = KeyValuePair.splitToKeyAndValue(ddotIdx, line);
+			if (values[1].trim().isEmpty()) {
 				String key = values[0].trim();
 				if (!key.isEmpty()) {
 					return new Key(key);
