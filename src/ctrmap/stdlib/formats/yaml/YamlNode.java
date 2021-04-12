@@ -74,6 +74,11 @@ public class YamlNode {
 		return null;
 	}
 	
+	public boolean getChildBoolValue(String name){
+		YamlNode ch = getChildByName(name);
+		return ch != null && ch.getValueBool();
+	}
+	
 	public void removeChildByName(String name){
 		children.remove(getChildByName(name));
 	}
@@ -128,7 +133,19 @@ public class YamlNode {
 		return Boolean.parseBoolean(getValue());
 	}
 	
+	public int getKeyInt() {
+		String val = getKey();
+		if (val.startsWith("0x")){
+			return Integer.parseInt(val.substring(2), 16);
+		}
+		return Integer.parseInt(getValue());
+	}
+	
 	public int getValueInt() {
+		String val = getValue();
+		if (val.startsWith("0x")){
+			return Integer.parseInt(val.substring(2), 16);
+		}
 		return Integer.parseInt(getValue());
 	}
 	
