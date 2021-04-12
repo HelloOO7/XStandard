@@ -82,111 +82,119 @@ public class IndentedPrintStream extends PrintStream {
 	}
 	
 	@Override
-	public void println(String obj) {
-		super.println(obj);
+	public void println(String str) {
+		super.println(str);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(boolean obj) {
-		super.println(obj);
+	public void println(boolean b) {
+		super.println(b);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(char obj) {
-		super.println(obj);
+	public void println(char c) {
+		super.println(c);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(char[] obj) {
-		super.println(obj);
+	public void println(char[] chars) {
+		super.println(chars);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(double obj) {
-		super.println(obj);
+	public void println(double d) {
+		super.println(d);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(float obj) {
-		super.println(obj);
+	public void println(float f) {
+		super.println(f);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(int obj) {
-		super.println(obj);
+	public void println(int i) {
+		super.println(i);
 
 		setIsNextLineBegin();
 	}
 	
 	@Override
-	public void println(long obj) {
-		super.println(obj);
+	public void println(long l) {
+		super.println(l);
 
 		setIsNextLineBegin();
 	}
 	
-	private void printImpl(Object obj){
+	private void printIndentor(){
 		if (isNextPrintLineBegin){
 			super.print(indentor);
 			isNextPrintLineBegin = false;
 		}
-		super.print(obj);
 	}
 	
 	@Override
 	public void print(Object obj) {
-		printImpl(obj);
+		printIndentor();
+		super.print(obj);
 	}
 	
 	@Override
-	public void print(String obj) {
-		printImpl(obj);
+	public void print(String str) {
+		printIndentor();
+		super.print(str);
 	}
 	
 	@Override
-	public void print(boolean obj) {
-		printImpl(obj);
+	public void print(boolean b) {
+		printIndentor();
+		super.print(b);
 	}
 	
 	@Override
-	public void print(char obj) {
-		printImpl(obj);
+	public void print(char c) {
+		printIndentor();
+		super.print(c);
 	}
 	
 	@Override
-	public void print(char[] obj) {
-		printImpl(obj);
+	public void print(char[] chars) {
+		printIndentor();
+		super.print(chars);
 	}
 	
 	@Override
-	public void print(double obj) {
-		printImpl(obj);
+	public void print(double d) {
+		printIndentor();
+		super.print(d);
 	}
 	
 	@Override
-	public void print(float obj) {
-		printImpl(obj);
+	public void print(float f) {
+		printIndentor();
+		super.print(f);
 	}
 	
 	@Override
-	public void print(int obj) {
-		printImpl(obj);
+	public void print(int i) {
+		printIndentor();
+		super.print(i);
 	}
 	
 	@Override
-	public void print(long obj) {
-		printImpl(obj);
+	public void print(long l) {
+		printIndentor();
+		super.print(l);
 	}
 }

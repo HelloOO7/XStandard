@@ -61,8 +61,8 @@ public class FormattingUtils {
 		return f.format(size / (double) 1000000) + "MB";
 	}
 	
-	public static String getEnumlyString(String str){
-		str = str.toUpperCase().replace(' ', '_');
+	public static String getStrWithoutSpaces(String str){
+		str = str.replace(' ', '_');
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < str.length(); i++){
 			char c = str.charAt(i);
@@ -71,6 +71,10 @@ public class FormattingUtils {
 			}
 		}
 		return sb.toString();
+	}
+	
+	public static String getEnumlyString(String str){
+		return getStrWithoutSpaces(str).toUpperCase();
 	}
 
 	public static String getFriendlyEnum(Enum e) {

@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.yaml;
 
+import ctrmap.stdlib.util.ParsingUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -134,19 +135,11 @@ public class YamlNode {
 	}
 	
 	public int getKeyInt() {
-		String val = getKey();
-		if (val.startsWith("0x")){
-			return Integer.parseInt(val.substring(2), 16);
-		}
-		return Integer.parseInt(getValue());
+		return ParsingUtils.parseBasedInt(getKey());
 	}
 	
 	public int getValueInt() {
-		String val = getValue();
-		if (val.startsWith("0x")){
-			return Integer.parseInt(val.substring(2), 16);
-		}
-		return Integer.parseInt(getValue());
+		return ParsingUtils.parseBasedInt(getValue());
 	}
 	
 	public List<String> getChildValuesAsListStr(){
