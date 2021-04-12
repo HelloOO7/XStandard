@@ -18,6 +18,14 @@ public class YamlListElement extends YamlContent {
 	public YamlListElement(YamlNode node){
 		this.node = node;
 	}
+	
+	public YamlListElement(){
+		
+	}
+	
+	void assign(YamlNode n){
+		node = n;
+	}
 
 	private YamlNode getFirstChild(){
 		return node.children.get(0);

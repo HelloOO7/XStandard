@@ -51,7 +51,7 @@ public class KeyValuePair extends YamlContent {
 	public void print(PrintStream out) {
 		out.print(key);
 		out.print(": ");
-		boolean printQuotes = value != null && (value.contains(" ") || value.contains(":"));
+		boolean printQuotes = value != null && (value.contains(":") || value.equals("null"));
 		if (printQuotes){
 			out.print("\"");
 		}

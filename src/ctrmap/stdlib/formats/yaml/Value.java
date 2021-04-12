@@ -28,7 +28,7 @@ public class Value extends YamlContent {
 
 	@Override
 	public void print(PrintStream out) {
-		boolean printQuotes = value != null && (value.contains(" ") || value.contains(":"));
+		boolean printQuotes = value != null && (value.contains(":") || value.equals("null"));
 		if (printQuotes){
 			out.print("\"");
 		}

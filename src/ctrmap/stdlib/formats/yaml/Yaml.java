@@ -181,7 +181,7 @@ public class Yaml {
 
 			writeNodeChildren(child, out, nextLevel, childBeginAsList);
 
-			if (child == last && node.parent != root && !writeAsListElem) {
+			if (child == last && node.parent == root) {
 				out.println();
 			}
 		}

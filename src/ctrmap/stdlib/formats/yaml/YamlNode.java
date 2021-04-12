@@ -21,6 +21,10 @@ public class YamlNode {
 	
 	public YamlNode(YamlContent cnt){
 		content = cnt;
+		
+		if (content instanceof YamlListElement){
+			((YamlListElement)content).assign(this);
+		}
 	}
 	
 	public YamlNode(String key, String value){
