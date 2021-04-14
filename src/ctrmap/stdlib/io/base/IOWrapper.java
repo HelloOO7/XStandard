@@ -15,6 +15,7 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 	protected SeekableDataInput dis;
 	protected SeekableDataOutput dos;
 	protected Closeable closeable;
+	private int base = 0;
 
 	protected IOWrapper() {
 
@@ -24,6 +25,10 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 		dis = toWrap;
 		dos = toWrap;
 		closeable = toWrap;
+	}
+	
+	public void setBase(int base){
+		this.base = base;
 	}
 
 	public void mirrorTo(IOWrapper target) {
@@ -267,6 +272,7 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 
 	@Override
 	public void seek(int addr) throws IOException {
+		addr -= base;
 		dis.seek(addr);
 		dos.seek(addr);
 	}
@@ -282,7 +288,7 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 
 	@Override
 	public int getPosition() throws IOException {
-		return dos.getPosition();
+		return dos.getPosition() + base;
 	}
 
 	@Override

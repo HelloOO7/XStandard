@@ -75,6 +75,12 @@ public class IndentedPrintStream extends PrintStream {
 	}
 
 	@Override
+	public void println(){
+		super.println();
+		setIsNextLineBegin();
+	}
+	
+	@Override
 	public void println(Object obj) {
 		super.println(obj);
 

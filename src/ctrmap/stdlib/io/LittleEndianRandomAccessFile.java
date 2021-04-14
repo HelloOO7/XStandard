@@ -37,11 +37,6 @@ public class LittleEndianRandomAccessFile extends LittleEndianIO {
 	public int getFilePointer() throws IOException {
 		return (int) raf_handle.getFilePointer();
 	}
-
-	@Override
-	public int getPosition() throws IOException {
-		return getFilePointer();
-	}
 	
 	private static class RAFWrapper extends RandomAccessFile implements SeekableDataInput, SeekableDataOutput{
 
