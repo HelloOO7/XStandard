@@ -23,6 +23,10 @@ public class ArgumentContent {
 		return stringValue(0);
 	}
 	
+	public boolean exists(){
+		return !contents.isEmpty() && contents.get(0) != null;
+	}
+	
 	public boolean booleanValue(int idx){
 		rangeCheck(idx);
 		return (Boolean)contents.get(idx);

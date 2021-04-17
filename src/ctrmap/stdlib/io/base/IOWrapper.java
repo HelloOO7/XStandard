@@ -273,9 +273,14 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 	@Override
 	public void seek(int addr) throws IOException {
 		addr -= base;
+		seekUnbased(addr);
+	}
+	
+	public void seekUnbased(int addr) throws IOException {
 		dis.seek(addr);
 		dos.seek(addr);
 	}
+
 
 	public void seekAndSeek(int addr) throws IOException {
 		seekAndSeek(addr, 0);
@@ -289,6 +294,10 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 	@Override
 	public int getPosition() throws IOException {
 		return dos.getPosition() + base;
+	}
+	
+	public int getPositionUnbased() throws IOException {
+		return dos.getPosition();
 	}
 
 	@Override

@@ -56,8 +56,8 @@ public class RandomAccessByteArray extends LittleEndianIO {
 	}
 
 	@Override
-	public int length() throws IOException {
-		return baos.out.lastOffset;
+	public int length() {
+		return baos.out.length();
 	}
 
 	public static class RandomAccessBAIS extends ByteArrayInputStream {
@@ -144,6 +144,10 @@ public class RandomAccessByteArray extends LittleEndianIO {
 		public void seek(int off) {
 			lastOffset = Math.max(lastOffset, size()); //store this in case the stream didn't return so that we can trim the byte array according to it
 			super.count = off;
+		}
+		
+		public int length(){
+			return Math.max(lastOffset, count);
 		}
 
 		@Override

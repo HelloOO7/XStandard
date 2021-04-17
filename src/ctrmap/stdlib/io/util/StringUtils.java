@@ -21,7 +21,7 @@ public class StringUtils {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String readStringUTF16(DataInput in) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		char read;
@@ -82,18 +82,22 @@ public class StringUtils {
 		writeStringUnterminated(dos, str);
 		dos.write(0);
 	}
-	
+
 	public static void writeStringUTF16(DataOutput dos, String str) throws IOException {
 		writeStringUnterminatedUTF16(dos, str);
 		dos.writeShort(0);
 	}
 
 	public static void writeStringUnterminated(DataOutput dos, String str) throws IOException {
-		dos.write(str.getBytes("ASCII"));
+		if (str != null) {
+			dos.write(str.getBytes("ASCII"));
+		}
 	}
-	
+
 	public static void writeStringUnterminatedUTF16(DataOutput dos, String str) throws IOException {
-		dos.write(str.getBytes("UTF-16LE"));
+		if (str != null) {
+			dos.write(str.getBytes("UTF-16LE"));
+		}
 	}
 
 	public static boolean isUTF8Capital(byte check) {

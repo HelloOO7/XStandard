@@ -1,5 +1,6 @@
 package ctrmap.stdlib.cli;
 
+import ctrmap.stdlib.util.ParsingUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -137,7 +138,7 @@ public class ArgumentPattern {
 				case INT:
 					int intv;
 					try {
-						intv = Integer.parseInt(p);
+						intv = ParsingUtils.parseBasedInt(p);
 					} catch (NumberFormatException ex) {
 						throw new UnsupportedOperationException(p + " is not a valid integer parameter for argument " + key + ".");
 					}

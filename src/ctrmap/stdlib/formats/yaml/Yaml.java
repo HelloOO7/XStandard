@@ -1,6 +1,7 @@
 package ctrmap.stdlib.formats.yaml;
 
 import ctrmap.stdlib.fs.FSFile;
+import ctrmap.stdlib.gui.file.ExtensionFilter;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
@@ -10,6 +11,8 @@ import java.util.Stack;
  *
  */
 public class Yaml {
+	
+	public static final ExtensionFilter EXTENSION_FILTER = new ExtensionFilter("Yet Another Markup Language", "*.yml", "*.yaml");
 
 	protected FSFile document;
 

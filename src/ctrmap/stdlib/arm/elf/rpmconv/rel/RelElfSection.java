@@ -1,0 +1,104 @@
+package ctrmap.stdlib.arm.elf.rpmconv.rel;
+
+import ctrmap.stdlib.io.RandomAccessByteArray;
+import ctrmap.stdlib.io.base.IOWrapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import net.fornwall.jelf.ElfFile;
+import net.fornwall.jelf.ElfSection;
+import net.fornwall.jelf.ElfSymbol;
+import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
+import ctrmap.stdlib.arm.elf.SectionType;
+import ctrmap.stdlib.formats.rpm.RPM;
+import ctrmap.stdlib.formats.rpm.RPMSymbol;
+import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
+import ctrmap.stdlib.formats.rpm.RPMSymbolType;
+
+/**
+ *
+ */
+public class RelElfSection {
+
+	private int id;
+
+	public final SectionType type;
+	private ElfFile elf;
+	private ElfSection sec;
+
+	public final List<Elf2RPMSymbolAdapter> rpmSymbols = new ArrayList<>();
+
+	public final int sourceOffset;
+	public final int length;
+	public int targetOffset;
+
+	private RandomAccessByteArray buf;
+
+	public RelElfSection(ElfFile elf, int sectionId, IOWrapper io) throws IOException {
+		id = sectionId;
+		sec = elf.getSection(id);
+		type = SectionType.getSectionTypeFromElf(sec.header.getName());
+		this.elf = elf;
+		sourceOffset = (int) sec.header.section_offset;
+		length = (int) sec.header.size;
+		byte[] b = new byte[length];
+		if (type != SectionType.BSS) {
+			io.seek(sourceOffset);
+			io.read(b);
+		}
+		buf = new RandomAccessByteArray(b);
+	}
+
+	public byte[] getBytes(){
+		return buf.toByteArray();
+	}
+	
+	public void prepareForRPM(RPM rpm, int targetOffset, ExternalSymbolDB esdb) {
+		this.targetOffset = targetOffset;
+		createRPMSymbols(rpm, esdb);
+	}
+
+	private void createRPMSymbols(RPM rpm, ExternalSymbolDB esdb) {
+		for (ElfSymbol smb : elf.getSymbolTableSection().symbols){
+			if (smb.st_shndx == id){
+				if ((smb.getName() == null || !smb.getName().startsWith("$")) && acceptsSymType(smb.getType())){
+					Elf2RPMSymbolAdapter s = new Elf2RPMSymbolAdapter(smb);
+					s.name = smb.getName();
+					s.type = getRpmSymType(smb.getType());
+					
+					if (s.name != null && esdb.isFuncExternal(s.name)){
+						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, esdb.getOffsetOfFunc(s.name));
+					}
+					else {
+						int sval = (int)smb.st_value + targetOffset;
+						sval -= sval % 2;
+						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, sval);
+					}
+					rpmSymbols.add(s);
+				}
+			}
+		}
+	}
+	
+	private static boolean acceptsSymType(int symType){
+		switch (symType){
+			case ElfSymbol.STT_FUNC:
+			case ElfSymbol.STT_NOTYPE:
+			case ElfSymbol.STT_SECTION:
+				return true;
+		}
+		return false;
+	}
+	
+	private static RPMSymbolType getRpmSymType(int symType){
+		switch (symType){
+			case ElfSymbol.STT_FUNC:
+				return RPMSymbolType.FUNCTION;
+			case ElfSymbol.STT_NOTYPE:
+				return RPMSymbolType.VALUE;
+			case ElfSymbol.STT_SECTION:
+				return RPMSymbolType.SECTION;
+		}
+		return null;
+	}
+}

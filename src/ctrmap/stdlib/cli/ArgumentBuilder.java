@@ -58,7 +58,7 @@ public class ArgumentBuilder {
 		defaultContent = new ArgumentContent();
 		StringBuilder comb = new StringBuilder();
 		for (String a : args) {
-			comb.append(a);
+			comb.append(a == null ? "" : a);
 		}
 		String str = comb.toString().trim();
 		cnt = new ArrayList<>();

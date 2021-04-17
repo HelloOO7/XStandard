@@ -12,6 +12,16 @@ public class StringEx {
 		return -1;
 	}
 	
+	public static int indexOfFirstWhitespace(String str, int startIndex){
+		int len = str.length();
+		for (int i = startIndex; i < len; i++){
+			if (Character.isWhitespace(str.charAt(i))){
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	public static boolean containsUppercase(String str){
 		int len = str.length();
 		for (int i = 0; i < len; i++){

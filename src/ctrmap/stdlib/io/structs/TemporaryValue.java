@@ -18,7 +18,11 @@ public class TemporaryValue {
 	public void set(int value) throws IOException {
 		int rememberpos = dosref.getPosition();
 		dosref.seek(position);
-		dosref.writeInt(value);
+		writePointer(value);
 		dosref.seek(rememberpos);
+	}
+	
+	protected void writePointer(int value) throws IOException {
+		dosref.writeInt(value);
 	}
 }
