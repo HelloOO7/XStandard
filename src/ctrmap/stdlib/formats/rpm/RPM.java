@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ctrmap.stdlib.arm.ThumbAssembler;
+import ctrmap.stdlib.io.base.LittleEndianIO;
+import java.io.File;
 
 public class RPM {
 
@@ -32,6 +34,10 @@ public class RPM {
 
 	private RandomAccessByteArray code;
 
+	public RPM(FSFile fsf) {
+		this(fsf.getBytes());
+	}
+	
 	public RPM(byte[] bytes) {
 		try {
 			RandomAccessByteArray ft = new RandomAccessByteArray(bytes);
@@ -72,16 +78,33 @@ public class RPM {
 		code = new RandomAccessByteArray();
 	}
 
+	public static boolean isRPM(FSFile f) {
+		if (f.isFile() && f.length() > 0x10) {
+			try {
+				LittleEndianIO io = f.getIO();
+
+				io.seek(f.length() - 16);
+				boolean rsl = StringUtils.checkMagic(io, RPM_MAGIC);
+				
+				io.close();
+				return rsl;
+			} catch (IOException ex) {
+				Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
+		return false;
+	}
+
 	public void writeMAPToFile(FSFile fsf) {
 		PrintStream out = new PrintStream(fsf.getOutputStream());
 
 		for (RPMSymbol symb : symbols) {
 			if (symb.name != null && !symb.name.isEmpty()) {
 				int addr = symb.address.getAddrAbs();
-				if (addr < baseAddress || addr > baseAddress + code.length()){
+				if (addr < baseAddress || addr > baseAddress + code.length()) {
 					continue; //external symbol
 				}
-				if (symb.type == RPMSymbolType.FUNCTION){
+				if (symb.type == RPMSymbolType.FUNCTION) {
 					addr++;
 				}
 				out.print("0000:");
