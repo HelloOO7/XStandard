@@ -12,13 +12,15 @@ import java.util.logging.Logger;
  */
 public interface RPMRelocationSource {
 
+	public int getAddress();
+	
 	public int getAbsoluteAddress();
 
 	public void write(DataOutput out) throws IOException;
 
 	public static class RPMRelSrcInternalSymbol implements RPMRelocationSource {
 
-		private RPMSymbol symb;
+		public RPMSymbol symb;
 		private RPM rpm;
 		
 		public RPMRelSrcInternalSymbol(RPM rpm, RPMSymbol symb){
@@ -39,6 +41,11 @@ public interface RPMRelocationSource {
 		@Override
 		public void write(DataOutput out) throws IOException {
 			out.writeShort(rpm.getSymbolNo(symb));
+		}
+
+		@Override
+		public int getAddress() {
+			return symb.address.getAddr();
 		}
 	}
 
@@ -61,6 +68,11 @@ public interface RPMRelocationSource {
 		public void write(DataOutput out) throws IOException {
 			StringUtils.writeString(out, ns);
 			StringUtils.writeString(out, symb.name);
+		}
+
+		@Override
+		public int getAddress() {
+			return symb.address.getAddr();
 		}
 
 	}

@@ -19,6 +19,7 @@ import ctrmap.stdlib.arm.elf.SymbInfo;
 import ctrmap.stdlib.formats.rpm.RPM;
 import ctrmap.stdlib.formats.rpm.RPMRelocation;
 import ctrmap.stdlib.formats.rpm.RPMRelocationSource;
+import ctrmap.stdlib.formats.rpm.RPMRelocationTarget;
 import ctrmap.stdlib.formats.rpm.RPMSymbol;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
 
@@ -251,7 +252,7 @@ public class ExecElfSection {
 									
 									RPMRelocation r = new RPMRelocation();
 									r.sourceType = RPMRelocation.RPMRelSourceType.SYMBOL_INTERNAL;
-									r.target = pos;
+									r.target = new RPMRelocationTarget(pos);
 									r.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
 									r.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, findRPMFuncByAddr(externalOffset));
 									relocs.add(r);
@@ -259,7 +260,7 @@ public class ExecElfSection {
 								else {
 									RPMRelocation r = new RPMRelocation();
 									r.sourceType = RPMRelocation.RPMRelSourceType.SYMBOL_INTERNAL;
-									r.target = pos;
+									r.target = new RPMRelocationTarget(pos);
 									r.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
 									r.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, findRPMFuncByAddr(brnchAddr));
 									relocs.add(r);

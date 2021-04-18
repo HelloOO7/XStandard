@@ -28,7 +28,7 @@ public class YamlNode {
 	}
 
 	public YamlNode(String key, Object value) {
-		this(key, String.valueOf(value));
+		this(key, (String)(value == null ? value : String.valueOf(value)));
 	}
 
 	public YamlNode(String key, String value) {

@@ -1,8 +1,9 @@
 
 package ctrmap.stdlib.formats.rpm;
 
-import java.io.DataInput;
-import java.io.DataOutput;
+import ctrmap.stdlib.io.iface.SeekableDataInput;
+import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.structs.StringTable;
 import java.io.IOException;
 
 /**
@@ -12,18 +13,21 @@ public class RPMRelocation {
 	
 	public RPMRelTargetType targetType;
 	public RPMRelSourceType sourceType;
-	public int target;
+	
+	public RPMRelocationTarget target;
+	
 	public RPMRelocationSource source;
 	
 	public RPMRelocation(){
 		
 	}
 	
-	public RPMRelocation(DataInput in, RPM rpm) throws IOException {
+	public RPMRelocation(SeekableDataInput in, RPM rpm) throws IOException {
 		int cfg = in.readUnsignedByte();
 		sourceType = RPMRelSourceType.values()[cfg & 0b11]; //reserved 4 values
 		targetType = RPMRelTargetType.values()[(cfg >> 2) & 0b111]; //reserved 8 values
-		target = in.readInt();
+		
+		target = new RPMRelocationTarget(in);
 		
 		switch (sourceType){
 			case SYMBOL_EXTERNAL:
@@ -35,16 +39,27 @@ public class RPMRelocation {
 		}
 	}
 	
-	public void write(DataOutput out) throws IOException{
+	public void write(SeekableDataOutput out, StringTable strtbl) throws IOException{
 		out.write((targetType.ordinal() << 2) | sourceType.ordinal());
-		out.writeInt(target);
+		target.write(out, strtbl);
 		source.write(out);
 	}
 
 	public static enum RPMRelTargetType {
 		OFFSET,
 		THUMB_BRANCH_LINK,
-		ARM_BRANCH_LINK
+		ARM_BRANCH_LINK,
+		THUMB_BRANCH,
+		ARM_BRANCH;
+		
+		public static RPMRelTargetType fromName(String name){
+			for (RPMRelTargetType t : values()){
+				if (t.name().equals(name)){
+					return t;
+				}
+			}
+			return null;
+		}
 	}
 	
 	public static enum RPMRelSourceType {

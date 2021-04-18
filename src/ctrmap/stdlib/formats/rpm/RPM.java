@@ -15,13 +15,20 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ctrmap.stdlib.arm.ThumbAssembler;
+import ctrmap.stdlib.gui.file.ExtensionFilter;
 import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.structs.StringTable;
 import java.io.File;
+import java.util.Objects;
 
 public class RPM {
 
+	public static final ExtensionFilter EXTENSION_FILTER = new ExtensionFilter("Relocatable Patch Module", "*.rpm");
+
 	public static final String RPM_MAGIC = "RPM0";
 	public static final String SYM_MAGIC = "SYM0";
+	public static final String STR_MAGIC = "STR0";
 	public static final String REL_MAGIC = "REL0";
 
 	public static final int RPM_PADDING = 0x10;
@@ -37,7 +44,7 @@ public class RPM {
 	public RPM(FSFile fsf) {
 		this(fsf.getBytes());
 	}
-	
+
 	public RPM(byte[] bytes) {
 		try {
 			RandomAccessByteArray ft = new RandomAccessByteArray(bytes);
@@ -85,7 +92,7 @@ public class RPM {
 
 				io.seek(f.length() - 16);
 				boolean rsl = StringUtils.checkMagic(io, RPM_MAGIC);
-				
+
 				io.close();
 				return rsl;
 			} catch (IOException ex) {
@@ -117,6 +124,26 @@ public class RPM {
 		out.close();
 	}
 
+	public List<RPMRelocation> getExternalRelocations() {
+		List<RPMRelocation> l = new ArrayList<>();
+		for (RPMRelocation r : relocations) {
+			if (r.target.isExternal()) {
+				l.add(r);
+			}
+		}
+		return l;
+	}
+
+	public void setExternalRelocations(List<RPMRelocation> l) {
+		for (int i = 0; i < relocations.size(); i++) {
+			if (relocations.get(i).target.isExternal()) {
+				relocations.remove(i);
+				i--;
+			}
+		}
+		relocations.addAll(l);
+	}
+
 	public void setCode(RandomAccessByteArray buf) {
 		code = buf;
 	}
@@ -127,6 +154,8 @@ public class RPM {
 			ba.write(code.toByteArray());
 			int codeSize = ba.getPosition();
 			ba.pad(RPM_PADDING);
+
+			StringTable strings = new StringTable(ba);
 
 			int symbOffset = ba.getPosition();
 			ba.writeStringUnterminated(SYM_MAGIC);
@@ -141,8 +170,12 @@ public class RPM {
 			ba.writeInt(baseAddress);
 			ba.writeInt(relocations.size());
 			for (RPMRelocation rel : relocations) {
-				rel.write(ba);
+				rel.write(ba, strings);
 			}
+			ba.pad(RPM_PADDING);
+
+			ba.writeStringUnterminated(STR_MAGIC);
+			strings.writeTable();
 			ba.pad(RPM_PADDING);
 
 			ba.writeStringUnterminated(RPM_MAGIC);
@@ -165,24 +198,24 @@ public class RPM {
 		relocateBufferToAddr(baseAddress);
 	}
 
+	public void doExternalRelocations(RPMExternalRelocator relocator) {
+		for (RPMRelocation rel : relocations) {
+			if (rel.target.isExternal()) {
+				relocator.processExternalRelocation(rel);
+			}
+		}
+	}
+
 	private void relocateBufferToAddr(int baseAddress) {
 		this.baseAddress = baseAddress;
 		code.setBase(baseAddress);
 		try {
 			for (RPMRelocation rel : relocations) {
-				code.seekUnbased(rel.target);
-				int source = rel.source.getAbsoluteAddress();
+				if (rel.target.isInternal()) {
+					System.out.println("rel " + rel.target.address + ", " + rel.target.module);
+					code.seekUnbased(rel.target.address);
 
-				switch (rel.targetType) {
-					case ARM_BRANCH_LINK:
-						ARMAssembler.writeBranchInstruction(code, source, true);
-						break;
-					case THUMB_BRANCH_LINK:
-						ThumbAssembler.writeBranchLinkInstruction(code, source);
-						break;
-					case OFFSET:
-						code.writeInt(source);
-						break;
+					writeRelocationDataByType(rel, code);
 				}
 			}
 		} catch (IOException ex) {
@@ -190,6 +223,45 @@ public class RPM {
 		}
 	}
 
+	public static void writeRelocationDataByType(RPMRelocation rel, SeekableDataOutput out) throws IOException {
+		int addr = rel.source.getAbsoluteAddress();
+
+		switch (rel.targetType) {
+			case ARM_BRANCH_LINK:
+				ARMAssembler.writeBranchInstruction(out, addr, true);
+				break;
+			case THUMB_BRANCH_LINK:
+				ThumbAssembler.writeBranchLinkInstruction(out, addr);
+				break;
+			case OFFSET:
+				out.writeInt(addr);
+				break;
+			case ARM_BRANCH:
+				ARMAssembler.writeBranchInstruction(out, addr, false);
+				break;
+			case THUMB_BRANCH:
+				if (Math.abs((out.getPosition() + 4) - addr) < 2048){
+					ThumbAssembler.writeSmallBranchInstruction(out, addr);
+				}
+				else {
+					int tgtAddr = ThumbAssembler.writePcRelativeLoad(out, 0, out.getPosition() + 4);
+					ThumbAssembler.writeBXInstruction(out, 0);
+					out.seek(tgtAddr);
+					out.writeInt(addr);
+				}
+				break;
+		}
+	}
+
+	public RPMSymbol getSymbol(String symbName) {
+		for (RPMSymbol s : symbols){
+			if (Objects.equals(s.name, symbName)){
+				return s;
+			}
+		}
+		return null;
+	}
+	
 	public RPMSymbol getSymbol(int symbNo) {
 		if (symbNo < symbols.size() && symbNo >= 0) {
 			return symbols.get(symbNo);

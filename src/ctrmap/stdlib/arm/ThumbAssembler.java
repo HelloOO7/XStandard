@@ -33,6 +33,23 @@ public class ThumbAssembler {
 		out.writeShort(first);
 		out.writeShort(second);
 	}
+	
+	public static void writeBXInstruction(SeekableDataOutput out, int register) throws IOException {
+		int byte0 = 0b01000111;
+		int byte1 = ((register > 7 ? 1 : 0) << 6) | ((register % 7) << 3);
+		out.write(byte1);
+		out.write(byte0);
+	}
+	
+	public static void writeSmallBranchInstruction(SeekableDataOutput out, int branchTarget) throws IOException {
+		int currentOffset = out.getPosition() + 4;
+		int diff = branchTarget - currentOffset;
+		int value = diff >> 1;
+
+		int instruction = 0b11100 | (value & 0x7FF);
+
+		out.writeShort(instruction);
+	}
 
 	public static int getBranchInstructionTarget(PositionedDataInput in) throws IOException {
 		int first = in.readUnsignedShort();

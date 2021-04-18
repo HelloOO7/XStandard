@@ -21,6 +21,7 @@ import ctrmap.stdlib.formats.rpm.RPMRelocation;
 import ctrmap.stdlib.formats.rpm.RPMRelocationSource;
 import ctrmap.stdlib.formats.rpm.RPMSymbol;
 import ctrmap.stdlib.arm.elf.rpmconv.IElf2RpmConverter;
+import ctrmap.stdlib.formats.rpm.RPMRelocationTarget;
 
 /**
  *
@@ -78,7 +79,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 					int relocTypeArg = BitUtils.readUInt24LE(io);
 					
 					RPMRelocation rel = new RPMRelocation();
-					rel.target = rpmRelocOffs;
+					rel.target = new RPMRelocationTarget(rpmRelocOffs);
 					rel.sourceType = RPMRelocation.RPMRelSourceType.SYMBOL_INTERNAL;
 					
 					switch (armRelocType){

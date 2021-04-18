@@ -8,7 +8,8 @@ public enum FSWildCard {
 	ROMFS("romfs", "RomFS", "romfs"),
 	EXEFS("exefs", "ExeFS", "exefs"),
 	CODE_BIN("codebin", "code.bin", ".code.bin", "mario.exe"),
-	EXHEADER("exheader", "ExHeader.bin", "exheader.bin", "exheader.exh", "ExHeader.exh", "exh.bin")
+	EXHEADER("exheader", "ExHeader.bin", "exheader.bin", "exheader.exh", "ExHeader.exh", "exh.bin"),
+	Y9("y9", "y9.bin", "arm9ovltable.bin")
 	;
 	public final String ddotId;
 	public final String[] options;
