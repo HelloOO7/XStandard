@@ -7,11 +7,12 @@ public enum SectionType {
 	TEXT, 
 	DATA, 
 	RODATA, 
-	BSS;
+	BSS,
+	EXTERN;
 	
 	public static SectionType getSectionTypeFromElf(String elfSecName) {
 		if (elfSecName == null) {
-			return null;
+			return EXTERN;
 		}
 		switch (elfSecName) {
 			case ".text":

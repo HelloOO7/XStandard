@@ -94,8 +94,22 @@ public class ThumbAssembler {
 		out.write(byte0);
 	}
 
+	public static int writePcRelativeLoadAbs(SeekableDataOutput out, int destReg, int off) throws IOException {
+		return writePcRelativeLoad(out, destReg, off, true);
+	}
+	
 	public static int writePcRelativeLoad(SeekableDataOutput out, int destReg, int off) throws IOException {
+		return writePcRelativeLoad(out, destReg, off, false);
+	}
+	
+	public static int writePcRelativeLoad(SeekableDataOutput out, int destReg, int off, boolean offAbs) throws IOException {
 		int pc = out.getPosition() + 4;
+		if (offAbs){
+			off -= pc;
+		}
+		else {
+			off -= 4;
+		}
 		int alignedPC = pc & ~3;
 		if (alignedPC != pc) {
 			off += 2;
@@ -104,9 +118,9 @@ public class ThumbAssembler {
 			off += 2;
 		}
 		int byte0 = (0b01001 << 3) | destReg;
-		out.write((off - 4) >> 2);
+		out.write(off >> 2);
 		out.write(byte0);
-		return alignedPC + off - 4;
+		return alignedPC + off;
 	}
 
 	public static void writeLSInstruction(DataOutput out, ThumbLSOpCode opCode, int shift, int srcReg, int destReg) throws IOException {

@@ -111,9 +111,11 @@ public class RPM {
 				if (addr < baseAddress || addr > baseAddress + code.length()) {
 					continue; //external symbol
 				}
-				if (symb.type == RPMSymbolType.FUNCTION) {
+				
+				if (symb.type == RPMSymbolType.FUNCTION_THM){
 					addr++;
 				}
+
 				out.print("0000:");
 				out.print(FormattingUtils.getStrWithLeadingZeros(8, Integer.toHexString(addr)));
 				out.print("        ");
@@ -212,7 +214,7 @@ public class RPM {
 		try {
 			for (RPMRelocation rel : relocations) {
 				if (rel.target.isInternal()) {
-					System.out.println("rel " + rel.target.address + ", " + rel.target.module);
+					//System.out.println("rel " + rel.target.address + ", " + rel.target.module);
 					code.seekUnbased(rel.target.address);
 
 					writeRelocationDataByType(rel, code);
@@ -224,9 +226,11 @@ public class RPM {
 	}
 
 	public static void writeRelocationDataByType(RPMRelocation rel, SeekableDataOutput out) throws IOException {
-		int addr = rel.source.getAbsoluteAddress();
+		int addr = rel.source.getWritableAddress();
 
 		switch (rel.targetType) {
+			//TODO BLX when address is not from the same instruction set (&1 != 0)
+			
 			case ARM_BRANCH_LINK:
 				ARMAssembler.writeBranchInstruction(out, addr, true);
 				break;
@@ -244,8 +248,9 @@ public class RPM {
 					ThumbAssembler.writeSmallBranchInstruction(out, addr);
 				}
 				else {
-					int tgtAddr = ThumbAssembler.writePcRelativeLoad(out, 0, out.getPosition() + 4);
+					int tgtAddr = ThumbAssembler.writePcRelativeLoadAbs(out, 0, out.getPosition() + 4);
 					ThumbAssembler.writeBXInstruction(out, 0);
+					System.out.println("load rsl " + Integer.toHexString(tgtAddr));
 					out.seek(tgtAddr);
 					out.writeInt(addr);
 				}

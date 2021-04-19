@@ -3,8 +3,12 @@ package ctrmap.stdlib.util;
 public class StringEx {
 	
 	public static int indexOfFirstNonWhitespace(String str){
+		return indexOfFirstNonWhitespace(str, 0);
+	}
+	
+	public static int indexOfFirstNonWhitespace(String str, int idx){
 		int len = str.length();
-		for (int i = 0; i < len; i++){
+		for (int i = idx; i < len; i++){
 			if (!Character.isWhitespace(str.charAt(i))){
 				return i;
 			}

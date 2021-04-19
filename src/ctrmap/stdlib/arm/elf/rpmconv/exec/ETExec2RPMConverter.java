@@ -58,7 +58,10 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 					s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, esdb.getOffsetOfFunc(s.name));
 				} else {
 					int smbValue = (int) smb.st_value;
-					smbValue -= smbValue % 2;
+					if ((smbValue & 1) != 0 && s.type == RPMSymbolType.FUNCTION_ARM){
+						s.type = RPMSymbolType.FUNCTION_THM;
+						smbValue--;
+					}
 					s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, smbValue - relocState.getSourceSectionOffsetById(smb.st_shndx) + relocState.getTargetSectionOffsetById(smb.st_shndx));
 				}
 				rpm.symbols.add(s);
@@ -93,7 +96,7 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 	private static RPMSymbolType getRpmSymType(int symType) {
 		switch (symType) {
 			case ElfSymbol.STT_FUNC:
-				return RPMSymbolType.FUNCTION;
+				return RPMSymbolType.FUNCTION_ARM;
 			case ElfSymbol.STT_NOTYPE:
 				return RPMSymbolType.VALUE;
 		}

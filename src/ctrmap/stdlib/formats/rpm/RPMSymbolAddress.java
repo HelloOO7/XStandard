@@ -29,6 +29,10 @@ public class RPMSymbolAddress {
 		return bits & 0x7FFFFFFF;
 	}
 	
+	public RPMAddrType getAddrType(){
+		return RPMAddrType.values()[(bits >> 31) & 1];
+	}
+	
 	public int getAddrAbs(){
 		if (getAddrType() == RPMAddrType.GLOBAL){
 			return getAddr();
@@ -46,10 +50,6 @@ public class RPMSymbolAddress {
 	public void setAddrType(RPMAddrType t){
 		bits &= 0x7FFFFFFF;
 		bits |= (t.ordinal() << 31);
-	}
-	
-	public RPMAddrType getAddrType(){
-		return RPMAddrType.values()[(bits >> 31) & 1];
 	}
 	
 	public static enum RPMAddrType {

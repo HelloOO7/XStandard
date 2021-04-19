@@ -8,6 +8,7 @@ import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,10 @@ public class ExternalSymbolDB {
 			String name = sym.getChildByName("Name").getValue();
 			offsetMap.put(name, new ESDBAddress(sym));
 		}
+	}
+	
+	public Collection<ESDBAddress> getAddresses(){
+		return offsetMap.values();
 	}
 	
 	public void putSegment(ESDBSegmentInfo seg){
@@ -105,6 +110,13 @@ public class ExternalSymbolDB {
 			sym.getValue().addToNode(n);
 			symbs.addChild(n);
 		}
+		
+		symbs.children.sort(new Comparator<YamlNode>() {
+			@Override
+			public int compare(YamlNode o1, YamlNode o2) {
+				return o1.getChildByName("Address").getValueInt() - o2.getChildByName("Address").getValueInt();
+			}
+		});
 		
 		yml.writeToFile(fsf);
 	}

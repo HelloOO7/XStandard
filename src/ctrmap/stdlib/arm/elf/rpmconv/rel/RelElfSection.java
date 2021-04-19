@@ -20,7 +20,7 @@ import ctrmap.stdlib.formats.rpm.RPMSymbolType;
  */
 public class RelElfSection {
 
-	private int id;
+	public final int id;
 
 	public final SectionType type;
 	private ElfFile elf;
@@ -67,11 +67,19 @@ public class RelElfSection {
 					s.type = getRpmSymType(smb.getType());
 					
 					if (s.name != null && esdb.isFuncExternal(s.name)){
+						System.out.println("extern func " + s.name);
+						s.type = RPMSymbolType.FUNCTION_THM;
 						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, esdb.getOffsetOfFunc(s.name));
 					}
 					else {
+						if (id == 0){
+							System.out.println("NONEXTERN FUNC IN EXTERN THING " + smb.getName());
+						}
 						int sval = (int)smb.st_value + targetOffset;
-						sval -= sval % 2;
+						if ((sval & 1) != 0 && s.type == RPMSymbolType.FUNCTION_ARM){
+							s.type = RPMSymbolType.FUNCTION_THM;
+							sval--;
+						}
 						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, sval);
 					}
 					rpmSymbols.add(s);
@@ -84,7 +92,7 @@ public class RelElfSection {
 		switch (symType){
 			case ElfSymbol.STT_FUNC:
 			case ElfSymbol.STT_NOTYPE:
-			case ElfSymbol.STT_SECTION:
+//			case ElfSymbol.STT_SECTION:
 				return true;
 		}
 		return false;
@@ -93,7 +101,7 @@ public class RelElfSection {
 	private static RPMSymbolType getRpmSymType(int symType){
 		switch (symType){
 			case ElfSymbol.STT_FUNC:
-				return RPMSymbolType.FUNCTION;
+				return RPMSymbolType.FUNCTION_ARM;
 			case ElfSymbol.STT_NOTYPE:
 				return RPMSymbolType.VALUE;
 			case ElfSymbol.STT_SECTION:

@@ -4,8 +4,6 @@ import ctrmap.stdlib.io.util.StringUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -15,6 +13,8 @@ public interface RPMRelocationSource {
 	public int getAddress();
 	
 	public int getAbsoluteAddress();
+	
+	public int getWritableAddress();
 
 	public void write(DataOutput out) throws IOException;
 
@@ -22,6 +22,10 @@ public interface RPMRelocationSource {
 
 		public RPMSymbol symb;
 		private RPM rpm;
+		
+		protected RPMRelSrcInternalSymbol(){
+			
+		}
 		
 		public RPMRelSrcInternalSymbol(RPM rpm, RPMSymbol symb){
 			this.symb = symb;
@@ -47,21 +51,23 @@ public interface RPMRelocationSource {
 		public int getAddress() {
 			return symb.address.getAddr();
 		}
+
+		@Override
+		public int getWritableAddress() {
+			int a = getAbsoluteAddress();
+			if (symb.type == RPMSymbolType.FUNCTION_THM){
+				a++;
+			}
+			return a;
+		}
 	}
 
-	public static class RPMRelSrcExternalSymbol implements RPMRelocationSource {
+	public static class RPMRelSrcExternalSymbol extends RPMRelSrcInternalSymbol {
 
-		private RPMSymbol symb;
 		private String ns;
 
 		public RPMRelSrcExternalSymbol(RPM rpm, DataInput in) throws IOException {
-			ns = StringUtils.readString(in);
-			symb = rpm.getExternalSymbol(ns, StringUtils.readString(in));
-		}
-
-		@Override
-		public int getAbsoluteAddress() {
-			return symb.address.getAddrAbs();
+			symb = rpm.getExternalSymbol(ns = StringUtils.readString(in), StringUtils.readString(in));
 		}
 
 		@Override
@@ -69,11 +75,5 @@ public interface RPMRelocationSource {
 			StringUtils.writeString(out, ns);
 			StringUtils.writeString(out, symb.name);
 		}
-
-		@Override
-		public int getAddress() {
-			return symb.address.getAddr();
-		}
-
 	}
 }
