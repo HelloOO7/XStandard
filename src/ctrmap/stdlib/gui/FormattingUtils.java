@@ -62,19 +62,26 @@ public class FormattingUtils {
 	}
 	
 	public static String getStrWithoutSpaces(String str){
-		str = str.replace(' ', '_');
 		StringBuilder sb = new StringBuilder();
+		boolean appendNextUnderscore = false;
 		for (int i = 0; i < str.length(); i++){
 			char c = str.charAt(i);
-			if (Character.isLetterOrDigit(c) || c == '_'){
+			if (Character.isLetterOrDigit(c)){
+				if (appendNextUnderscore){
+					sb.append('_');
+					appendNextUnderscore = false;
+				}
 				sb.append(c);
+			}
+			else {
+				appendNextUnderscore = true;
 			}
 		}
 		return sb.toString();
 	}
 	
 	public static String getEnumlyString(String str){
-		return getStrWithoutSpaces(str).toUpperCase();
+		return getStrWithoutSpaces(str.trim()).toUpperCase();
 	}
 
 	public static String getFriendlyEnum(Enum e) {

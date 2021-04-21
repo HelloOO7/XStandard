@@ -95,6 +95,15 @@ public class YamlNode {
 		return null;
 	}
 
+	public int getChildIntValue(String name) {
+		YamlNode ch = getChildByName(name);
+		return ch != null ? ch.getValueInt() : -1;
+	}
+	
+	public String getChildValue(String name) {
+		return getChildByName(name).getValue();
+	}
+	
 	public boolean getChildBoolValue(String name) {
 		YamlNode ch = getChildByName(name);
 		return ch != null && ch.getValueBool();
@@ -116,6 +125,14 @@ public class YamlNode {
 		} else {
 			content.setKey(name);
 		}
+	}
+	
+	public void setValueInt(int val) {
+		setValueInt(val, false);
+	}
+	
+	public void setValueInt(int val, boolean hex) {
+		setValue(hex ? "0x" + Integer.toHexString(val) : String.valueOf(val));
 	}
 
 	public void setValueBool(boolean v) {

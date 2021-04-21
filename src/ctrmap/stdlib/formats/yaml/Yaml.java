@@ -130,6 +130,10 @@ public class Yaml {
 		root.removeChildByName(key);
 	}
 
+	public int getRootNodeKeyValueInt(String key) {
+		return root.getChildIntValue(key);
+	}
+	
 	public boolean getRootNodeKeyValueBool(String key) {
 		YamlNode node = getRootNodeKeyNode(key);
 		if (node != null) {
