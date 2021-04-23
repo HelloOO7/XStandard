@@ -85,12 +85,17 @@ public class ArcFile extends FSFile{
 	}
 
 	@Override
-	public int getChildCount(boolean includeHidden) {
+	public int getChildCount() {
 		return accessor.getArcFiles(this).size();
 	}
 
 	@Override
 	public void setPath(String newPath) {
 		source.setPath(newPath);
+	}
+
+	@Override
+	public int getPermissions() {
+		return FSF_ATT_READ | FSF_ATT_WRITE;
 	}
 }

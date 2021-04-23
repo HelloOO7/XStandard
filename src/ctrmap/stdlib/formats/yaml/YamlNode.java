@@ -50,21 +50,26 @@ public class YamlNode {
 		children.clear();
 	}
 
-	public void addChild(String key, int value, boolean hex) {
+	public YamlNode addChild(String key, int value, boolean hex) {
 		if (hex) {
-			addChild(key, "0x" + Integer.toHexString(value));
+			return addChild(key, "0x" + Integer.toHexString(value));
 		} else {
-			addChild(key, value);
+			return addChild(key, value);
 		}
 	}
 
-	public void addChild(String key, Object value) {
-		addChild(new YamlNode(key, value));
+	public YamlNode addChild(String key, Object value) {
+		return addChild(new YamlNode(key, value));
 	}
 
-	public void addChild(YamlNode n) {
+	public YamlNode addChildKey(String key) {
+		return addChild(new YamlNode(new Key(key)));
+	}
+	
+	public YamlNode addChild(YamlNode n) {
 		children.add(n);
 		n.parent = this;
+		return n;
 	}
 
 	public YamlNode addChild() {
@@ -89,6 +94,15 @@ public class YamlNode {
 	public YamlNode getChildByName(String name) {
 		for (YamlNode ch : children) {
 			if (Objects.equals(ch.getKey(), name)) {
+				return ch;
+			}
+		}
+		return null;
+	}
+	
+	public YamlNode getChildByNameIgnoreCase(String name) {
+		for (YamlNode ch : children) {
+			if (ch.getKey() == null && name == null || ch.getKey().equalsIgnoreCase(name)){
 				return ch;
 			}
 		}
@@ -173,6 +187,14 @@ public class YamlNode {
 
 	public int getValueInt() {
 		return ParsingUtils.parseBasedInt(getValue());
+	}
+	
+	public float getValueFloat() {
+		return Float.parseFloat(getValue());
+	}
+	
+	public float getValueLong() {
+		return ParsingUtils.parseBasedLong(getValue());
 	}
 
 	public boolean isValueInt() {

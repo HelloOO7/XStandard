@@ -7,11 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ResourceAccess {
 
-	public static ResourceTable resTbl = readResourceTable();
+	private static final List<String> loadedTables = new ArrayList<>();
+
+	public static ResourceTable resTbl = new ResourceTable();
 
 	public static ResourceFile getResourceFile(String pathname) {
 		ResourceTable.ResourceInfo i = resTbl.getResInfo(pathname);
@@ -45,23 +49,22 @@ public class ResourceAccess {
 		}
 	}
 
-	public static void main(String[] args) {
-		buildResourceTable(new File("src/ctrmap/resources"));
-	}
-
-	public static void buildResourceTable(File root) {
+	public static void buildResourceTable(File root, String tableName) {
 		ResourceTable rt = new ResourceTable(root);
-		rt.write(new File(root + "/res.tbl"));
+		rt.write(new File(root + "/" + tableName));
 	}
 
-	public static ResourceTable readResourceTable() {
-		InputStream stm = getStream("res.tbl");
-		try {
-			stm.available();
-			return new ResourceTable(stm);
-		} catch (Exception ex) {
-			return null;
+	public static void loadResourceTable(String tableName) {
+		if (!loadedTables.contains(tableName)) {
+			InputStream stm = getStream(tableName);
+			try {
+				stm.available();
+				ResourceTable tbl = new ResourceTable(stm);
+				resTbl.merge(tbl);
+				loadedTables.add(tableName);
+			} catch (Exception ex) {
 
+			}
 		}
 	}
 }

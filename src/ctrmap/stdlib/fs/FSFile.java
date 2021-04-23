@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Stack;
 
 public abstract class FSFile {
+	
+	public static final int FSF_ATT_READ = 1;
+	public static final int FSF_ATT_WRITE = 2;
+	public static final int FSF_ATT_EXECUTE = 4;
 
 	public abstract FSFile getChild(String forName);
 
@@ -34,8 +38,35 @@ public abstract class FSFile {
 	public abstract LittleEndianIO getIO();
 
 	public abstract List<FSFile> listFiles();
+	
+	public abstract int getPermissions();
+	
+	public boolean canRead(){
+		return (getPermissions() & FSF_ATT_READ) != 0;
+	}
+	
+	public boolean canWrite(){
+		return (getPermissions() & FSF_ATT_WRITE) != 0;
+	}
+	
+	public boolean canExecute(){
+		return (getPermissions() & FSF_ATT_EXECUTE) != 0;
+	}
+	
+	//privilege check sounds better but does not look good in code
+	public boolean checkPrivileges(int... flags){
+		int p = getPermissions();
+		for (int f : flags){
+			if ((p & f) == 0){
+				return false;
+			}
+		}
+		return true;
+	}
 
-	public abstract int getChildCount(boolean includeInvisible);
+	public int getChildCount(){
+		return listFiles().size();
+	}
 
 	public byte[] getBytes(){
 		return FSUtil.readFileToBytes(this);
@@ -44,13 +75,14 @@ public abstract class FSFile {
 	public void setBytes(byte[] bytes){
 		FSUtil.writeBytesToFile(this, bytes);
 	}
-	
-	public int getChildCount() {
-		return getChildCount(true);
-	}
 
 	public int getVisibleChildCount() {
-		return getChildCount(false);
+		List<FSFile> files = listFiles();
+		return files.size() - getHiddenCount(files);
+	}
+	
+	public int getHiddenChildCount(){
+		return getHiddenCount(listFiles());
 	}
 
 	public static int getHiddenCount(List<FSFile> children) {

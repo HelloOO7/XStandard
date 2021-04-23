@@ -8,6 +8,7 @@ package ctrmap.stdlib.formats.zip;
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.DiskFile;
+import ctrmap.stdlib.fs.accessors.FSFileAdapter;
 import ctrmap.stdlib.io.base.LittleEndianIO;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -26,12 +27,10 @@ import java.util.zip.ZipInputStream;
 /**
  *
  */
-public class ZipArchive extends FSFile {
+public class ZipArchive extends FSFileAdapter {
 
 	public static final String MAGIC = "PK\u0004\u0003";
 	
-	private FSFile source;
-
 	protected List<ZipEntry> entries = new ArrayList<>();
 
 	private ZipFile zf;
@@ -39,7 +38,7 @@ public class ZipArchive extends FSFile {
 	private final boolean allowsDirectAccess;
 
 	public ZipArchive(FSFile source) {
-		this.source = source;
+		super(source);
 		allowsDirectAccess = source instanceof DiskFile;
 		try {
 			if (allowsDirectAccess) {
@@ -72,58 +71,13 @@ public class ZipArchive extends FSFile {
 	}
 
 	@Override
-	public FSFile getParent() {
-		return source.getParent();
-	}
-
-	@Override
 	public void mkdir() {
 		//already is a directory
 	}
 
 	@Override
-	public void setPath(String newPath) {
-		source.setPath(newPath);
-	}
-
-	@Override
-	public void delete() {
-		source.delete();
-	}
-
-	@Override
-	public int length() {
-		return source.length();
-	}
-
-	@Override
 	public boolean isDirectory() {
 		return true;
-	}
-
-	@Override
-	public boolean exists() {
-		return source.exists();
-	}
-
-	@Override
-	public String getName() {
-		return source.getName();
-	}
-
-	@Override
-	public InputStream getInputStream() {
-		return source.getInputStream();
-	}
-
-	@Override
-	public OutputStream getOutputStream() {
-		return source.getOutputStream();
-	}
-
-	@Override
-	public LittleEndianIO getIO() {
-		return source.getIO();
 	}
 
 	@Override
@@ -173,11 +127,5 @@ public class ZipArchive extends FSFile {
 			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return null;
-	}
-
-	@Override
-	public int getChildCount(boolean includeInvisible) {
-		List<FSFile> children = listFiles();
-		return children.size() - getHiddenCount(children);
 	}
 }

@@ -5,7 +5,6 @@ import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.io.RandomAccessByteArray;
 import ctrmap.stdlib.io.base.LittleEndianIO;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -91,12 +90,17 @@ public class MemoryFile extends FSFile{
 	}
 
 	@Override
-	public int getChildCount(boolean includeHidden) {
+	public int getChildCount() {
 		return 0;
 	}
 
 	@Override
 	public void setPath(String newPath) {
 		name = FSUtil.getFileName(newPath);
+	}
+
+	@Override
+	public int getPermissions() {
+		return FSF_ATT_READ;
 	}
 }

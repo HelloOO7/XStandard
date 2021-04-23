@@ -15,13 +15,15 @@ public interface RPMRelocationSource {
 	public int getAbsoluteAddress();
 	
 	public int getWritableAddress();
+	
+	public int getLength();
 
 	public void write(DataOutput out) throws IOException;
 
 	public static class RPMRelSrcInternalSymbol implements RPMRelocationSource {
 
 		public RPMSymbol symb;
-		private RPM rpm;
+		protected RPM rpm;
 		
 		protected RPMRelSrcInternalSymbol(){
 			
@@ -60,14 +62,30 @@ public interface RPMRelocationSource {
 			}
 			return a;
 		}
+
+		@Override
+		public int getLength() {
+			return symb.size;
+		}
 	}
 
 	public static class RPMRelSrcExternalSymbol extends RPMRelSrcInternalSymbol {
 
-		private String ns;
+		public String ns;
+		public String symbolName;
 
 		public RPMRelSrcExternalSymbol(RPM rpm, DataInput in) throws IOException {
-			symb = rpm.getExternalSymbol(ns = StringUtils.readString(in), StringUtils.readString(in));
+			ns = StringUtils.readString(in);
+			symbolName = StringUtils.readString(in);
+			this.rpm = rpm;
+			symb = rpm.getExternalSymbol(ns, symbolName);
+		}
+		
+		public RPMRelSrcExternalSymbol(RPM rpm, String ns, String symbolName){
+			this.ns = ns;
+			this.symbolName = symbolName;
+			this.rpm = rpm;
+			symb = rpm.getExternalSymbol(ns, symbolName);
 		}
 
 		@Override

@@ -22,4 +22,17 @@ public class ParsingUtils {
 		}
 		return Integer.parseInt(str);
 	}
+	
+	public static long parseBasedLong(String str){
+		if (str.startsWith("0x")){
+			return Long.parseUnsignedLong(str.substring(2), 16);
+		}
+		if (str.startsWith("-0x")){
+			return Long.parseLong(str.substring(2), 16);
+		}
+		if (str.startsWith("0b")){
+			return Long.parseLong(str.substring(2), 2);
+		}
+		return Long.parseLong(str);
+	}
 }

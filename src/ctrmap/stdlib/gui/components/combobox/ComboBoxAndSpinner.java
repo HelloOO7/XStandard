@@ -5,7 +5,7 @@
  */
 package ctrmap.stdlib.gui.components.combobox;
 
-import ctrmap.stdlib.gui.FormattingUtils;
+import ctrmap.stdlib.text.FormattingUtils;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComboBox;

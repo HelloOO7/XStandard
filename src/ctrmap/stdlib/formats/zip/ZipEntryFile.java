@@ -100,9 +100,7 @@ public class ZipEntryFile extends FSFile {
 	}
 
 	@Override
-	public int getChildCount(boolean includeInvisible) {
-		List<FSFile> children = listFiles();
-		return children.size() - getHiddenCount(children);
+	public int getPermissions() {
+		return FSF_ATT_READ;
 	}
-
 }

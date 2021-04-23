@@ -169,9 +169,8 @@ public class VFSFile extends FSFile {
 		}
 		return null;
 	}
-
-	@Override
-	public int getChildCount(boolean includeInvisible) {
+	
+	private int vfsGetChildCountImpl(boolean includeHidden){
 		List<FSFile> ovChildren = ovFile.listFiles();
 		List<FSFile> baseChildren = baseFile.listFiles();
 
@@ -181,7 +180,17 @@ public class VFSFile extends FSFile {
 			}
 		}
 		
-		return baseChildren.size() - (includeInvisible ? 0 : getHiddenCount(baseChildren));
+		return baseChildren.size() - (includeHidden ? 0 : getHiddenCount(baseChildren));
+	}
+
+	@Override
+	public int getChildCount() {
+		return vfsGetChildCountImpl(true);
+	}
+	
+	@Override
+	public int getVisibleChildCount(){
+		return vfsGetChildCountImpl(false);
 	}
 
 	@Override
@@ -193,5 +202,10 @@ public class VFSFile extends FSFile {
 		
 		fs.relocateBlackListFile(path, newPath);
 		path = newPath;
+	}
+
+	@Override
+	public int getPermissions() {
+		return getExistingFile().getPermissions();
 	}
 }

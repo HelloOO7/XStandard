@@ -153,19 +153,19 @@ public class DiskFile extends FSFile {
 	}
 
 	@Override
-	public int getChildCount(boolean includeHidden) {
+	public int getChildCount() {
 		if (isDirectory()) {
-			String[] l = file.list();
-			int hidden = 0;
-			if (!includeHidden) {
-				for (String s : l) {
-					if (s.startsWith(".")) {
-						hidden++;
-					}
-				}
-			}
-			return file.list().length - hidden;
+			return file.list().length;
 		}
 		return 0;
+	}
+
+	@Override
+	public int getPermissions() {
+		int att = 0;
+		att |= file.canRead() ? FSF_ATT_READ : 0;
+		att |= file.canWrite()? FSF_ATT_WRITE : 0;
+		att |= file.canExecute()? FSF_ATT_EXECUTE : 0;
+		return att;
 	}
 }

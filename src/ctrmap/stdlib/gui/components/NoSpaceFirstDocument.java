@@ -1,6 +1,6 @@
 package ctrmap.stdlib.gui.components;
 
-import ctrmap.stdlib.util.StringEx;
+import ctrmap.stdlib.text.StringEx;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;

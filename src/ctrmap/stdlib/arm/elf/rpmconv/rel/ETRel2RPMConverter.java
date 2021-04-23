@@ -54,18 +54,6 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 			}
 		}
 
-		/*for (ElfSymbol sym : elf.getSymbolTableSection().symbols){
-			if (sym.st_shndx == 0){
-				//EXTERN
-				if (esdb.isFuncExternal(sym.getName())){
-					RPMSymbol rpms = new RPMSymbol();
-					rpms.name = sym.getName();
-					rpms.type = RPMSymbolType.FUNCTION_THM;
-					rpms.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, esdb.getOffsetOfFunc(sym.getName()));
-					rpm.symbols.add(rpms);
-				}
-			}
-		}*/
 		int offs = 0;
 		for (RelElfSection sec : sections) {
 			sec.prepareForRPM(rpm, offs, esdb);

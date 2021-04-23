@@ -1,10 +1,13 @@
-
 package ctrmap.stdlib.util;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ArraysEx {
+
+	public static <T> T[] asArray(T... elems) {
+		return elems;
+	}
 
 	public static <T> List<T> asList(T... obj) {
 		List<T> r = new ArrayList<>();
@@ -19,21 +22,21 @@ public class ArraysEx {
 			list.add(elem);
 		}
 	}
-	
+
 	public static <T> void addAllIfNotNullOrContains(List<T> list, List<T> toAdd) {
-		for (T e : toAdd){
+		for (T e : toAdd) {
 			addIfNotNullOrContains(list, e);
 		}
 	}
-	
-	public static String toString(List list){
+
+	public static String toString(List list) {
 		return toString(list.toArray(new Object[list.size()]));
 	}
-	
-	public static String toString(Object... list){
+
+	public static String toString(Object... list) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < list.length; i++){
-			if (i != 0){
+		for (int i = 0; i < list.length; i++) {
+			if (i != 0) {
 				sb.append(",");
 			}
 			sb.append(list[i].toString());

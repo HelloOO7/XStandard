@@ -22,6 +22,24 @@ public class RPMRelocation {
 		
 	}
 	
+	public RPMRelocation(RPM rpm, RPMRelocation rel){
+		sourceType = rel.sourceType;
+		targetType = rel.targetType;
+		
+		target = new RPMRelocationTarget(rel.target);
+		
+		switch (sourceType){
+			case SYMBOL_EXTERNAL:
+				RPMRelocationSource.RPMRelSrcExternalSymbol es = (RPMRelocationSource.RPMRelSrcExternalSymbol)rel.source;
+				source = new RPMRelocationSource.RPMRelSrcExternalSymbol(rpm, es.ns, es.symbolName);
+				break;
+			case SYMBOL_INTERNAL:
+				RPMRelocationSource.RPMRelSrcInternalSymbol is = (RPMRelocationSource.RPMRelSrcInternalSymbol)rel.source;
+				source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, rpm.getSymbol(is.symb.name));
+				break;
+		}
+	}
+	
 	public RPMRelocation(SeekableDataInput in, RPM rpm) throws IOException {
 		int cfg = in.readUnsignedByte();
 		sourceType = RPMRelSourceType.values()[cfg & 0b11]; //reserved 4 values
@@ -50,7 +68,9 @@ public class RPMRelocation {
 		THUMB_BRANCH_LINK,
 		ARM_BRANCH_LINK,
 		THUMB_BRANCH,
-		ARM_BRANCH;
+		ARM_BRANCH,
+		
+		FULL_COPY;
 		
 		public static RPMRelTargetType fromName(String name){
 			for (RPMRelTargetType t : values()){

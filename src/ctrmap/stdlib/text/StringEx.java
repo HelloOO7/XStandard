@@ -1,4 +1,4 @@
-package ctrmap.stdlib.util;
+package ctrmap.stdlib.text;
 
 public class StringEx {
 	

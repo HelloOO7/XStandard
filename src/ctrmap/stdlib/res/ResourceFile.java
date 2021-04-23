@@ -117,14 +117,13 @@ public class ResourceFile extends FSFile{
 	}
 
 	@Override
-	public int getChildCount(boolean includeHidden) {
-		List<FSFile> l = listFiles();
-		return l.size() - (includeHidden ? 0 : getHiddenCount(l));
+	public void setPath(String newPath) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
 	@Override
-	public void setPath(String newPath) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	public int getPermissions() {
+		return FSF_ATT_READ;
 	}
 
 }

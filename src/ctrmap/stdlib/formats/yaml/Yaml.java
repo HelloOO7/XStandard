@@ -86,7 +86,7 @@ public class Yaml {
 			}
 
 			/*if (spaces > cpr) {
-				currentNode = currentNode.addChild();
+				currentNode = currentNode.addChildKey();
 			} else if (spaces == cpr) {
 				currentNode = currentNode.addSibling();
 			} else {

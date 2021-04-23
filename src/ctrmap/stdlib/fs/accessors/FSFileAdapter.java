@@ -89,8 +89,13 @@ public class FSFileAdapter extends FSFile {
 	}
 
 	@Override
-	public int getChildCount(boolean includeInvisible) {
-		return source.getChildCount(includeInvisible);
+	public int getChildCount() {
+		return source.getChildCount();
+	}
+
+	@Override
+	public int getPermissions() {
+		return source.getPermissions();
 	}
 
 }

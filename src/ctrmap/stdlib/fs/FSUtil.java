@@ -200,6 +200,11 @@ public class FSUtil {
 		int lioDot = getLastDotIndexInName(fileName);
 		return lioDot == -1 ? "" : fileName.substring(lioDot + 1);
 	}
+	
+	public static String getFileExtensionWithDot(String fileName){
+		int lioDot = getLastDotIndexInName(fileName);
+		return lioDot == -1 ? "" : fileName.substring(lioDot);
+	}
 
 	public static String getFileNameWithoutExtension(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);

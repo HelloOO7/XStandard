@@ -32,6 +32,11 @@ public class RPMRelocationTarget {
 		this.module = module;
 	}
 	
+	public RPMRelocationTarget(RPMRelocationTarget tgt){
+		address = tgt.address;
+		module = tgt.module;
+	}
+	
 	public boolean isInternal(){
 		return Objects.equals(module, MODULE_BASE);
 	}

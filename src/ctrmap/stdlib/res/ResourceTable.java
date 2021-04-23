@@ -18,6 +18,14 @@ public class ResourceTable {
 	public ResourceTable(File root) {
 		addFile(root, -1, false);
 	}
+	
+	public ResourceTable(){
+		
+	}
+	
+	public void merge(ResourceTable tbl){
+		data.addAll(tbl.data);
+	}
 
 	private void addFile(File f, int parentIdx, boolean addThis) {
 		ResourceInfo i = new ResourceInfo(f, this);

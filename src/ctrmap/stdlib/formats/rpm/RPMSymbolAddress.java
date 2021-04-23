@@ -21,6 +21,11 @@ public class RPMSymbolAddress {
 		setAddrType(t);
 	}
 	
+	public RPMSymbolAddress(RPM rpm, RPMSymbolAddress addr){
+		this.rpm = rpm;
+		this.bits = addr.bits;
+	}
+	
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(bits);
 	}
@@ -40,6 +45,10 @@ public class RPMSymbolAddress {
 		else {
 			return rpm.baseAddress + getAddr();
 		}
+	}
+	
+	public boolean isNull(){
+		return getAddrType() == RPMAddrType.GLOBAL && getAddr() == -1;
 	}
 	
 	public void setAddr(int addr){

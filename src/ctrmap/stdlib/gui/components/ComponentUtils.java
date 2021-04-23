@@ -3,6 +3,7 @@ package ctrmap.stdlib.gui.components;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Frame;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
@@ -21,6 +22,10 @@ import javax.swing.text.NumberFormatter;
  *
  */
 public class ComponentUtils {
+	
+	public static void maximize(Frame f){
+		f.setExtendedState(Frame.MAXIMIZED_BOTH);
+	}
 	
 	public static void setSystemNativeLookAndFeel(){
 		try {

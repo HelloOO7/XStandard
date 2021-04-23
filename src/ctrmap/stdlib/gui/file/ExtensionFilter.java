@@ -1,6 +1,7 @@
 package ctrmap.stdlib.gui.file;
 
 import ctrmap.stdlib.fs.FSUtil;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,16 @@ public class ExtensionFilter {
 	public ExtensionFilter(String fmtName, String... filter) {
 		formatName = fmtName;
 		this.filters = filter;
+	}
+	
+	public static ExtensionFilter findByFileName(File f, ExtensionFilter... filters){
+		String ext = FSUtil.getFileExtensionWithDot(f.getName());
+		for (ExtensionFilter flt : filters){
+			if (flt.getExtensions().contains(ext)){
+				return flt;
+			}
+		}
+		return null;
 	}
 
 	public String getPrimaryExtension() {

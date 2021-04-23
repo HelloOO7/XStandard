@@ -1,7 +1,7 @@
 
 package ctrmap.stdlib.formats.yaml;
 
-import ctrmap.stdlib.gui.FormattingUtils;
+import ctrmap.stdlib.text.FormattingUtils;
 import java.io.PrintStream;
 
 /**

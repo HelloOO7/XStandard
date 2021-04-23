@@ -1,5 +1,5 @@
 
-package ctrmap.stdlib.gui;
+package ctrmap.stdlib.text;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -78,6 +78,13 @@ public class FormattingUtils {
 			}
 		}
 		return sb.toString();
+	}
+	
+	public static String camelToPascal(String str){
+		if (str == null || str.isEmpty()){
+			return str;
+		}
+		return Character.toUpperCase(str.charAt(0)) + str.substring(1);
 	}
 	
 	public static String getEnumlyString(String str){

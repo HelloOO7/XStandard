@@ -79,12 +79,17 @@ public class ArcFileMember extends FSFile{
 	}
 
 	@Override
-	public int getChildCount(boolean includeInvisible) {
+	public int getChildCount() {
 		return 0;//costly
 	}
 
 	@Override
 	public void setPath(String newPath) {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public int getPermissions() {
+		return FSF_ATT_READ | FSF_ATT_WRITE;
 	}
 }
