@@ -220,7 +220,7 @@ public class RPM {
 			ba.pad(RPM_PADDING);
 
 			ba.writeStringUnterminated(RPM_MAGIC);
-			ba.write(RPMRevisions.REV_CURRENT);
+			ba.write(RPMRevisions.REV_CURRENT + '0');
 			ba.writeInt(symbOffset);
 			ba.writeInt(relOffset);
 			ba.writeInt(codeSize);
