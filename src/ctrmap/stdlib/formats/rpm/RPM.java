@@ -302,7 +302,7 @@ public class RPM {
 					int len = rel.source.getLength();
 					if (len > 0) {
 						copyEndAdr = copyStartAdr + len;
-						rpm.code.seek(copyStartAdr);
+						rpm.code.seekUnbased(copyStartAdr);
 						byte[] bytes = new byte[len];
 						rpm.code.read(bytes);
 						out.seek(addr);
