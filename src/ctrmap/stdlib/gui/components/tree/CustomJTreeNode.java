@@ -29,6 +29,10 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	public abstract int getIconResourceID();
 
 	public abstract String getNodeName();
+	
+	public void onNodeSelected(){
+		
+	}
 
 	@Override
 	public void setParent(MutableTreeNode parent) {

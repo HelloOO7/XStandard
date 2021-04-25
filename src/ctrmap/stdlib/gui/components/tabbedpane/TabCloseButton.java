@@ -1,5 +1,6 @@
 package ctrmap.stdlib.gui.components.tabbedpane;
 
+import java.awt.Insets;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
@@ -7,16 +8,23 @@ public class TabCloseButton extends JButton {
 
 	TabbedPaneTab tab;
 
-	public TabCloseButton(TabbedPaneTab tab) {
-		this.tab = tab;
-		
+	public TabCloseButton() {
+		setContentAreaFilled(false);
+		setBorderPainted(false);
+		setBorder(null);
+		setMargin(new Insets(0, 0, 0, 0));
+		setOpaque(false);
+
 		addActionListener((e) -> {
-			tab.remove();
+			if (tab != null) {
+				tab.remove();
+			}
 		});
 	}
 
-	public TabCloseButton() {
-
+	@Override
+	public String getText() {
+		return getIcon() == null ? "X" : null;
 	}
 
 	@Override
@@ -26,9 +34,33 @@ public class TabCloseButton extends JButton {
 		}
 		return null;
 	}
-	
+
 	@Override
-	public boolean isVisible(){
-		return tab.pane.isCloseable();
+	public Icon getRolloverIcon() {
+		if (tab != null) {
+			return tab.pane.getCloseIconRollover();
+		}
+		return null;
+	}
+
+	@Override
+	public Icon getPressedIcon() {
+		if (tab != null) {
+			return tab.pane.getCloseIconPressed();
+		}
+		return null;
+	}
+
+	@Override
+	public boolean isRolloverEnabled() {
+		return getRolloverIcon() != null;
+	}
+
+	@Override
+	public boolean isVisible() {
+		if (tab != null) {
+			return tab.pane.isCloseable();
+		}
+		return false;
 	}
 }

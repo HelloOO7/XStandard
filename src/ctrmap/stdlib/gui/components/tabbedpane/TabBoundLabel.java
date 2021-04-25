@@ -11,7 +11,7 @@ public class TabBoundLabel extends JLabel {
 		this.tab = tab;
 	}
 
-	TabBoundLabel() {
+	public TabBoundLabel() {
 
 	}
 

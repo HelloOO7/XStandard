@@ -10,6 +10,7 @@ public class TabHeader extends javax.swing.JPanel {
 		
 		this.tab = tab;
 		tabLabel.tab = tab;
+		btnCloseTab.tab = tab;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -18,6 +19,8 @@ public class TabHeader extends javax.swing.JPanel {
 
         tabLabel = new ctrmap.stdlib.gui.components.tabbedpane.TabBoundLabel();
         btnCloseTab = new ctrmap.stdlib.gui.components.tabbedpane.TabCloseButton();
+
+        setOpaque(false);
 
         tabLabel.setText("Title");
 
@@ -35,7 +38,7 @@ public class TabHeader extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(btnCloseTab, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(btnCloseTab, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(tabLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents

@@ -103,18 +103,22 @@ public class YamlReflectUtil {
 			YamlNode n = new YamlNode(new Key(nodeName));
 			addFieldsToNode(n, obj);
 			return n;
-		} catch (IllegalArgumentException | IllegalAccessException ex) {
+		} catch (IllegalArgumentException ex) {
 			Logger.getLogger(YamlReflectUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return null;
 	}
 
-	public static void addFieldsToNode(YamlNode n, Object obj) throws IllegalAccessException {
-		for (Field field : obj.getClass().getFields()) {
-			int mods = field.getModifiers();
-			if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
-				addValueToNode(n, field.getName(), field.getType(), field.get(obj));
+	public static void addFieldsToNode(YamlNode n, Object obj) {
+		try {
+			for (Field field : obj.getClass().getFields()) {
+				int mods = field.getModifiers();
+				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
+					addValueToNode(n, field.getName(), field.getType(), field.get(obj));
+				}
 			}
+		} catch (IllegalAccessException ex) {
+			Logger.getLogger(YamlReflectUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 

@@ -305,14 +305,16 @@ public class RPM {
 						rpm.code.seekUnbased(copyStartAdr);
 						byte[] bytes = new byte[len];
 						rpm.code.read(bytes);
-						out.seek(addr);
+						
+						int pos = out.getPosition();
+						
 						out.write(bytes);
 
 						for (RPMRelocation copyRel : rpm.relocations) {
 							if (copyRel.target.isInternal() && copyRel.targetType != RPMRelocation.RPMRelTargetType.FULL_COPY) {
 								int copyRelAddr = copyRel.target.address;
 								if (copyRelAddr >= copyStartAdr && copyRelAddr < copyEndAdr) {
-									out.seek(addr + (copyRelAddr - copyStartAdr));
+									out.seek(pos + (copyRelAddr - copyStartAdr));
 									writeRelocationDataByType(rpm, copyRel, out);
 								}
 							}
