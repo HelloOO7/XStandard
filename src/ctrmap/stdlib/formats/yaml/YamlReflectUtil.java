@@ -66,6 +66,8 @@ public class YamlReflectUtil {
 				} else {
 					throw new UnsupportedOperationException("Unsupported primitive: " + type);
 				}
+			} else if (type == String.class) {
+				return node.getValue();
 			} else if (type.isEnum()) {
 				String str = node.getValue();
 				for (Object enm : type.getEnumConstants()) {
@@ -123,11 +125,11 @@ public class YamlReflectUtil {
 	}
 
 	private static void addValueToNode(YamlNode n, String key, Class type, Object value) throws IllegalArgumentException, IllegalAccessException {
-		if (type.isPrimitive() || type.isEnum()) {
+		if (type.isPrimitive() || type.isEnum() || value == null || type == String.class) {
 			if (key != null) {
-				n.addChild(FormattingUtils.camelToPascal(key), String.valueOf(value));
+				n.addChild(FormattingUtils.camelToPascal(key), value);
 			} else {
-				n.addChild(new YamlNode(String.valueOf(value)));
+				n.addChild(new YamlNode(value));
 			}
 		} else if (type.isArray()) {
 			YamlNode list = n.addChildKey(FormattingUtils.camelToPascal(key));

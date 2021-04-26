@@ -68,9 +68,14 @@ public class RelElfSection {
 					s.size = (int) smb.st_size;
 
 					if (s.name != null && esdb.isFuncExternal(s.name)) {
-						System.out.println("extern func " + s.name);
-						s.type = RPMSymbolType.FUNCTION_THM;
-						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, esdb.getOffsetOfFunc(s.name));
+						System.out.println("extern func " + s.name + " (cur symtype: " + s.type + ")");
+						s.type = RPMSymbolType.FUNCTION_ARM;
+						int off = esdb.getOffsetOfFunc(s.name);
+						if ((off & 1) == 1){
+							off--;
+							s.type = RPMSymbolType.FUNCTION_THM;
+						}
+						s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, off);
 					} else {
 						if (id == 0) {
 						//	System.out.println("NONEXTERN FUNC IN EXTERN SEGMENT " + smb.getName());

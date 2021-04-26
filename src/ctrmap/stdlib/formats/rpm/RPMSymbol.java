@@ -21,6 +21,12 @@ public class RPMSymbol {
 		type = source.type;
 		address = new RPMSymbolAddress(rpm, source.address);
 	}
+	
+	public RPMSymbol(RPM rpm, String name, RPMSymbolType type, RPMSymbolAddress addr) {
+		this.name = name;
+		this.type = type;
+		this.address = addr;
+	}
 
 	public RPMSymbol(RPM rpm, DataInput in, int version) throws IOException {
 		name = StringUtils.readString(in);

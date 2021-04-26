@@ -344,6 +344,17 @@ public class RPM {
 		}
 		return null;
 	}
+	
+	public RPMSymbol findGlobalSymbolByAddrAbs(int addr) {
+		for (RPMSymbol s : symbols) {
+			if (s.address.getAddrType() == RPMSymbolAddress.RPMAddrType.GLOBAL){
+				if (s.address.getAddrAbs() == addr){
+					return s;
+				}
+			}
+		}
+		return null;
+	}
 
 	public int getSymbolNo(RPMSymbol symb) {
 		return symbols.indexOf(symb);

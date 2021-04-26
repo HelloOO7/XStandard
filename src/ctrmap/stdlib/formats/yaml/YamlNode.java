@@ -35,8 +35,8 @@ public class YamlNode {
 		this(new KeyValuePair(key, value));
 	}
 
-	public YamlNode(String value) {
-		this(new Value(value));
+	public YamlNode(Object value) {
+		this(new Value((String)(value == null ? value : String.valueOf(value))));
 	}
 
 	public int getParentLevel() {

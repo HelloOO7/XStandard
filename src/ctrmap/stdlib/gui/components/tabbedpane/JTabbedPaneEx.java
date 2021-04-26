@@ -17,6 +17,8 @@ public class JTabbedPaneEx extends JTabbedPane {
 	
 	private boolean closeable = false;
 	
+	private List<TabRemovedListener> tabRemovedListeners = new ArrayList<>();
+	
 	public JTabbedPaneEx(){
 		
 	}
@@ -30,11 +32,19 @@ public class JTabbedPaneEx extends JTabbedPane {
 		setTabComponentAt(index, tab.getHeader());
 	}
 	
+	public void addTabRemovedListener(TabRemovedListener l){
+		tabRemovedListeners.add(l);
+	}
+	
 	@Override
 	public void removeTabAt(int index){
 		super.removeTabAt(index);
+		TabbedPaneTab tab = tabs.remove(index);
 		tabs.remove(index);
 		updateTabIndices();
+		for (TabRemovedListener l : tabRemovedListeners){
+			l.onTabRemoved(tab);
+		}
 	}
 	
 	private void updateTabIndices(){
@@ -83,5 +93,9 @@ public class JTabbedPaneEx extends JTabbedPane {
 	
 	public boolean isCloseable(){
 		return closeable;
+	}
+	
+	public interface TabRemovedListener {
+		public void onTabRemoved(TabbedPaneTab tab);
 	}
 }

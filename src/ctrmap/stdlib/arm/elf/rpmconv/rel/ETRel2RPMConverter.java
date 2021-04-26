@@ -97,6 +97,14 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 								s = new RPMSymbol();
 								s.name = null;
 								s.type = RPMSymbolType.VALUE;
+								if (findSectionById(sections, es.st_shndx) == null){
+									System.out.println("FATAL: NOTFOUND SECTION " + es.st_shndx + " for sym " + es.getName());
+									
+									for (int se = 0; se < elf.num_sh; se++){
+										ElfSection sect = elf.getSection(se);
+										System.out.println("section " + se + ": " + sect.header.getName());
+									}
+								}
 								s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, findSectionById(sections, es.st_shndx).targetOffset + (int) es.st_value + addend);
 								rpm.symbols.add(s);
 							}

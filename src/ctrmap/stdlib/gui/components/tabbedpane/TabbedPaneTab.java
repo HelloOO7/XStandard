@@ -32,7 +32,7 @@ public class TabbedPaneTab {
 		return pane.getIconAt(index);
 	}
 	
-	public Component getComponentAt(){
+	public Component getComponent(){
 		return pane.getComponentAt(index);
 	}
 	

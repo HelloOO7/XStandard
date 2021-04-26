@@ -38,84 +38,82 @@ public class Yaml {
 	}
 
 	private void loadFromInputStream(InputStream strm) {
-		Scanner scanner = new Scanner(strm);
-
-		YamlNode currentNode = root;
-		
-		Stack<Integer> parentLevels = new Stack<>();
-		parentLevels.push(-1);
-
-		while (scanner.hasNextLine()) {
-			String line = scanner.nextLine();
-			if (line.trim().isEmpty()) {
-				continue;
-			}
-
-			int spaces = 0;
-			OUTER:
-			for (int i = 0; i < line.length(); i++) {
-				char c = line.charAt(i);
-				switch (c) {
-					case 0x09:
-						spaces += 4;
-						break;
-					case 0x20:
-						spaces++;
-						break;
-					default:
-						break OUTER;
-				}
-			}
+		try (Scanner scanner = new Scanner(strm, "UTF-8")) {
+			YamlNode currentNode = root;
 			
-			int peek = parentLevels.peek();
-			if (spaces > peek){
-				parentLevels.push(spaces);
-				currentNode = currentNode.addChild();
-			}
-			else if (spaces == peek){
-				currentNode = currentNode.addSibling();
-			}
-			else {
-				YamlNode parent = currentNode;
-				while (parentLevels.peek() > spaces){
-					parentLevels.pop();
-					parent = parent.parent;
+			Stack<Integer> parentLevels = new Stack<>();
+			parentLevels.push(-1);
+			
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+				if (line.trim().isEmpty()) {
+					continue;
 				}
 				
-				currentNode = parent.addSibling();
-			}
-
-			/*if (spaces > cpr) {
+				int spaces = 0;
+				OUTER:
+				for (int i = 0; i < line.length(); i++) {
+					char c = line.charAt(i);
+					switch (c) {
+						case 0x09:
+							spaces += 4;
+							break;
+						case 0x20:
+							spaces++;
+							break;
+						default:
+							break OUTER;
+					}
+				}
+				
+				int peek = parentLevels.peek();
+				if (spaces > peek){
+					parentLevels.push(spaces);
+					currentNode = currentNode.addChild();
+				}
+				else if (spaces == peek){
+					currentNode = currentNode.addSibling();
+				}
+				else {
+					YamlNode parent = currentNode;
+					while (parentLevels.peek() > spaces){
+						parentLevels.pop();
+						parent = parent.parent;
+					}
+					
+					currentNode = parent.addSibling();
+				}
+				
+				/*if (spaces > cpr) {
 				currentNode = currentNode.addChildKey();
-			} else if (spaces == cpr) {
+				} else if (spaces == cpr) {
 				currentNode = currentNode.addSibling();
-			} else {
-				currentNode = currentNode.parent.addSibling();
-			}*/
-			String trim = line.trim();
-			if (trim.startsWith("-")) {
-				parentLevels.push(spaces + 2);
-
-				currentNode.content = new YamlListElement(currentNode);
-				currentNode = currentNode.addChild();
-				trim = trim.substring(1, trim.length()).trim();
-			}
-
-			KeyValuePair kvp = KeyValuePair.trySet(trim);
-			if (kvp != null) {
-				currentNode.content = kvp;
-			} else {
-				Key k = Key.trySet(trim);
-
-				if (k != null) {
-					currentNode.content = k;
 				} else {
-					currentNode.content = Value.trySet(trim);
+				currentNode = currentNode.parent.addSibling();
+				}*/
+				String trim = line.trim();
+				if (trim.startsWith("-")) {
+					parentLevels.push(spaces + 2);
+					
+					currentNode.content = new YamlListElement(currentNode);
+					currentNode = currentNode.addChild();
+					trim = trim.substring(1, trim.length()).trim();
+				}
+				
+				KeyValuePair kvp = KeyValuePair.trySet(trim);
+				if (kvp != null) {
+					currentNode.content = kvp;
+				} else {
+					Key k = Key.trySet(trim);
+					
+					if (k != null) {
+						currentNode.content = k;
+					} else {
+						currentNode.content = Value.trySet(trim);
+					}
 				}
 			}
 		}
-
-		scanner.close();
 	}
 
 	public YamlNode getEnsureRootNodeKeyNode(String key) {
