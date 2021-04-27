@@ -4,7 +4,9 @@ import ctrmap.stdlib.io.iface.SeekableDataInput;
 import ctrmap.stdlib.io.iface.SeekableDataOutput;
 import ctrmap.stdlib.io.structs.StringTable;
 import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.util.ArraysEx;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 public class RPMRelocationTarget {
@@ -16,7 +18,7 @@ public class RPMRelocationTarget {
 	public RPMRelocationTarget(SeekableDataInput in) throws IOException {
 		address = in.readInt();
 		boolean hasModule = ((address >> 31) & 1) != 0;
-		address &= 0xFEFFFFFF;
+		address &= 0x7FFFFFFF;
 		
 		if (hasModule){
 			module = StringUtils.readStringWithAddress(in);
@@ -35,6 +37,23 @@ public class RPMRelocationTarget {
 	public RPMRelocationTarget(RPMRelocationTarget tgt){
 		address = tgt.address;
 		module = tgt.module;
+	}
+	
+	public void addStrings(List<String> l){
+		ArraysEx.addIfNotNullOrContains(l, module);
+	}
+	
+	public int getAddrHWordAligned(){
+		return address - address % 2;
+	}
+	
+	public int getSize(){
+		if (isInternal()){
+			return 4;
+		}
+		else {
+			return 8;
+		}
 	}
 	
 	public boolean isInternal(){

@@ -97,18 +97,18 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 								s = new RPMSymbol();
 								s.name = null;
 								s.type = RPMSymbolType.VALUE;
-								if (findSectionById(sections, es.st_shndx) == null){
+								if (findSectionById(sections, es.st_shndx) == null) {
 									System.out.println("FATAL: NOTFOUND SECTION " + es.st_shndx + " for sym " + es.getName());
-									
-									for (int se = 0; se < elf.num_sh; se++){
+
+									for (int se = 0; se < elf.num_sh; se++) {
 										ElfSection sect = elf.getSection(se);
 										System.out.println("section " + se + ": " + sect.header.getName());
 									}
 								}
 								s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, findSectionById(sections, es.st_shndx).targetOffset + (int) es.st_value + addend);
+								System.out.println("notfound fixup addr " + Integer.toHexString(s.address.getAddr()));
 								rpm.symbols.add(s);
-							}
-							else {
+							} else {
 								System.out.println("found symbol " + Long.toHexString(es.st_value) + " of shndx " + es.st_shndx + " at " + Integer.toHexString(s.address.getAddr()));
 							}
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
@@ -118,7 +118,8 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
 							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, symbs.symbols[relocTypeArg], 0, true);
 							if (s == null) {
-								System.out.println("Could not find function symbol " + symbs.symbols[relocTypeArg]);
+								ElfSymbol es = symbs.symbols[relocTypeArg];
+								System.out.println("Could not find function symbol " + es.getName() + " of shndx " + es.st_shndx);
 							} else {
 								System.out.println("got func symbol " + s.name + " type " + s.type + " add type " + s.address.getAddrType());
 							}
@@ -163,10 +164,8 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 	private static RPMSymbol findRPMByMatchElfAddr(List<RelElfSection> sections, ElfFile elf, ElfSymbol sym, int addend, boolean needsFunc) {
 		for (RelElfSection s : sections) {
 			for (Elf2RPMSymbolAdapter a : s.rpmSymbols) {
-				if (a.origin == sym){
-					if (!needsFunc || a.type.isFunction()) {
-						return a;
-					}
+				if (a.origin == sym && a.origin.getType() != ElfSymbol.STT_SECTION) {
+					return a;
 				}
 			}
 		}

@@ -5,6 +5,7 @@ import ctrmap.stdlib.io.iface.SeekableDataInput;
 import ctrmap.stdlib.io.iface.SeekableDataOutput;
 import ctrmap.stdlib.io.structs.StringTable;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -22,7 +23,7 @@ public class RPMRelocation {
 		
 	}
 	
-	public RPMRelocation(RPM rpm, RPMRelocation rel){
+	public RPMRelocation(RPM rpm, RPMRelocation rel, Map<RPMSymbol, RPMSymbol> symbolTransferMap){
 		sourceType = rel.sourceType;
 		targetType = rel.targetType;
 		
@@ -35,7 +36,7 @@ public class RPMRelocation {
 				break;
 			case SYMBOL_INTERNAL:
 				RPMRelocationSource.RPMRelSrcInternalSymbol is = (RPMRelocationSource.RPMRelSrcInternalSymbol)rel.source;
-				source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, rpm.getSymbol(is.symb.name));
+				source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, symbolTransferMap.get(is.symb));
 				break;
 		}
 	}
@@ -61,6 +62,10 @@ public class RPMRelocation {
 		out.write((targetType.ordinal() << 2) | sourceType.ordinal());
 		target.write(out, strtbl);
 		source.write(out);
+	}
+	
+	public int getSize(){
+		return 1 + target.getSize() + source.getDataSize();
 	}
 
 	public static enum RPMRelTargetType {

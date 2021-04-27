@@ -19,6 +19,8 @@ import ctrmap.stdlib.gui.file.ExtensionFilter;
 import ctrmap.stdlib.io.base.LittleEndianIO;
 import ctrmap.stdlib.io.iface.SeekableDataOutput;
 import ctrmap.stdlib.io.structs.StringTable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class RPM {
@@ -29,8 +31,10 @@ public class RPM {
 	public static final String SYM_MAGIC = "SYM0";
 	public static final String STR_MAGIC = "STR0";
 	public static final String REL_MAGIC = "REL0";
-	
+
 	public static final int RPM_PADDING = 0x10;
+
+	public static final int RPM_FOOTER_SIZE = 0x10;
 
 	public int baseAddress;
 	public List<RPMSymbol> symbols = new ArrayList<>();
@@ -104,37 +108,43 @@ public class RPM {
 
 	public void merge(RPM source) {
 		try {
-			int base = code.length();
+			int base = BitUtils.getPaddedInteger(code.length(), 4);
 			code.seek(base);
 			code.write(source.code.toByteArray());
-			
+
 			for (RPMSymbol sym : symbols) {
-				if (sym.address.isNull()){
+				if (sym.address.isNull()) {
 					RPMSymbol newSym = source.getSymbol(sym.name);
-					if (newSym != null){
+					if (newSym != null) {
 						sym.address = new RPMSymbolAddress(this, newSym.address);
 					}
 				}
 			}
+			
+			Map<RPMSymbol, RPMSymbol> oldToNewSymbolMap = new HashMap<>();
 
 			for (RPMSymbol symbol : source.symbols) {
 				RPMSymbol newSymbol = new RPMSymbol(this, symbol);
-				RPMSymbol existingSymbol = getSymbol(newSymbol.name);
-				if (existingSymbol != null){
-					continue;
+				if (newSymbol.name != null) {
+					RPMSymbol existingSymbol = getSymbol(newSymbol.name);
+					if (existingSymbol != null) {
+						oldToNewSymbolMap.put(symbol, existingSymbol);
+						continue;
+					}
 				}
 				if (newSymbol.address.getAddrType() == RPMSymbolAddress.RPMAddrType.LOCAL) {
 					newSymbol.address.setAddr(base + newSymbol.address.getAddr());
 				}
 				symbols.add(newSymbol);
+				oldToNewSymbolMap.put(symbol, newSymbol);
 			}
 
 			for (RPMRelocation rel : source.relocations) {
-				RPMRelocation newRel = new RPMRelocation(this, rel);
+				RPMRelocation newRel = new RPMRelocation(this, rel, oldToNewSymbolMap);
 				if (newRel.target.isInternal()) {
 					newRel.target.address += base;
 				}
-				relocations.add(rel);
+				relocations.add(newRel);
 			}
 		} catch (IOException ex) {
 			Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
@@ -189,6 +199,42 @@ public class RPM {
 		code = buf;
 	}
 
+	public byte[] getBytesForBaseOfs(int baseOfs) {
+		updateBytesForBaseAddr(baseOfs);
+		byte[] bytes = getBytes();
+		updateBytesForSetBaseAddr();
+		return bytes;
+	}
+
+	public int getByteSize() {
+		int size = code.length();
+		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
+
+		size += 8; //symbol header
+		for (RPMSymbol s : symbols) {
+			size += s.getByteSize();
+		}
+
+		List<String> strings = new ArrayList<>();
+
+		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
+		size += 12; //relocation header
+		for (RPMRelocation rel : relocations) {
+			rel.target.addStrings(strings);
+			size += rel.getSize();
+		}
+
+		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
+		size += 4;
+		for (String s : strings) {
+			size += s.length() + 1;
+		}
+
+		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
+		size += RPM_FOOTER_SIZE;
+		return size;
+	}
+
 	public byte[] getBytes() {
 		try {
 			RandomAccessByteArray ba = new RandomAccessByteArray();
@@ -236,8 +282,12 @@ public class RPM {
 		this.baseAddress = baseAddress;
 	}
 
-	public void updateBytesForBaseAddr() {
+	public void updateBytesForSetBaseAddr() {
 		relocateBufferToAddr(baseAddress);
+	}
+
+	public void updateBytesForBaseAddr(int baseAddr) {
+		relocateBufferToAddr(baseAddr);
 	}
 
 	public void doExternalRelocations(RPMExternalRelocator relocator) {
@@ -255,7 +305,7 @@ public class RPM {
 			for (RPMRelocation rel : relocations) {
 				if (rel.target.isInternal()) {
 					//System.out.println("rel " + rel.target.address + ", " + rel.target.module);
-					code.seekUnbased(rel.target.address);
+					code.seekUnbased(rel.target.getAddrHWordAligned());
 
 					writeRelocationDataByType(this, rel, code);
 				}
@@ -305,25 +355,27 @@ public class RPM {
 						rpm.code.seekUnbased(copyStartAdr);
 						byte[] bytes = new byte[len];
 						rpm.code.read(bytes);
-						
+
 						int pos = out.getPosition();
-						
+
 						out.write(bytes);
 
+						System.out.println("FULL_COPIED to " + Integer.toHexString(pos));
 						for (RPMRelocation copyRel : rpm.relocations) {
 							if (copyRel.target.isInternal() && copyRel.targetType != RPMRelocation.RPMRelTargetType.FULL_COPY) {
-								int copyRelAddr = copyRel.target.address;
+								int copyRelAddr = copyRel.target.getAddrHWordAligned();
 								if (copyRelAddr >= copyStartAdr && copyRelAddr < copyEndAdr) {
 									out.seek(pos + (copyRelAddr - copyStartAdr));
+									System.out.println("Applying mirrored relocation at " + Integer.toHexString(out.getPosition()));
 									writeRelocationDataByType(rpm, copyRel, out);
 								}
 							}
 						}
 					} else {
-						throw new UnsupportedOperationException("Can not FULL_COPY a symbol without a length!");
+						throw new UnsupportedOperationException("Can not FULL_COPY a symbol without a length! - " + ((RPMRelocationSource.RPMRelSrcInternalSymbol) rel.source).symb.name);
 					}
 				} else {
-					throw new UnsupportedOperationException("Can not FULL_COPY and external symbol!");
+					throw new UnsupportedOperationException("Can not FULL_COPY an external symbol!");
 				}
 				break;
 		}
@@ -344,11 +396,11 @@ public class RPM {
 		}
 		return null;
 	}
-	
+
 	public RPMSymbol findGlobalSymbolByAddrAbs(int addr) {
 		for (RPMSymbol s : symbols) {
-			if (s.address.getAddrType() == RPMSymbolAddress.RPMAddrType.GLOBAL){
-				if (s.address.getAddrAbs() == addr){
+			if (s.address.getAddrType() == RPMSymbolAddress.RPMAddrType.GLOBAL) {
+				if (s.address.getAddrAbs() == addr) {
 					return s;
 				}
 			}

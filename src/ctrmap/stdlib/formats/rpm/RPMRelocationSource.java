@@ -17,6 +17,8 @@ public interface RPMRelocationSource {
 	public int getWritableAddress();
 	
 	public int getLength();
+	
+	public int getDataSize();
 
 	public void write(DataOutput out) throws IOException;
 
@@ -67,6 +69,11 @@ public interface RPMRelocationSource {
 		public int getLength() {
 			return symb.size;
 		}
+
+		@Override
+		public int getDataSize() {
+			return 2;
+		}
 	}
 
 	public static class RPMRelSrcExternalSymbol extends RPMRelSrcInternalSymbol {
@@ -92,6 +99,11 @@ public interface RPMRelocationSource {
 		public void write(DataOutput out) throws IOException {
 			StringUtils.writeString(out, ns);
 			StringUtils.writeString(out, symb.name);
+		}
+		
+		@Override
+		public int getDataSize() {
+			return ns.length() + symb.name.length() + 2;
 		}
 	}
 }

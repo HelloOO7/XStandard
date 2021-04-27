@@ -20,6 +20,7 @@ public class RPMSymbol {
 		name = source.name;
 		type = source.type;
 		address = new RPMSymbolAddress(rpm, source.address);
+		size = source.size;
 	}
 	
 	public RPMSymbol(RPM rpm, String name, RPMSymbolType type, RPMSymbolAddress addr) {
@@ -30,11 +31,19 @@ public class RPMSymbol {
 
 	public RPMSymbol(RPM rpm, DataInput in, int version) throws IOException {
 		name = StringUtils.readString(in);
+		if (name.isEmpty()){
+			name = null;
+		}
 		type = RPMSymbolType.values()[in.readUnsignedByte()];
 		address = new RPMSymbolAddress(rpm, in);
 		if (version >= RPMRevisions.REV_SYMBOL_LENGTH) {
 			size = in.readInt();
 		}
+	}
+	
+	public int getByteSize(){
+		return (name == null ? 0 : name.length()) + 1 + 1 + 4 + 4;
+		//name + term + type + addr + size
 	}
 
 	public void write(DataOutput out) throws IOException {
