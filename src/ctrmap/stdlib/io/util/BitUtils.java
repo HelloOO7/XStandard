@@ -1,6 +1,6 @@
 package ctrmap.stdlib.io.util;
 
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.base.IOStream;
 import ctrmap.stdlib.io.iface.SeekableDataInput;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -36,20 +36,32 @@ public class BitUtils {
 		return output;
 	}
 
-	public static byte[] integerToByteArray(int i) {
+	public static byte[] integerToByteArrayBE(int i) {
 		return new byte[]{(byte) (i >>> 24), (byte) (i >>> 16), (byte) (i >>> 8), (byte) i};
 	}
-
-	public static int byteArrayToInteger(byte[] b) {
-		return byteArrayToInteger(b, 0);
+	
+	public static byte[] integerToByteArrayLE(int i, byte[] arr, int off) {
+		arr[off + 3] = (byte) (i >>> 24);
+		arr[off + 2] = (byte) (i >>> 16);
+		arr[off + 1] = (byte) (i >>> 8);
+		arr[off + 0] = (byte)i;
+		return arr;
 	}
 
-	public static int byteArrayToInteger(byte[] b, int offs) {
+	public static int byteArrayToIntegerBE(byte[] b) {
+		return byteArrayToIntegerBE(b, 0);
+	}
+
+	public static int byteArrayToIntegerBE(byte[] b, int offs) {
 		int x = b[offs];
 		x = (x << 8) | (b[offs + 1] & 255);
 		x = (x << 8) | (b[offs + 2] & 255);
 		x = (x << 8) | (b[offs + 3] & 255);
 		return x;
+	}
+	
+	public static int byteArrayToIntegerLE(byte[] b, int offs) {
+		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
 
 	public static byte[] getPadding(int offsetInPack, int length) {
@@ -83,11 +95,11 @@ public class BitUtils {
 		return false;
 	}
 
-	public static SearchResult searchForInt32(IOWrapper in, int startPos, int endPos, int value) throws IOException {
+	public static SearchResult searchForInt32(IOStream in, int startPos, int endPos, int value) throws IOException {
 		return searchForBytes(in, startPos, endPos, new SearchPattern(ByteBuffer.wrap(new byte[4]).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array()));
 	}
 
-	public static SearchResult searchForBytes(IOWrapper in, int startPos, int endPos, SearchPattern... patterns) throws IOException {
+	public static SearchResult searchForBytes(IOStream in, int startPos, int endPos, SearchPattern... patterns) throws IOException {
 		if (patterns.length == 0) {
 			throw new IllegalArgumentException("At least one pattern has to be provided.");
 		}

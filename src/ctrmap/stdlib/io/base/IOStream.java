@@ -10,18 +10,18 @@ import ctrmap.stdlib.io.util.StringUtils;
 import java.io.Closeable;
 import java.io.IOException;
 
-public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput, Closeable, CloseableDataInput, DataInputEx, DataOutputEx, IHasLength {
+public abstract class IOStream implements SeekableDataInput, SeekableDataOutput, Closeable, CloseableDataInput, DataInputEx, DataOutputEx, IHasLength {
 
 	protected SeekableDataInput dis;
 	protected SeekableDataOutput dos;
 	protected Closeable closeable;
 	private int base = 0;
 
-	protected IOWrapper() {
+	protected IOStream() {
 
 	}
 	
-	public IOWrapper(IOWrapper toWrap) {
+	public IOStream(IOStream toWrap) {
 		dis = toWrap;
 		dos = toWrap;
 		closeable = toWrap;
@@ -31,17 +31,17 @@ public abstract class IOWrapper implements SeekableDataInput, SeekableDataOutput
 		this.base = base;
 	}
 
-	public void mirrorTo(IOWrapper target) {
+	public void mirrorTo(IOStream target) {
 		target.dis = dis;
 		target.dos = dos;
 		target.closeable = closeable;
 	}
 
-	public IOWrapper(SeekableDataInput dis, SeekableDataOutput dos) {
+	public IOStream(SeekableDataInput dis, SeekableDataOutput dos) {
 		this(dis, dos, null);
 	}
 
-	public IOWrapper(SeekableDataInput dis, SeekableDataOutput dos, Closeable closeable) {
+	public IOStream(SeekableDataInput dis, SeekableDataOutput dos, Closeable closeable) {
 		this.dis = dis;
 		this.dos = dos;
 		this.closeable = closeable;

@@ -6,10 +6,9 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class StringUtils {
 
@@ -38,12 +37,8 @@ public class StringUtils {
 		in.close();
 		return str;
 	}
-
-	public static String readGFString(DataInput in) throws IOException {
-		return readStringWithSize(in, 0x20);
-	}
-
-	public static String readStringWithSize(DataInput in, int size) throws IOException {
+	
+	private static byte[] readPaddedByteBuffer(DataInput in, int size) throws IOException {
 		byte[] buf = new byte[size];
 		in.readFully(buf);
 		int term = 0;
@@ -52,7 +47,17 @@ public class StringUtils {
 				break;
 			}
 		}
-		return new String(Arrays.copyOfRange(buf, 0, term), "ASCII");
+		return Arrays.copyOfRange(buf, 0, term);
+	}
+
+	public static String readStringWithSize(DataInput in, int size) throws IOException {
+		return new String(readPaddedByteBuffer(in, size), StandardCharsets.US_ASCII);
+	}
+	
+	private static final Charset SJIS_CHARSET = Charset.forName("SJIS");
+	
+	public static String readStringWithSizeSJIS(DataInput in, int size) throws IOException {
+		return new String(readPaddedByteBuffer(in, size), SJIS_CHARSET);
 	}
 
 	public static String readStringWithAddress(SeekableDataInput in) throws IOException {
@@ -67,20 +72,35 @@ public class StringUtils {
 		return ret;
 	}
 
+	public static String readStringWithAddressUTF16(SeekableDataInput in) throws IOException {
+		int addr = in.readInt();
+		if (addr == 0) {
+			return null;
+		}
+		int pos = in.getPosition();
+		in.seek(addr);
+		String ret = readStringUTF16(in);
+		in.seek(pos);
+		return ret;
+	}
+
 	public static boolean checkMagic(DataInput in, String magic) throws IOException {
 		byte[] buf = new byte[magic.length()];
 		in.readFully(buf);
-		try {
-			return new String(buf, "ASCII").equals(magic);
-		} catch (UnsupportedEncodingException ex) {
-			Logger.getLogger(StringUtils.class.getName()).log(Level.SEVERE, null, ex);
-			return false;
-		}
+		return new String(buf, StandardCharsets.US_ASCII).equals(magic);
 	}
 
 	public static void writeString(DataOutput dos, String str) throws IOException {
 		writeStringUnterminated(dos, str);
 		dos.write(0);
+	}
+
+	public static void writePaddedString(DataOutput dos, String str, int len) throws IOException {
+		str = str.substring(0, Math.min(len, str.length()));
+		writeStringUnterminated(dos, str);
+		for (int i = str.length(); i < len; i++) {
+			dos.write(0);
+		}
 	}
 
 	public static void writeStringUTF16(DataOutput dos, String str) throws IOException {
@@ -90,13 +110,13 @@ public class StringUtils {
 
 	public static void writeStringUnterminated(DataOutput dos, String str) throws IOException {
 		if (str != null) {
-			dos.write(str.getBytes("ASCII"));
+			dos.write(str.getBytes(StandardCharsets.US_ASCII));
 		}
 	}
 
 	public static void writeStringUnterminatedUTF16(DataOutput dos, String str) throws IOException {
 		if (str != null) {
-			dos.write(str.getBytes("UTF-16LE"));
+			dos.write(str.getBytes(StandardCharsets.UTF_16LE));
 		}
 	}
 

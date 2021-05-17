@@ -2,7 +2,7 @@ package ctrmap.stdlib.fs.accessors;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
-import ctrmap.stdlib.io.RandomAccessByteArray;
+import ctrmap.stdlib.io.MemoryStream;
 import ctrmap.stdlib.io.base.LittleEndianIO;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public class MemoryFile extends FSFile{
 
 	@Override
 	public OutputStream getOutputStream() {
-		return new RandomAccessByteArray.RandomAccessBAOS(null, new RandomAccessByteArray.RandomAccessBAOS.CloseListener() {
+		return new MemoryStream.RandomAccessBAOS(null, new MemoryStream.RandomAccessBAOS.CloseListener() {
 			@Override
 			public void onClose(byte[] buf) {
 				data = buf;
@@ -47,7 +47,7 @@ public class MemoryFile extends FSFile{
 
 	@Override
 	public LittleEndianIO getIO() {
-		return new RandomAccessByteArray(data);
+		return new MemoryStream(data);
 	}
 	
 	public byte[] getBackingArray(){

@@ -1,8 +1,8 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.RandomAccessByteArray;
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.MemoryStream;
+import ctrmap.stdlib.io.base.IOStream;
 import ctrmap.stdlib.io.util.BitUtils;
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 
 		List<RelElfSection> sections = new ArrayList<>();
 
-		IOWrapper io = new DiskFile(f).getIO();
+		IOStream io = new DiskFile(f).getIO();
 
 		Map<String, ElfSection> relSections = new HashMap<>();
 
@@ -146,7 +146,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 
 		io.close();
 
-		RandomAccessByteArray code = new RandomAccessByteArray();
+		MemoryStream code = new MemoryStream();
 		for (RelElfSection s : sections) {
 			code.seek(s.targetOffset);
 			code.write(s.getBytes());

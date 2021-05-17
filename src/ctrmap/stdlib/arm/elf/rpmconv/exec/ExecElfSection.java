@@ -1,7 +1,7 @@
 package ctrmap.stdlib.arm.elf.rpmconv.exec;
 
-import ctrmap.stdlib.io.RandomAccessByteArray;
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.MemoryStream;
+import ctrmap.stdlib.io.base.IOStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class ExecElfSection {
 	public final SectionType type;
 	private int offset;
 	private int length;
-	private RandomAccessByteArray buf;
+	private MemoryStream buf;
 
 	private List<SubSection> subSections = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class ExecElfSection {
 	
 	private RPM rpm;
 	
-	public ExecElfSection(int sectionId, ElfSection sec, SectionType type, ElfFile elf, IOWrapper io, RPM rpm) throws IOException {
+	public ExecElfSection(int sectionId, ElfSection sec, SectionType type, ElfFile elf, IOStream io, RPM rpm) throws IOException {
 		id = sectionId;
 		this.rpm = rpm;
 		this.elf = elf;
@@ -57,7 +57,7 @@ public class ExecElfSection {
 			io.seek((int) sec.header.section_offset);
 			io.read(b);
 		}
-		buf = new RandomAccessByteArray(b);
+		buf = new MemoryStream(b);
 		this.type = type;
 		this.symbols = elf.getSymbolTableSection();
 		buf.setBase(offset);

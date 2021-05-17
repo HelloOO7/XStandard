@@ -16,30 +16,30 @@ import java.util.Arrays;
 /**
  * A class to imitate RandomAccessFile for byte array streams
  */
-public class RandomAccessByteArray extends LittleEndianIO {
+public class MemoryStream extends LittleEndianIO {
 
 	private RandomAccessBAOS.Wrapper baos;
 	private RandomAccessBAIS.Wrapper bais;
 
-	public RandomAccessByteArray(byte[] ba) {
+	public MemoryStream(byte[] ba) {
 		this(new RandomAccessBAIS.Wrapper(ba));
 	}
 
-	public RandomAccessByteArray() {
+	public MemoryStream() {
 		this(new byte[0]);
 	}
 
-	private RandomAccessByteArray(RandomAccessBAIS.Wrapper bais) {
+	private MemoryStream(RandomAccessBAIS.Wrapper bais) {
 		this(bais, new RandomAccessBAOS.Wrapper(new RandomAccessBAOS(bais.bais_handle)));
 	}
 
-	private RandomAccessByteArray(RandomAccessBAIS.Wrapper bais, RandomAccessBAOS.Wrapper baos) {
+	private MemoryStream(RandomAccessBAIS.Wrapper bais, RandomAccessBAOS.Wrapper baos) {
 		super(bais, baos);
 		this.bais = bais;
 		this.baos = baos;
 	}
 
-	public RandomAccessByteArray(InputStream strm) {
+	public MemoryStream(InputStream strm) {
 		this(FSUtil.readStreamToBytes(strm));
 	}
 

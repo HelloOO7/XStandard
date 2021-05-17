@@ -2,8 +2,8 @@ package ctrmap.stdlib.arm.elf.rpmconv.exec;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.RandomAccessByteArray;
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.MemoryStream;
+import ctrmap.stdlib.io.base.IOStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 
 		List<ExecElfSection> sections = new ArrayList<>();
 
-		IOWrapper io = new DiskFile(elfFile).getIO();
+		IOStream io = new DiskFile(elfFile).getIO();
 
 		for (int i = 0; i < elf.num_sh; i++) {
 			ElfSection sect = elf.getSection(i);
@@ -72,7 +72,7 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 			s.relocate(relocState);
 		}
 
-		RandomAccessByteArray out = new RandomAccessByteArray();
+		MemoryStream out = new MemoryStream();
 		for (ExecElfSection c : sections) {
 			rpm.relocations.addAll(c.relocs);
 			out.seek(relocState.getTargetSectionOffsetById(c.id));

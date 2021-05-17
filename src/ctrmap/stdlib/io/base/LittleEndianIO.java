@@ -6,7 +6,7 @@ import ctrmap.stdlib.io.util.BitUtils;
 import java.io.Closeable;
 import java.io.IOException;
 
-public abstract class LittleEndianIO extends IOWrapper {
+public abstract class LittleEndianIO extends IOStream {
 
 	protected LittleEndianIO() {
 

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Stack;
 
 public abstract class FSFile {
-	
+
 	public static final int FSF_ATT_READ = 1;
 	public static final int FSF_ATT_WRITE = 2;
 	public static final int FSF_ATT_EXECUTE = 4;
@@ -18,7 +18,7 @@ public abstract class FSFile {
 	public abstract FSFile getParent();
 
 	public abstract void mkdir();
-	
+
 	public abstract void setPath(String newPath);
 
 	public abstract void delete();
@@ -38,41 +38,41 @@ public abstract class FSFile {
 	public abstract LittleEndianIO getIO();
 
 	public abstract List<FSFile> listFiles();
-	
+
 	public abstract int getPermissions();
-	
-	public boolean canRead(){
+
+	public boolean canRead() {
 		return (getPermissions() & FSF_ATT_READ) != 0;
 	}
-	
-	public boolean canWrite(){
+
+	public boolean canWrite() {
 		return (getPermissions() & FSF_ATT_WRITE) != 0;
 	}
-	
-	public boolean canExecute(){
+
+	public boolean canExecute() {
 		return (getPermissions() & FSF_ATT_EXECUTE) != 0;
 	}
-	
+
 	//privilege check sounds better but does not look good in code
-	public boolean checkPrivileges(int... flags){
+	public boolean checkPrivileges(int... flags) {
 		int p = getPermissions();
-		for (int f : flags){
-			if ((p & f) == 0){
+		for (int f : flags) {
+			if ((p & f) == 0) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public int getChildCount(){
+	public int getChildCount() {
 		return listFiles().size();
 	}
 
-	public byte[] getBytes(){
+	public byte[] getBytes() {
 		return FSUtil.readFileToBytes(this);
 	}
-	
-	public void setBytes(byte[] bytes){
+
+	public void setBytes(byte[] bytes) {
 		FSUtil.writeBytesToFile(this, bytes);
 	}
 
@@ -80,8 +80,8 @@ public abstract class FSFile {
 		List<FSFile> files = listFiles();
 		return files.size() - getHiddenCount(files);
 	}
-	
-	public int getHiddenChildCount(){
+
+	public int getHiddenChildCount() {
 		return getHiddenCount(listFiles());
 	}
 
@@ -93,11 +93,11 @@ public abstract class FSFile {
 				hidden++;
 			}
 		}
-		
+
 		return hidden;
 	}
-	
-	public boolean isFile(){
+
+	public boolean isFile() {
 		return exists() && !isDirectory();
 	}
 
@@ -108,14 +108,23 @@ public abstract class FSFile {
 		return getName();
 	}
 
+	public void renameTo(String name) {
+		FSFile p = getParent();
+		if (p == null) {
+			setPath(name);
+		} else {
+			setPath(p.getPath() + "/" + name);
+		}
+	}
+
 	@Override
-	public boolean equals(Object o){
-		if (o != null && o instanceof FSFile){
-			return ((FSFile)o).getPath().equals(getPath());
+	public boolean equals(Object o) {
+		if (o != null && o instanceof FSFile) {
+			return ((FSFile) o).getPath().equals(getPath());
 		}
 		return false;
 	}
-	
+
 	public String getPathRelativeTo(FSFile relativeTo) {
 		return getPathRelativeTo(getPath(), relativeTo.getPath());
 	}

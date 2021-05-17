@@ -66,6 +66,10 @@ public class YamlNode {
 		return addChild(new YamlNode(new Key(key)));
 	}
 	
+	public YamlNode addChildValue(String value) {
+		return addChild(new YamlNode(new Value(value)));
+	}
+	
 	public YamlNode addChild(YamlNode n) {
 		children.add(n);
 		n.parent = this;
@@ -100,6 +104,15 @@ public class YamlNode {
 		return null;
 	}
 	
+	public YamlNode getChildByValue(String value) {
+		for (YamlNode ch : children) {
+			if (Objects.equals(ch.getValue(), value)) {
+				return ch;
+			}
+		}
+		return null;
+	}
+	
 	public YamlNode getChildByNameIgnoreCase(String name) {
 		for (YamlNode ch : children) {
 			if (ch.getKey() == null && name == null || ch.getKey().equalsIgnoreCase(name)){
@@ -125,6 +138,10 @@ public class YamlNode {
 
 	public void removeChildByName(String name) {
 		children.remove(getChildByName(name));
+	}
+	
+	public void removeChildByValue(String value) {
+		children.remove(getChildByValue(value));
 	}
 
 	public void removeChild(YamlNode ch) {

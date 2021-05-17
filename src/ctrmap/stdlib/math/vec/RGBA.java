@@ -23,6 +23,22 @@ public class RGBA {
 		this.a = (short)a;
 	}
 	
+	public RGBA(int rgb){
+		
+	}
+	
+	public RGBA(int rgb, boolean a){
+		r = (short)(rgb & 0xFF);
+		g = (short)((rgb >> 8) & 0xFF);
+		b = (short)((rgb >> 16) & 0xFF);
+		if (a){
+			this.a = (short)(rgb >> 24 & 0xFF);
+		}
+		else {
+			this.a = 0xFF;
+		}
+	}
+	
 	public RGBA(float r, float g, float b, float a){
 		this.r = (short)(r * 255f);
 		this.g = (short)(g * 255f);
@@ -35,6 +51,10 @@ public class RGBA {
 	}
 	
 	public RGBA(RGBA rgba){
+		set(rgba);
+	}
+	
+	public void set(RGBA rgba){
 		r = rgba.r;
 		g = rgba.g;
 		b = rgba.b;

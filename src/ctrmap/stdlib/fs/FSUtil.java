@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -118,7 +119,7 @@ public class FSUtil {
 	}
 
 	public static void writeStringToFile(FSFile f, String str) {
-		writeBytesToFile(f, str.getBytes(Charset.forName("UTF-8")));
+		writeBytesToFile(f, str.getBytes(StandardCharsets.UTF_8));
 	}
 
 	public static byte[] readFileToBytes(File f) {

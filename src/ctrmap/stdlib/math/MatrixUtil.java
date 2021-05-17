@@ -46,6 +46,12 @@ public class MatrixUtil {
 		mtx.scale(x, y, z);
 		return mtx;
 	}
+	
+	public static void decompose3x3(float[] src, float[][] dst){
+		for (int i = 0; i < 9; i++){
+			dst[i / 3][i % 3] = src[i];
+		}
+	}
 
 	public static Matrix4 copyMatrix(Matrix4 input) {
 		if (input == null) {

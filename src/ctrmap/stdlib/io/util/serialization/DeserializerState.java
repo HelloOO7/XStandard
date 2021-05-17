@@ -1,6 +1,6 @@
 package ctrmap.stdlib.io.util.serialization;
 
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.base.IOStream;
 import java.io.DataInput;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -21,9 +21,9 @@ public class DeserializerState {
 		this.settings = settings;
 	}
 	
-	public IOWrapper getIO(){
-		if (in instanceof IOWrapper){
-			return (IOWrapper)in;
+	public IOStream getIO(){
+		if (in instanceof IOStream){
+			return (IOStream)in;
 		}
 		throw new UnsupportedOperationException("Not an IO stream.");
 	}

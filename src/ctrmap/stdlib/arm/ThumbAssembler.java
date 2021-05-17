@@ -1,7 +1,7 @@
 package ctrmap.stdlib.arm;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.RandomAccessByteArray;
+import ctrmap.stdlib.io.MemoryStream;
 import ctrmap.stdlib.io.base.LittleEndianIO;
 import ctrmap.stdlib.io.iface.PositionedDataInput;
 import ctrmap.stdlib.io.iface.SeekableDataOutput;

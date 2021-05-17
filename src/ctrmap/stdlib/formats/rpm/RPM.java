@@ -4,7 +4,7 @@ import ctrmap.stdlib.arm.ARMAssembler;
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.text.FormattingUtils;
 import ctrmap.stdlib.io.InvalidMagicException;
-import ctrmap.stdlib.io.RandomAccessByteArray;
+import ctrmap.stdlib.io.MemoryStream;
 import ctrmap.stdlib.io.util.BitUtils;
 import ctrmap.stdlib.io.util.StringUtils;
 import java.io.IOException;
@@ -42,7 +42,7 @@ public class RPM {
 
 	private RPMExternalSymbolResolver extResolver;
 
-	private RandomAccessByteArray code;
+	private MemoryStream code;
 
 	public RPM(FSFile fsf) {
 		this(fsf.getBytes());
@@ -50,7 +50,7 @@ public class RPM {
 
 	public RPM(byte[] bytes) {
 		try {
-			RandomAccessByteArray ft = new RandomAccessByteArray(bytes);
+			MemoryStream ft = new MemoryStream(bytes);
 			ft.seek(bytes.length - 16);
 			if (!StringUtils.checkMagic(ft, RPM_MAGIC)) {
 				throw new InvalidMagicException("Not an RPM file!");
@@ -79,14 +79,14 @@ public class RPM {
 				relocations.add(new RPMRelocation(ft, this));
 			}
 
-			code = new RandomAccessByteArray(Arrays.copyOf(bytes, codeSize));
+			code = new MemoryStream(Arrays.copyOf(bytes, codeSize));
 		} catch (IOException ex) {
 			Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
 	public RPM() {
-		code = new RandomAccessByteArray();
+		code = new MemoryStream();
 	}
 
 	public static boolean isRPM(FSFile f) {
@@ -195,7 +195,7 @@ public class RPM {
 		relocations.addAll(l);
 	}
 
-	public void setCode(RandomAccessByteArray buf) {
+	public void setCode(MemoryStream buf) {
 		code = buf;
 	}
 
@@ -237,7 +237,7 @@ public class RPM {
 
 	public byte[] getBytes() {
 		try {
-			RandomAccessByteArray ba = new RandomAccessByteArray();
+			MemoryStream ba = new MemoryStream();
 			ba.write(code.toByteArray());
 			int codeSize = ba.getPosition();
 			ba.pad(RPM_PADDING);

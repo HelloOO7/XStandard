@@ -1,7 +1,7 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
-import ctrmap.stdlib.io.RandomAccessByteArray;
-import ctrmap.stdlib.io.base.IOWrapper;
+import ctrmap.stdlib.io.MemoryStream;
+import ctrmap.stdlib.io.base.IOStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +32,9 @@ public class RelElfSection {
 	public final int length;
 	public int targetOffset;
 
-	private RandomAccessByteArray buf;
+	private MemoryStream buf;
 
-	public RelElfSection(ElfFile elf, int sectionId, IOWrapper io) throws IOException {
+	public RelElfSection(ElfFile elf, int sectionId, IOStream io) throws IOException {
 		id = sectionId;
 		sec = elf.getSection(id);
 		type = SectionType.getSectionTypeFromElf(sec.header.getName());
@@ -46,7 +46,7 @@ public class RelElfSection {
 			io.seek(sourceOffset);
 			io.read(b);
 		}
-		buf = new RandomAccessByteArray(b);
+		buf = new MemoryStream(b);
 	}
 
 	public byte[] getBytes() {

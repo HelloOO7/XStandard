@@ -1,6 +1,7 @@
 package ctrmap.stdlib.gui.file;
 
 import com.sun.javafx.application.PlatformImpl;
+import ctrmap.stdlib.CMStdLibPrefs;
 import ctrmap.stdlib.util.ArraysEx;
 import java.io.File;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import javafx.stage.FileChooser;
 
 public class CMFileDialog {
 
-	private static Preferences prefs = Preferences.userRoot().node("CMFileDialog");
+	private static Preferences prefs = CMStdLibPrefs.node("CMFileDialog");
 
 	public static File openDirectoryDialog() {
 		return openDirectoryDialog((String)null);

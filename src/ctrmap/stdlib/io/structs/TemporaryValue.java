@@ -12,7 +12,7 @@ public class TemporaryValue {
 	public TemporaryValue(SeekableDataOutput dos) throws IOException {
 		dosref = dos;
 		position = dos.getPosition();
-		dos.writeInt(0);
+		writePointer(0);
 	}
 
 	public void set(int value) throws IOException {

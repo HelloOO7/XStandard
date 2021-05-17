@@ -1,5 +1,6 @@
 package ctrmap.stdlib.gui;
 
+import ctrmap.stdlib.CMStdLibPrefs;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
@@ -7,7 +8,7 @@ import javax.swing.JRadioButton;
 
 public class ActionSelector extends javax.swing.JDialog {
 
-	private Preferences lastOptPrefs = Preferences.userRoot().node("CTRMapActionSelector");
+	private Preferences lastOptPrefs = CMStdLibPrefs.node("CTRMapActionSelector");
 
 	private Map<String, Object> acmdUserDataMap = new HashMap<>();
 	private Map<String, Integer> acmdIndexMap = new HashMap<>();

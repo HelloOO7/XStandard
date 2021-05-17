@@ -8,6 +8,30 @@ public class ArraysEx {
 	public static <T> T[] asArray(T... elems) {
 		return elems;
 	}
+	
+	public static int[] asArrayI(List<Integer> intList) {
+		int[] arr = new int[intList.size()];
+		for (int i = 0; i < arr.length; i++){
+			arr[i] = intList.get(i);
+		}
+		return arr;
+	}
+	
+	public static float[] asArrayF(List<Float> floatList) {
+		float[] arr = new float[floatList.size()];
+		for (int i = 0; i < arr.length; i++){
+			arr[i] = floatList.get(i);
+		}
+		return arr;
+	}
+	
+	public static short[] asArrayS(List<Short> shortList) {
+		short[] arr = new short[shortList.size()];
+		for (int i = 0; i < arr.length; i++){
+			arr[i] = shortList.get(i);
+		}
+		return arr;
+	}
 
 	public static <T> List<T> asList(T... obj) {
 		List<T> r = new ArrayList<>();
