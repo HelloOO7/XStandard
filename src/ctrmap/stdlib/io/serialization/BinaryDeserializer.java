@@ -11,11 +11,13 @@ import ctrmap.stdlib.io.serialization.annotations.typechoice.TypeChoicesStr;
 import java.io.IOException;
 import java.lang.reflect.*;
 import static ctrmap.stdlib.io.IOCommon.*;
+import ctrmap.stdlib.io.base.impl.access.MemoryStream;
 import ctrmap.stdlib.io.serialization.annotations.ArrayLengthSize;
 import ctrmap.stdlib.io.serialization.annotations.ArraySize;
 import ctrmap.stdlib.io.serialization.annotations.ByteOrderMark;
 import ctrmap.stdlib.io.serialization.annotations.Define;
 import ctrmap.stdlib.io.serialization.annotations.DefinedArraySize;
+import ctrmap.stdlib.io.serialization.annotations.IfVersion;
 import ctrmap.stdlib.io.serialization.annotations.Ignore;
 import ctrmap.stdlib.io.serialization.annotations.Inline;
 import ctrmap.stdlib.io.serialization.annotations.MagicStr;
@@ -24,6 +26,7 @@ import ctrmap.stdlib.io.serialization.annotations.ObjSize;
 import ctrmap.stdlib.io.serialization.annotations.PointerBase;
 import ctrmap.stdlib.io.serialization.annotations.PointerSize;
 import ctrmap.stdlib.io.serialization.annotations.Size;
+import ctrmap.stdlib.io.serialization.annotations.Version;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.logging.Level;
@@ -31,7 +34,7 @@ import java.util.logging.Logger;
 
 public class BinaryDeserializer extends BinarySerialization {
 
-	public final DataIOStream baseStream;
+	public DataIOStream baseStream;
 
 	private final ReferenceType refType;
 
@@ -45,6 +48,18 @@ public class BinaryDeserializer extends BinarySerialization {
 		refType = referenceType;
 		this.baseStream = new DataIOStream(baseStream, bo);
 		pointerBaseStack.push(0);
+	}
+
+	public void loadStreamOntoMemory() {
+		if (!(baseStream.getBaseStream() instanceof MemoryStream)) {
+			try {
+				DataIOStream newStream = new DataIOStream(baseStream.toByteArray());
+				baseStream.close();
+				baseStream = newStream;
+			} catch (IOException ex) {
+				Logger.getLogger(BinaryDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
 	}
 
 	public <T> T deserialize(Class<T> cls) {
@@ -93,6 +108,25 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 	}
 
+	private boolean isIfVersionPass(IfVersion ifv) {
+		int rhs = ifv.rhs();
+		switch (ifv.op()) {
+			case EQUAL:
+				return fileVersion == rhs;
+			case GEQUAL:
+				return fileVersion >= rhs;
+			case GREATER:
+				return fileVersion > rhs;
+			case LEQUAL:
+				return fileVersion <= rhs;
+			case LESS:
+				return fileVersion < rhs;
+			case NOTEQUAL:
+				return fileVersion != rhs;
+		}
+		return false;
+	}
+
 	private void readObjectFields(Object obj, Class cls, int objStartAddress) throws InstantiationException, IllegalAccessException, IOException {
 		List<Field> objSizeFields = new ArrayList<>();
 		List<String> localDefinitions = new ArrayList<>();
@@ -101,6 +135,11 @@ public class BinaryDeserializer extends BinarySerialization {
 			cls = obj.getClass();
 		}
 		for (Field fld : getSortedFields(cls)) {
+			if (fld.isAnnotationPresent(IfVersion.class)) {
+				if (!isIfVersionPass(fld.getAnnotation(IfVersion.class))) {
+					continue;
+				}
+			}
 			if (!fld.isAnnotationPresent(Ignore.class)) {
 				Object value = readValue(fld.getGenericType(), fld);
 				fld.set(obj, value);
@@ -211,6 +250,9 @@ public class BinaryDeserializer extends BinarySerialization {
 						throw new RuntimeException(String.format("Unrecognized ByteOrderMark: 0x%08X, expected 0x%08X for BE and 0x%08X for LE respectively.", numValue, bom.ifBE(), bom.ifLE()));
 					}
 				}
+				if (hasAnnotation(Version.class, field)) {
+					fileVersion = ((Number) value).intValue();
+				}
 
 				break;
 			case ENUM:
@@ -265,10 +307,10 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		int ordinal = readSizedInt(field, getIntSize(defaultSize, field, cls));
 
-		if (ordinal < 0 || ordinal >= constants.length){
+		if (ordinal < 0 || ordinal >= constants.length) {
 			return null;
 		}
-		
+
 		return (Enum) constants[ordinal];
 	}
 
@@ -397,13 +439,12 @@ public class BinaryDeserializer extends BinarySerialization {
 
 			if (!found) {
 				System.err.println("Warning: Unknown type choice: " + strVal + "(0x" + Integer.toHexString(intVal) + "). Using base type " + cls + " of field " + field + ".");
-			}
-			else {
+			} else {
 				debugPrint("Resolved TypeChoice " + cls);
 			}
 		}
 		ant[1] = cls;
-		
+
 		Object obj = null;
 
 		if (cls == String.class) {
@@ -427,7 +468,7 @@ public class BinaryDeserializer extends BinarySerialization {
 			obj = str;
 		} else {
 			obj = cls.newInstance();
-			
+
 			if (Modifier.isAbstract(cls.getModifiers())) {
 				throw new InstantiationException("Can not instantiate abstract class " + cls + ". Check for invalid TypeChoice?");
 			}

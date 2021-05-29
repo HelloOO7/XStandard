@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BinarySerialization {
+	
+	public int fileVersion;
+	
     protected static List<Field> getSortedFields(Class cls){
         List<Field> l = new ArrayList<>();
 
