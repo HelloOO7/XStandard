@@ -1,16 +1,8 @@
 package ctrmap.stdlib.arm;
 
-import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.MemoryStream;
-import ctrmap.stdlib.io.base.LittleEndianIO;
-import ctrmap.stdlib.io.iface.PositionedDataInput;
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ThumbAssembler {
 
@@ -20,7 +12,7 @@ public class ThumbAssembler {
 	public static final int BL_HIGH_IDENT = (0b11110 << 11);
 	public static final int BL_LOW_IDENT = (0b11111 << 11);
 
-	public static void writeBranchLinkInstruction(SeekableDataOutput out, int branchTarget) throws IOException {
+	public static void writeBranchLinkInstruction(DataIOStream out, int branchTarget) throws IOException {
 		int currentOffset = out.getPosition() + 4;
 		int diff = branchTarget - currentOffset;
 		int value = diff >> 1;
@@ -34,14 +26,14 @@ public class ThumbAssembler {
 		out.writeShort(second);
 	}
 	
-	public static void writeBXInstruction(SeekableDataOutput out, int register) throws IOException {
+	public static void writeBXInstruction(DataIOStream out, int register) throws IOException {
 		int byte0 = 0b01000111;
 		int byte1 = ((register > 7 ? 1 : 0) << 6) | ((register % 7) << 3);
 		out.write(byte1);
 		out.write(byte0);
 	}
 	
-	public static void writeSmallBranchInstruction(SeekableDataOutput out, int branchTarget) throws IOException {
+	public static void writeSmallBranchInstruction(DataIOStream out, int branchTarget) throws IOException {
 		int currentOffset = out.getPosition() + 4;
 		int diff = branchTarget - currentOffset;
 		int value = diff >> 1;
@@ -51,7 +43,7 @@ public class ThumbAssembler {
 		out.writeShort(instruction);
 	}
 
-	public static int getBranchInstructionTarget(PositionedDataInput in) throws IOException {
+	public static int getBranchInstructionTarget(DataIOStream in) throws IOException {
 		int first = in.readUnsignedShort();
 		int second = in.readUnsignedShort();
 		int pos = in.getPosition();
@@ -94,15 +86,15 @@ public class ThumbAssembler {
 		out.write(byte0);
 	}
 
-	public static int writePcRelativeLoadAbs(SeekableDataOutput out, int destReg, int off) throws IOException {
+	public static int writePcRelativeLoadAbs(DataIOStream out, int destReg, int off) throws IOException {
 		return writePcRelativeLoad(out, destReg, off, true);
 	}
 	
-	public static int writePcRelativeLoad(SeekableDataOutput out, int destReg, int off) throws IOException {
+	public static int writePcRelativeLoad(DataIOStream out, int destReg, int off) throws IOException {
 		return writePcRelativeLoad(out, destReg, off, false);
 	}
 	
-	public static int writePcRelativeLoad(SeekableDataOutput out, int destReg, int off, boolean offAbs) throws IOException {
+	public static int writePcRelativeLoad(DataIOStream out, int destReg, int off, boolean offAbs) throws IOException {
 		int pc = out.getPosition() + 4;
 		if (offAbs){
 			off -= pc;

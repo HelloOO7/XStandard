@@ -1,7 +1,10 @@
 package ctrmap.stdlib.res;
 
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.InputStreamReadable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,20 +32,20 @@ public class ResourceFile extends FSFile{
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public ReadableStream getInputStream() {
 		if (isDirectory()){
 			return null;
 		}
-		return ResourceAccess.getStream(info.getResourcePath());
+		return new InputStreamReadable(ResourceAccess.getStream(info.getResourcePath()));
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		throw new UnsupportedOperationException("Can not output to a static resource file.");
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		throw new UnsupportedOperationException("Can not output to a static resource file.");
 	}
 

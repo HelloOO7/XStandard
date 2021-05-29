@@ -1,15 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package ctrmap.stdlib.fs.accessors;
 
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.io.base.LittleEndianIO;
-import java.io.InputStream;
-import java.io.OutputStream;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
 import java.util.List;
 
 /**
@@ -23,6 +17,10 @@ public class FSFileAdapter extends FSFile {
 		source = toWrap;
 	}
 
+	public FSFile getSource(){
+		return source;
+	}
+	
 	@Override
 	public FSFile getChild(String forName) {
 		return source.getChild(forName);
@@ -69,17 +67,17 @@ public class FSFileAdapter extends FSFile {
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public ReadableStream getInputStream() {
 		return source.getInputStream();
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		return source.getOutputStream();
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		return source.getIO();
 	}
 

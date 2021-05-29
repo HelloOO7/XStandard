@@ -4,9 +4,8 @@ import ctrmap.stdlib.arm.ARMAssembler;
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.text.FormattingUtils;
 import ctrmap.stdlib.io.InvalidMagicException;
-import ctrmap.stdlib.io.MemoryStream;
 import ctrmap.stdlib.io.util.BitUtils;
-import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -16,8 +15,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import ctrmap.stdlib.arm.ThumbAssembler;
 import ctrmap.stdlib.gui.file.ExtensionFilter;
-import ctrmap.stdlib.io.base.LittleEndianIO;
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.impl.access.MemoryStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.structs.StringTable;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class RPM {
 
 	private RPMExternalSymbolResolver extResolver;
 
-	private MemoryStream code;
+	private DataIOStream code;
 
 	public RPM(FSFile fsf) {
 		this(fsf.getBytes());
@@ -50,9 +50,9 @@ public class RPM {
 
 	public RPM(byte[] bytes) {
 		try {
-			MemoryStream ft = new MemoryStream(bytes);
+			DataIOStream ft = new DataIOStream(bytes);
 			ft.seek(bytes.length - 16);
-			if (!StringUtils.checkMagic(ft, RPM_MAGIC)) {
+			if (!StringIO.checkMagic(ft, RPM_MAGIC)) {
 				throw new InvalidMagicException("Not an RPM file!");
 			}
 			int version = ft.read() - '0';
@@ -61,7 +61,7 @@ public class RPM {
 			int codeSize = ft.readInt();
 
 			ft.seek(symbolsOffset);
-			if (!StringUtils.checkMagic(ft, SYM_MAGIC)) {
+			if (!StringIO.checkMagic(ft, SYM_MAGIC)) {
 				throw new InvalidMagicException("SYM section not present!");
 			}
 			int symbolCount = ft.readUnsignedShort();
@@ -70,7 +70,7 @@ public class RPM {
 			}
 
 			ft.seek(relocationsOffset);
-			if (!StringUtils.checkMagic(ft, REL_MAGIC)) {
+			if (!StringIO.checkMagic(ft, REL_MAGIC)) {
 				throw new InvalidMagicException("REL section not present!");
 			}
 			baseAddress = ft.readInt();
@@ -79,23 +79,23 @@ public class RPM {
 				relocations.add(new RPMRelocation(ft, this));
 			}
 
-			code = new MemoryStream(Arrays.copyOf(bytes, codeSize));
+			code = new DataIOStream(Arrays.copyOf(bytes, codeSize));
 		} catch (IOException ex) {
 			Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
 	public RPM() {
-		code = new MemoryStream();
+		code = new DataIOStream();
 	}
 
 	public static boolean isRPM(FSFile f) {
 		if (f.isFile() && f.length() > 0x10) {
 			try {
-				LittleEndianIO io = f.getIO();
+				DataIOStream io = f.getDataIOStream();
 
 				io.seek(f.length() - 16);
-				boolean rsl = StringUtils.checkMagic(io, RPM_MAGIC);
+				boolean rsl = StringIO.checkMagic(io, RPM_MAGIC);
 
 				io.close();
 				return rsl;
@@ -108,7 +108,7 @@ public class RPM {
 
 	public void merge(RPM source) {
 		try {
-			int base = BitUtils.getPaddedInteger(code.length(), 4);
+			int base = BitUtils.getPaddedInteger(code.getLength(), 4);
 			code.seek(base);
 			code.write(source.code.toByteArray());
 
@@ -152,12 +152,12 @@ public class RPM {
 	}
 
 	public void writeMAPToFile(FSFile fsf) {
-		PrintStream out = new PrintStream(fsf.getOutputStream());
+		PrintStream out = new PrintStream(fsf.getNativeOutputStream());
 
 		for (RPMSymbol symb : symbols) {
 			if (symb.name != null && !symb.name.isEmpty()) {
 				int addr = symb.address.getAddrAbs();
-				if (addr < baseAddress || addr > baseAddress + code.length()) {
+				if (addr < baseAddress || addr > baseAddress + code.getLength()) {
 					continue; //external symbol
 				}
 
@@ -195,7 +195,7 @@ public class RPM {
 		relocations.addAll(l);
 	}
 
-	public void setCode(MemoryStream buf) {
+	public void setCode(DataIOStream buf) {
 		code = buf;
 	}
 
@@ -207,7 +207,7 @@ public class RPM {
 	}
 
 	public int getByteSize() {
-		int size = code.length();
+		int size = code.getLength();
 		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
 
 		size += 8; //symbol header
@@ -237,7 +237,7 @@ public class RPM {
 
 	public byte[] getBytes() {
 		try {
-			MemoryStream ba = new MemoryStream();
+			DataIOStream ba = new DataIOStream();
 			ba.write(code.toByteArray());
 			int codeSize = ba.getPosition();
 			ba.pad(RPM_PADDING);
@@ -315,7 +315,7 @@ public class RPM {
 		}
 	}
 
-	public static void writeRelocationDataByType(RPM rpm, RPMRelocation rel, SeekableDataOutput out) throws IOException {
+	public static void writeRelocationDataByType(RPM rpm, RPMRelocation rel, DataIOStream out) throws IOException {
 		int addr = rel.source.getWritableAddress();
 
 		switch (rel.targetType) {

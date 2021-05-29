@@ -1,6 +1,6 @@
 package ctrmap.stdlib.crypto;
 
-import ctrmap.stdlib.io.iface.SeekableDataInput;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.IOException;
 
 /**
@@ -11,7 +11,7 @@ public class CRC16 {
 	/*
 	Checksums.cs in PKHex.
 	 */
-	public static int CRC16_CCIITT(SeekableDataInput in, int off, int len) throws IOException {
+	public static int CRC16_CCIITT(DataIOStream in, int off, int len) throws IOException {
 		int top = 0xFF;
 		int bot = 0xFF;
 		in.seek(off);

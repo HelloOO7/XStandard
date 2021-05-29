@@ -2,6 +2,10 @@ package ctrmap.stdlib.text;
 
 public class StringEx {
 	
+	public static int indexOfFirstNonWhitespaceAfterWhitespace(String str, int idx){
+		return indexOfFirstNonWhitespace(str, indexOfFirstWhitespace(str, idx));
+	}
+	
 	public static int indexOfFirstNonWhitespace(String str){
 		return indexOfFirstNonWhitespace(str, 0);
 	}

@@ -1,6 +1,6 @@
 package ctrmap.stdlib.formats.rpm;
 
-import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -82,8 +82,8 @@ public interface RPMRelocationSource {
 		public String symbolName;
 
 		public RPMRelSrcExternalSymbol(RPM rpm, DataInput in) throws IOException {
-			ns = StringUtils.readString(in);
-			symbolName = StringUtils.readString(in);
+			ns = StringIO.readString(in);
+			symbolName = StringIO.readString(in);
 			this.rpm = rpm;
 			symb = rpm.getExternalSymbol(ns, symbolName);
 		}
@@ -97,8 +97,8 @@ public interface RPMRelocationSource {
 
 		@Override
 		public void write(DataOutput out) throws IOException {
-			StringUtils.writeString(out, ns);
-			StringUtils.writeString(out, symb.name);
+			StringIO.writeString(out, ns);
+			StringIO.writeString(out, symb.name);
 		}
 		
 		@Override

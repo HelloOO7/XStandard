@@ -1,15 +1,15 @@
 package ctrmap.stdlib.io.structs;
 
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.IOException;
 
 public class TemporaryValue {
 
 	private int position;
 
-	protected SeekableDataOutput dosref;
+	protected DataIOStream dosref;
 	
-	public TemporaryValue(SeekableDataOutput dos) throws IOException {
+	public TemporaryValue(DataIOStream dos) throws IOException {
 		dosref = dos;
 		position = dos.getPosition();
 		writePointer(0);

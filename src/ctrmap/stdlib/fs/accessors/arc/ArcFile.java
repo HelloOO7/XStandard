@@ -2,16 +2,14 @@ package ctrmap.stdlib.fs.accessors.arc;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
-import ctrmap.stdlib.io.base.LittleEndianIO;
-import java.io.InputStream;
-import java.io.OutputStream;
+import ctrmap.stdlib.fs.accessors.FSFileAdapter;
 import java.util.List;
 
-public class ArcFile extends FSFile{
-	private FSFile source;
+public class ArcFile extends FSFileAdapter {
 	private ArcFileAccessor accessor;
 	
 	public ArcFile(FSFile source, ArcFileAccessor accessor){
+		super(source);
 		this.source = source;
 		this.accessor = accessor;
 	}
@@ -26,11 +24,6 @@ public class ArcFile extends FSFile{
 	}
 
 	@Override
-	public FSFile getParent() {
-		return source.getParent();
-	}
-
-	@Override
 	public void mkdir() {
 		throw new UnsupportedOperationException("ArcFiles can not be directories.");
 	}
@@ -41,42 +34,8 @@ public class ArcFile extends FSFile{
 	}
 
 	@Override
-	public boolean exists() {
-		return source.exists();
-	}
-
-	@Override
-	public String getName() {
-		return source.getName();
-	}
-
-	@Override
-	public InputStream getInputStream() {
-		return source.getInputStream();
-	}
-
-	@Override
-	public OutputStream getOutputStream() {
-		return source.getOutputStream();
-	}
-
-	@Override
-	public LittleEndianIO getIO() {
-		return source.getIO();
-	}
-
-	@Override
 	public List<FSFile> listFiles() {
 		return accessor.getArcFiles(this);
-	}
-
-	@Override
-	public int length() {
-		return source.length();
-	}
-	
-	public FSFile getSource(){
-		return source;
 	}
 
 	@Override
@@ -87,11 +46,6 @@ public class ArcFile extends FSFile{
 	@Override
 	public int getChildCount() {
 		return accessor.getArcFiles(this).size();
-	}
-
-	@Override
-	public void setPath(String newPath) {
-		source.setPath(newPath);
 	}
 
 	@Override

@@ -3,7 +3,9 @@ package ctrmap.stdlib.fs;
 import ctrmap.stdlib.fs.accessors.arc.ArcFileAccessor;
 import ctrmap.stdlib.fs.accessors.io.MonitoredFSIO;
 import ctrmap.stdlib.fs.accessors.io.MonitoredFSOutputStream;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -113,12 +115,12 @@ public class VFSFile extends FSFile {
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public ReadableStream getInputStream() {
 		return getExistingFile().getInputStream();
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		ensureOvParentExists();
 		return new MonitoredFSOutputStream(this);
 	}
@@ -130,7 +132,7 @@ public class VFSFile extends FSFile {
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		if (!ovFile.exists()) {
 			ensureOvParentExists();
 			FSUtil.copy(baseFile, ovFile);

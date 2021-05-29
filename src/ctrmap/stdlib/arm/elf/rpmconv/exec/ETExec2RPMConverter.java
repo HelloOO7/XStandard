@@ -1,17 +1,10 @@
 package ctrmap.stdlib.arm.elf.rpmconv.exec;
 
-import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.MemoryStream;
-import ctrmap.stdlib.io.base.IOStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import net.fornwall.jelf.ElfException;
 import net.fornwall.jelf.ElfFile;
 import net.fornwall.jelf.ElfSection;
 import net.fornwall.jelf.ElfSymbol;
@@ -22,6 +15,7 @@ import ctrmap.stdlib.formats.rpm.RPM;
 import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
 import ctrmap.stdlib.arm.elf.rpmconv.IElf2RpmConverter;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 
 /**
  *
@@ -34,7 +28,7 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 
 		List<ExecElfSection> sections = new ArrayList<>();
 
-		IOStream io = new DiskFile(elfFile).getIO();
+		DataIOStream io = new DiskFile(elfFile).getDataIOStream();
 
 		for (int i = 0; i < elf.num_sh; i++) {
 			ElfSection sect = elf.getSection(i);
@@ -72,7 +66,7 @@ public class ETExec2RPMConverter implements IElf2RpmConverter {
 			s.relocate(relocState);
 		}
 
-		MemoryStream out = new MemoryStream();
+		DataIOStream out = new DataIOStream();
 		for (ExecElfSection c : sections) {
 			rpm.relocations.addAll(c.relocs);
 			out.seek(relocState.getTargetSectionOffsetById(c.id));

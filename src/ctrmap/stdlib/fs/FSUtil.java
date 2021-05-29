@@ -2,13 +2,15 @@ package ctrmap.stdlib.fs;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.fs.accessors.MemoryFile;
-import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,15 +22,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FSUtil {
-	
-	public static boolean checkFileMagic(FSFile fsf, String magic){
-		if (!fsf.isFile()){
+
+	public static boolean checkFileMagic(FSFile fsf, String magic) {
+		if (!fsf.isFile()) {
 			return false;
 		}
-		try {
-			DataInputStream dis = new DataInputStream(fsf.getInputStream());
-			if (dis.available() >= magic.length()){
-				return StringUtils.checkMagic(dis, magic);
+		try (DataInStream dis = new DataInStream(fsf.getInputStream())) {
+			if (dis.getLength() >= magic.length()) {
+				return StringIO.checkMagic(dis, magic);
 			}
 			return false;
 		} catch (IOException ex) {
@@ -44,18 +45,46 @@ public class FSUtil {
 		return path;
 	}
 
+	public static void copy(File source, File target) {
+		try {
+			Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException ex) {
+			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public static void move(File source, File target) {
+		try {
+			Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException ex) {
+			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
 	public static void copy(FSFile source, FSFile target) {
 		if (source instanceof DiskFile && target instanceof DiskFile) {
 			//Optimized copy for real filesystem files
 			DiskFile dfSrc = (DiskFile) source;
 			DiskFile dfTgt = (DiskFile) target;
-			try {
-				Files.copy(dfSrc.getFile().toPath(), dfTgt.getFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException ex) {
-				Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
-			}
+
+			copy(dfSrc.getFile(), dfTgt.getFile());
+		} else {
+			writeBytesToFile(target, readFileToBytes(source));
 		}
-		writeBytesToFile(target, readFileToBytes(source));
+	}
+
+	public static void move(FSFile source, FSFile target) {
+		if (source instanceof DiskFile && target instanceof DiskFile) {
+			//Optimized copy for real filesystem files
+			DiskFile dfSrc = (DiskFile) source;
+			DiskFile dfTgt = (DiskFile) target;
+
+			move(dfSrc.getFile(), dfTgt.getFile());
+		} else {
+			//Using setPath could result in undefined behavior if the files are not on the same file system
+			writeBytesToFile(target, readFileToBytes(source));
+			source.delete();
+		}
 	}
 
 	public static boolean fileCmp(FSFile f1, FSFile f2) {
@@ -73,11 +102,11 @@ public class FSUtil {
 						return Arrays.equals(b1, b2);
 					} else {
 						try {
-							InputStream is1 = f1.getInputStream();
-							InputStream is2 = f2.getInputStream();
+							ReadableStream is1 = f1.getInputStream();
+							ReadableStream is2 = f2.getInputStream();
 							int b0 = 0;
 							int b1 = 0;
-							int size = is1.available();
+							int size = is1.getLength();
 							boolean b = true;
 							for (int i = 0; i < size; i++) {
 								b0 = is1.read();
@@ -114,7 +143,7 @@ public class FSUtil {
 
 	public static void writeBytesToFile(FSFile f, byte[] bytes) {
 		//This won't get any optimizations with NIO stuff as it's actually faster than that
-		OutputStream os = f.getOutputStream();
+		WriteableStream os = f.getOutputStream();
 		writeBytesToStream(bytes, os);
 	}
 
@@ -166,7 +195,28 @@ public class FSUtil {
 		return null;
 	}
 
+	public static byte[] readStreamToBytes(ReadableStream strm) {
+		try {
+			byte[] b = new byte[strm.getLength()];
+			strm.read(b);
+			strm.close();
+			return b;
+		} catch (IOException ex) {
+			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return null;
+	}
+
 	public static void writeBytesToStream(byte[] bytes, OutputStream strm) {
+		try {
+			strm.write(bytes);
+			strm.close();
+		} catch (IOException ex) {
+			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public static void writeBytesToStream(byte[] bytes, WriteableStream strm) {
 		try {
 			strm.write(bytes);
 			strm.close();
@@ -196,13 +246,13 @@ public class FSUtil {
 		int start = path.replace('\\', '/').lastIndexOf("/") + 1;
 		return path.substring(start, path.length());
 	}
-	
-	public static String getFileExtension(String fileName){
+
+	public static String getFileExtension(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);
 		return lioDot == -1 ? "" : fileName.substring(lioDot + 1);
 	}
-	
-	public static String getFileExtensionWithDot(String fileName){
+
+	public static String getFileExtensionWithDot(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);
 		return lioDot == -1 ? "" : fileName.substring(lioDot);
 	}
@@ -211,8 +261,8 @@ public class FSUtil {
 		int lioDot = getLastDotIndexInName(fileName);
 		return lioDot != -1 ? fileName.substring(0, lioDot) : fileName;
 	}
-	
-	private static int getLastDotIndexInName(String fileName){
+
+	private static int getLastDotIndexInName(String fileName) {
 		int slash = fileName.indexOf("/");
 		int lioDot = fileName.lastIndexOf(".");
 		return lioDot > slash ? lioDot : -1;

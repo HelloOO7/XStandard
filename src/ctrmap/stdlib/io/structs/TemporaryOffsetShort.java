@@ -1,15 +1,15 @@
 package ctrmap.stdlib.io.structs;
 
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.IOException;
 
 public class TemporaryOffsetShort extends TemporaryOffset {
 
-	public TemporaryOffsetShort(SeekableDataOutput dos) throws IOException {
+	public TemporaryOffsetShort(DataIOStream dos) throws IOException {
 		super(dos);
 	}
 	
-	public TemporaryOffsetShort(SeekableDataOutput dos, int base) throws IOException {
+	public TemporaryOffsetShort(DataIOStream dos, int base) throws IOException {
 		super(dos, base);
 	}
 	

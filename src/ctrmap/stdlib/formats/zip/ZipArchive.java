@@ -9,11 +9,9 @@ import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
-import ctrmap.stdlib.io.base.LittleEndianIO;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -49,7 +47,7 @@ public class ZipArchive extends FSFileAdapter {
 					entries.add(es.nextElement());
 				}
 			} else {
-				ZipInputStream in = new ZipInputStream(source.getInputStream());
+				ZipInputStream in = new ZipInputStream(source.getNativeInputStream());
 				ZipEntry e;
 				while ((e = in.getNextEntry()) != null) {
 					entries.add(e);
@@ -114,7 +112,7 @@ public class ZipArchive extends FSFileAdapter {
 
 			} else {
 				//VERY SLOW. Do not use unless really needed
-				ZipInputStream in = new ZipInputStream(source.getInputStream());
+				ZipInputStream in = new ZipInputStream(source.getNativeInputStream());
 				ZipEntry e;
 				while ((e = in.getNextEntry()) != null) {
 					if (Objects.equals(e.getName(), entry.getName())){

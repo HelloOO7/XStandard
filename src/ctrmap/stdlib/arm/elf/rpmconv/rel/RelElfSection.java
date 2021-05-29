@@ -1,7 +1,5 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
-import ctrmap.stdlib.io.MemoryStream;
-import ctrmap.stdlib.io.base.IOStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +9,9 @@ import net.fornwall.jelf.ElfSymbol;
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
 import ctrmap.stdlib.arm.elf.SectionType;
 import ctrmap.stdlib.formats.rpm.RPM;
-import ctrmap.stdlib.formats.rpm.RPMSymbol;
 import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 
 /**
  *
@@ -32,9 +30,9 @@ public class RelElfSection {
 	public final int length;
 	public int targetOffset;
 
-	private MemoryStream buf;
+	private DataIOStream buf;
 
-	public RelElfSection(ElfFile elf, int sectionId, IOStream io) throws IOException {
+	public RelElfSection(ElfFile elf, int sectionId, DataIOStream io) throws IOException {
 		id = sectionId;
 		sec = elf.getSection(id);
 		type = SectionType.getSectionTypeFromElf(sec.header.getName());
@@ -46,7 +44,7 @@ public class RelElfSection {
 			io.seek(sourceOffset);
 			io.read(b);
 		}
-		buf = new MemoryStream(b);
+		buf = new DataIOStream(b);
 	}
 
 	public byte[] getBytes() {

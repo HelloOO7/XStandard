@@ -1,20 +1,18 @@
 package ctrmap.stdlib.io.util;
 
-import ctrmap.stdlib.io.base.IOStream;
-import ctrmap.stdlib.io.iface.SeekableDataInput;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 public class BitUtils {
 
 	public static int readUInt24LE(DataInput in) throws IOException {
 		return (int) (in.readUnsignedByte()
-				| in.readUnsignedByte() << 8
-				| in.readUnsignedByte() << 16);
+			| in.readUnsignedByte() << 8
+			| in.readUnsignedByte() << 16);
 	}
 
 	public static int readInt24LE(DataInput in) throws IOException {
@@ -39,13 +37,25 @@ public class BitUtils {
 	public static byte[] integerToByteArrayBE(int i) {
 		return new byte[]{(byte) (i >>> 24), (byte) (i >>> 16), (byte) (i >>> 8), (byte) i};
 	}
-	
+
 	public static byte[] integerToByteArrayLE(int i, byte[] arr, int off) {
 		arr[off + 3] = (byte) (i >>> 24);
 		arr[off + 2] = (byte) (i >>> 16);
 		arr[off + 1] = (byte) (i >>> 8);
-		arr[off + 0] = (byte)i;
+		arr[off + 0] = (byte) i;
 		return arr;
+	}
+
+	public static byte[] floatArrayToByteArray(float[] floats, int floatsOff, byte[] bytes, int bytesOff, int count) {
+		for (int fIdx = floatsOff, bIdx = bytesOff; fIdx < count && fIdx < floats.length; fIdx++, bIdx += 4) {
+			if (bIdx + 3 >= bytes.length){
+				break;
+			}
+			int reinterpretFloat = Float.floatToIntBits(floats[fIdx]);
+			
+			integerToByteArrayLE(reinterpretFloat, bytes, bIdx);
+		}
+		return bytes;
 	}
 
 	public static int byteArrayToIntegerBE(byte[] b) {
@@ -59,7 +69,7 @@ public class BitUtils {
 		x = (x << 8) | (b[offs + 3] & 255);
 		return x;
 	}
-	
+
 	public static int byteArrayToIntegerLE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
@@ -95,16 +105,16 @@ public class BitUtils {
 		return false;
 	}
 
-	public static SearchResult searchForInt32(IOStream in, int startPos, int endPos, int value) throws IOException {
+	public static SearchResult searchForInt32(DataIOStream in, int startPos, int endPos, int value) throws IOException {
 		return searchForBytes(in, startPos, endPos, new SearchPattern(ByteBuffer.wrap(new byte[4]).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array()));
 	}
 
-	public static SearchResult searchForBytes(IOStream in, int startPos, int endPos, SearchPattern... patterns) throws IOException {
+	public static SearchResult searchForBytes(DataIOStream in, int startPos, int endPos, SearchPattern... patterns) throws IOException {
 		if (patterns.length == 0) {
 			throw new IllegalArgumentException("At least one pattern has to be provided.");
 		}
 		int pos = in.getPosition();
-		int inLength = in.length();
+		int inLength = in.getLength();
 		if (endPos != -1) {
 			inLength = endPos;
 		}

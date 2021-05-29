@@ -2,8 +2,10 @@ package ctrmap.stdlib.fs.accessors;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
-import ctrmap.stdlib.io.MemoryStream;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.access.MemoryStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,22 +33,17 @@ public class MemoryFile extends FSFile{
 	}
 
 	@Override
-	public InputStream getInputStream() {
-		return new ByteArrayInputStream(data);
+	public ReadableStream getInputStream() {
+		return getIO();
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
-		return new MemoryStream.RandomAccessBAOS(null, new MemoryStream.RandomAccessBAOS.CloseListener() {
-			@Override
-			public void onClose(byte[] buf) {
-				data = buf;
-			}
-		});
+	public WriteableStream getOutputStream() {
+		return getIO();
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		return new MemoryStream(data);
 	}
 	

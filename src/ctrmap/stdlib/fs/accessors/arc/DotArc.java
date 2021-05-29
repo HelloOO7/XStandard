@@ -30,7 +30,7 @@ public class DotArc {
 			if (dotArcFile == null || !dotArcFile.exists()) {
 				return;
 			}
-			BufferedReader reader = new BufferedReader(new InputStreamReader(dotArcFile.getInputStream()));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(dotArcFile.getInputStream().getInputStream()));
 			if (reader.ready()) {
 				String signature = reader.readLine();
 				if (signature.equals(DOT_ARC_SIGNATURE)) {
@@ -61,7 +61,7 @@ public class DotArc {
 	public void updateAndWrite() {
 		if (source != null) {
 			try {
-				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(source.getOutputStream()));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(source.getOutputStream().getOutputStream()));
 
 				writer.write(DOT_ARC_SIGNATURE);
 				writer.write(System.lineSeparator());

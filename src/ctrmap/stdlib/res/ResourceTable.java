@@ -1,7 +1,9 @@
 package ctrmap.stdlib.res;
 
-import ctrmap.stdlib.io.LittleEndianDataInputStream;
-import ctrmap.stdlib.io.LittleEndianDataOutputStream;
+import ctrmap.stdlib.io.base.iface.DataInputEx;
+import ctrmap.stdlib.io.base.iface.DataOutputEx;
+import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataOutStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,12 +20,12 @@ public class ResourceTable {
 	public ResourceTable(File root) {
 		addFile(root, -1, false);
 	}
-	
-	public ResourceTable(){
-		
+
+	public ResourceTable() {
+
 	}
-	
-	public void merge(ResourceTable tbl){
+
+	public void merge(ResourceTable tbl) {
 		data.addAll(tbl.data);
 	}
 
@@ -42,43 +44,37 @@ public class ResourceTable {
 	}
 
 	public ResourceTable(InputStream in) {
-		try {
-			LittleEndianDataInputStream dis = new LittleEndianDataInputStream(in);
+		try (DataInputEx dis = new DataInStream(in)) {
 			int size = dis.readInt();
 			for (int i = 0; i < size; i++) {
 				data.add(new ResourceInfo(dis, this));
 			}
-			dis.close();
 		} catch (IOException ex) {
 			Logger.getLogger(ResourceTable.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
 	public void write(File target) {
-		try {
-			LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new FileOutputStream(target));
-
+		try (DataOutputEx dos = new DataOutStream(new FileOutputStream(target))) {
 			dos.writeInt(data.size());
 
 			for (ResourceInfo i : data) {
 				i.write(dos);
 			}
-
-			dos.close();
 		} catch (IOException ex) {
 			Logger.getLogger(ResourceTable.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
-	public ResourceInfo getResInfo(String path){
-		for (ResourceInfo i : data){
-			if (i.getResourcePath().equals(path)){
+	public ResourceInfo getResInfo(String path) {
+		for (ResourceInfo i : data) {
+			if (i.getResourcePath().equals(path)) {
 				return i;
 			}
 		}
 		return null;
 	}
-	
+
 	public static class ResourceInfo {
 
 		public String resourceName;
@@ -93,21 +89,21 @@ public class ResourceTable {
 			this.table = table;
 		}
 
-		public ResourceInfo(LittleEndianDataInputStream in, ResourceTable table) throws IOException {
+		public ResourceInfo(DataInputEx in, ResourceTable table) throws IOException {
 			this.table = table;
 			resourceName = in.readString();
 			isDirectory = in.readBoolean();
 			parentIdx = in.readInt();
 		}
 
-		public void write(LittleEndianDataOutputStream dos) throws IOException {
+		public void write(DataOutputEx dos) throws IOException {
 			dos.writeString(resourceName);
 			dos.writeBoolean(isDirectory);
 			dos.writeInt(parentIdx);
 		}
 
 		public ResourceInfo getParent() {
-			if (parentIdx == -1){
+			if (parentIdx == -1) {
 				return null;
 			}
 			return table.data.get(parentIdx);
@@ -119,12 +115,12 @@ public class ResourceTable {
 			}
 			return resourceName;
 		}
-		
-		public List<ResourceInfo> listFiles(){
+
+		public List<ResourceInfo> listFiles() {
 			int idx = table.data.indexOf(this);
 			List<ResourceInfo> ret = new ArrayList<>();
-			for (ResourceInfo i : table.data){
-				if (i.parentIdx == idx){
+			for (ResourceInfo i : table.data) {
+				if (i.parentIdx == idx) {
 					ret.add(i);
 				}
 			}

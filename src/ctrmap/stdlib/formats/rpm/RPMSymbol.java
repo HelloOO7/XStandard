@@ -1,6 +1,6 @@
 package ctrmap.stdlib.formats.rpm;
 
-import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class RPMSymbol {
 	}
 
 	public RPMSymbol(RPM rpm, DataInput in, int version) throws IOException {
-		name = StringUtils.readString(in);
+		name = StringIO.readString(in);
 		if (name.isEmpty()){
 			name = null;
 		}
@@ -47,7 +47,7 @@ public class RPMSymbol {
 	}
 
 	public void write(DataOutput out) throws IOException {
-		StringUtils.writeString(out, name);
+		StringIO.writeString(out, name);
 		out.write(type.ordinal());
 		address.write(out);
 		out.writeInt(size);

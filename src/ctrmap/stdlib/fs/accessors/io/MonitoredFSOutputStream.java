@@ -2,25 +2,19 @@ package ctrmap.stdlib.fs.accessors.io;
 
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.VFSFile;
-import java.io.File;
-import java.io.FileOutputStream;
+import ctrmap.stdlib.io.base.impl.WriteableWrapper;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class MonitoredFSOutputStream extends OutputStream {
-
-	private OutputStream os;
+public class MonitoredFSOutputStream extends WriteableWrapper {
 
 	private VFSFile vfsf;
 
 	public MonitoredFSOutputStream(VFSFile vfsf) {
+		super(null);
 		if (vfsf.getOvFile().isDirectory()) {
-			os = vfsf.getBaseFile().getOutputStream();
+			out = vfsf.getBaseFile().getOutputStream();
 		} else {
-			os = vfsf.getOvFile().getOutputStream();
+			out = vfsf.getOvFile().getOutputStream();
 		}
 		this.vfsf = vfsf;
 
@@ -31,17 +25,17 @@ public class MonitoredFSOutputStream extends OutputStream {
 
 	@Override
 	public void write(byte b[], int off, int len) throws IOException {
-		os.write(b, off, len);
+		out.write(b, off, len);
 	}
 
 	@Override
 	public void write(int b) throws IOException {
-		os.write(b);
+		out.write(b);
 	}
 
 	@Override
 	public void close() throws IOException {
-		os.close();
+		out.close();
 		if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
 			System.out.println("File " + vfsf + " is in the blacklist, checking for changes.");
 			if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {

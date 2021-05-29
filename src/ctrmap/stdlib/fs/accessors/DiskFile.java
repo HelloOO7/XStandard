@@ -1,16 +1,20 @@
 package ctrmap.stdlib.fs.accessors;
 
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.io.LittleEndianRandomAccessFile;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.InputStreamReadable;
+import ctrmap.stdlib.io.base.impl.OutputStreamWriteable;
+import ctrmap.stdlib.io.base.impl.access.FileStream;
+import ctrmap.stdlib.io.base.impl.ext.BufferedIOStream;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -45,9 +49,9 @@ public class DiskFile extends FSFile {
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public ReadableStream getInputStream() {
 		try {
-			return new BufferedInputStream(new FileInputStream(file), Math.max(4096, (int) file.length() / 1000));
+			return new InputStreamReadable(new BufferedInputStream(new FileInputStream(file), Math.max(4096, (int) file.length() / 1000)));
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(DiskFile.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -55,9 +59,9 @@ public class DiskFile extends FSFile {
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		try {
-			return new FileOutputStream(file);
+			return new OutputStreamWriteable(new BufferedOutputStream(new FileOutputStream(file)));
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(DiskFile.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -65,13 +69,8 @@ public class DiskFile extends FSFile {
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
-		try {
-			return new LittleEndianRandomAccessFile(file);
-		} catch (FileNotFoundException ex) {
-			Logger.getLogger(DiskFile.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		return null;
+	public IOStream getIO() {
+		return new BufferedIOStream(FileStream.create(file));
 	}
 
 	@Override

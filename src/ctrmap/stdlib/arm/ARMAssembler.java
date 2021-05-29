@@ -1,10 +1,7 @@
 package ctrmap.stdlib.arm;
 
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.util.BitUtils;
-import ctrmap.stdlib.io.iface.SeekableDataInput;
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
-import ctrmap.stdlib.res.ResourceAccess;
-import ctrmap.stdlib.io.base.LittleEndianIO;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -19,7 +16,7 @@ public class ARMAssembler {
 	public static final int ARM_PRGCNT_REG_NUM = 15;
 	public static final int INS_NOP_MOV_R0_R0 = 0xE1A00000;
 		
-	public static void writeNOPInstructions(SeekableDataOutput out, int count) throws IOException{
+	public static void writeNOPInstructions(DataIOStream out, int count) throws IOException{
 		for (int i = 0; i < count; i++){
 			out.writeInt(INS_NOP_MOV_R0_R0);
 		}
@@ -75,20 +72,20 @@ public class ARMAssembler {
 		out.write(byte0);
 	}
 	
-	public static void writeLDRInstruction(SeekableDataOutput out, int targetRegister, int targetOffsetAbs) throws IOException{
+	public static void writeLDRInstruction(DataIOStream out, int targetRegister, int targetOffsetAbs) throws IOException{
 		int offsetDiff = targetOffsetAbs - (out.getPosition() + 8);
 		writeLDRInstruction(out, targetRegister, ARM_PRGCNT_REG_NUM, offsetDiff);
 	}
 	
-	public static void writeLDRInstruction(SeekableDataOutput out, int targetRegister, int baseRegister, int targetOffset) throws IOException{
+	public static void writeLDRInstruction(DataIOStream out, int targetRegister, int baseRegister, int targetOffset) throws IOException{
 		writeSingleDataTransferInstruction(out, targetRegister, baseRegister, targetOffset, true, false, ARMCondition.AL);
 	}
 	
-	public static void writeSTRInstruction(SeekableDataOutput out, int sourceRegister, int baseRegister, int targetOffset, boolean isByteQuantity, ARMCondition cnd) throws IOException {
+	public static void writeSTRInstruction(DataIOStream out, int sourceRegister, int baseRegister, int targetOffset, boolean isByteQuantity, ARMCondition cnd) throws IOException {
 		writeSingleDataTransferInstruction(out, sourceRegister, baseRegister, targetOffset, false, isByteQuantity, cnd);
 	}
 	
-	private static void writeSingleDataTransferInstruction(SeekableDataOutput out, int targetRegister, int baseRegister, int targetOffset, boolean isLDR, boolean isByteQuantity, ARMCondition cnd) throws IOException{
+	private static void writeSingleDataTransferInstruction(DataIOStream out, int targetRegister, int baseRegister, int targetOffset, boolean isLDR, boolean isByteQuantity, ARMCondition cnd) throws IOException{
 		byte condImmPrePostByte = 0;
 		condImmPrePostByte |= cnd.bits << 4;	//Always condition
 		condImmPrePostByte |= 0b01 << 2;				//Constant
@@ -111,14 +108,14 @@ public class ARMAssembler {
 		out.writeByte(condImmPrePostByte);
 	}
 	
-	public static int getBranchInstructionTarget(SeekableDataInput in) throws IOException{
+	public static int getBranchInstructionTarget(DataIOStream in) throws IOException{
 		int currentOffset = in.getPosition() + 8;
 		int v = (BitUtils.readInt24LE(in) << 2) + currentOffset;
 		in.skipBytes(1);
 		return v;
 	}
 	
-	public static void writeBranchInstruction(SeekableDataOutput out, int branchTarget, boolean link) throws IOException{
+	public static void writeBranchInstruction(DataIOStream out, int branchTarget, boolean link) throws IOException{
 		int currentOffset = out.getPosition() + 8;
 		int diff = branchTarget - currentOffset;
 		int value = (diff >> 2);
@@ -126,7 +123,7 @@ public class ARMAssembler {
 		out.write(CONDITION_ALWAYS << 4 | 0b101 << 1 | (link ? 1 : 0));
 	}
 	
-	public static void setImmValue(LittleEndianIO io, int targetValue) throws IOException{
+	public static void setImmValue(DataIOStream io, int targetValue) throws IOException{
 		int basePos = io.getPosition();
 		int bsi = encodeBarrelShiftedInt(targetValue);
 		io.skipBytes(1);

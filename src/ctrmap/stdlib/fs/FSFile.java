@@ -1,11 +1,16 @@
 package ctrmap.stdlib.fs;
 
-import ctrmap.stdlib.io.base.LittleEndianIO;
-import java.io.InputStream;
-import java.io.OutputStream;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataOutStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public abstract class FSFile {
 
@@ -31,11 +36,11 @@ public abstract class FSFile {
 
 	public abstract String getName();
 
-	public abstract InputStream getInputStream();
+	public abstract ReadableStream getInputStream();
 
-	public abstract OutputStream getOutputStream();
+	public abstract WriteableStream getOutputStream();
 
-	public abstract LittleEndianIO getIO();
+	public abstract IOStream getIO();
 
 	public abstract List<FSFile> listFiles();
 
@@ -74,6 +79,26 @@ public abstract class FSFile {
 
 	public void setBytes(byte[] bytes) {
 		FSUtil.writeBytesToFile(this, bytes);
+	}
+	
+	public DataInStream getDataInputStream(){
+		return new DataInStream(getInputStream());
+	}
+	
+	public DataOutStream getDataOutputStream(){
+		return new DataOutStream(getOutputStream());
+	}
+	
+	public DataIOStream getDataIOStream(){
+		return new DataIOStream(getIO());
+	}
+	
+	public InputStream getNativeInputStream(){
+		return getInputStream().getInputStream();
+	}
+	
+	public OutputStream getNativeOutputStream(){
+		return getOutputStream().getOutputStream();
 	}
 
 	public int getVisibleChildCount() {

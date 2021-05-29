@@ -1,7 +1,7 @@
 package ctrmap.stdlib.io.structs;
 
-import ctrmap.stdlib.io.iface.SeekableDataOutput;
-import ctrmap.stdlib.io.util.StringUtils;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,9 +11,9 @@ import java.util.Map;
 public class StringTable {
 	private Map<String, List<TemporaryOffset>> registOffsets = new HashMap<>();
 	
-	private SeekableDataOutput out;
+	private DataIOStream out;
 	
-	public StringTable(SeekableDataOutput out){
+	public StringTable(DataIOStream out){
 		this.out = out;
 	}
 	
@@ -31,7 +31,7 @@ public class StringTable {
 			for (TemporaryOffset o : e.getValue()){
 				o.setHere();
 			}
-			StringUtils.writeString(out, e.getKey());
+			StringIO.writeString(out, e.getKey());
 		}
 	}
 }

@@ -1,7 +1,9 @@
 package ctrmap.stdlib.fs.accessors.arc;
 
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -49,17 +51,17 @@ public class ArcFileMember extends FSFile{
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public ReadableStream getInputStream() {
 		return accessor.getInputStreamForArcMember(arc, path);
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		return accessor.getOutputStreamForArcMember(arc, path);
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		return accessor.getIOForArcMember(arc, path);
 	}
 

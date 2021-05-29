@@ -8,7 +8,10 @@ package ctrmap.stdlib.formats.zip;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.InputStreamReadable;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -80,17 +83,17 @@ public class ZipEntryFile extends FSFile {
 	}
 
 	@Override
-	public InputStream getInputStream() {
-		return arc.getEntryInputStream(e);
+	public ReadableStream getInputStream() {
+		return new InputStreamReadable(arc.getEntryInputStream(e));
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
+	public WriteableStream getOutputStream() {
 		throw new UnsupportedOperationException("Zip archives are not yet editable.");
 	}
 
 	@Override
-	public LittleEndianIO getIO() {
+	public IOStream getIO() {
 		throw new UnsupportedOperationException("Zip archives are not yet editable.");
 	}
 

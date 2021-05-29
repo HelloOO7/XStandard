@@ -1,9 +1,8 @@
 package ctrmap.stdlib.fs;
 
 import ctrmap.stdlib.gui.DialogUtils;
-import ctrmap.stdlib.io.LittleEndianDataInputStream;
-import ctrmap.stdlib.io.LittleEndianDataOutputStream;
-import ctrmap.stdlib.io.base.LittleEndianIO;
+import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataOutStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,8 @@ public class VFSChangeBlacklist {
 		tempBlacklistLocation = location;
 		try {
 			if (tempBlacklistLocation.exists()) {
-				LittleEndianDataInputStream in = new LittleEndianDataInputStream(tempBlacklistLocation.getInputStream());
-				int len = in.available();
+				DataInStream in = new DataInStream(tempBlacklistLocation.getInputStream());
+				int len = in.getLength();
 				if (len > 0) {
 					boolean restore = DialogUtils.showYesNoDialog("Backup VFS data found",
 							"CTRMap's last session was not shut down properly.\n"
@@ -71,7 +70,7 @@ public class VFSChangeBlacklist {
 
 	private void writeToIO() {
 		try {
-			LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(tempBlacklistLocation.getOutputStream());
+			DataOutStream dos = new DataOutStream(tempBlacklistLocation.getOutputStream());
 			for (String blp : blacklistedPaths) {
 				dos.writeString(blp);
 			}

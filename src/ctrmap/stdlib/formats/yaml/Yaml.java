@@ -2,6 +2,7 @@ package ctrmap.stdlib.formats.yaml;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.gui.file.ExtensionFilter;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
@@ -32,13 +33,13 @@ public class Yaml {
 		document = fsf;
 	}
 
-	public Yaml(InputStream strm, String name) {
+	public Yaml(ReadableStream strm, String name) {
 		loadFromInputStream(strm);
 		this.documentName = name;
 	}
 
-	private void loadFromInputStream(InputStream strm) {
-		try (Scanner scanner = new Scanner(strm, "UTF-8")) {
+	private void loadFromInputStream(ReadableStream strm) {
+		try (Scanner scanner = new Scanner(strm.getInputStream(), "UTF-8")) {
 			YamlNode currentNode = root;
 			
 			Stack<Integer> parentLevels = new Stack<>();
@@ -150,7 +151,7 @@ public class Yaml {
 
 	public void write() {
 		if (document != null) {
-			PrintStream out = new PrintStream(document.getOutputStream());
+			PrintStream out = new PrintStream(document.getNativeOutputStream());
 
 			writeNodeChildren(root, out, 0, false);
 

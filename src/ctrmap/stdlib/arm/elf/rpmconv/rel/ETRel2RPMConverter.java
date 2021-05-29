@@ -1,8 +1,6 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.MemoryStream;
-import ctrmap.stdlib.io.base.IOStream;
 import ctrmap.stdlib.io.util.BitUtils;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +22,7 @@ import ctrmap.stdlib.arm.elf.rpmconv.IElf2RpmConverter;
 import ctrmap.stdlib.formats.rpm.RPMRelocationTarget;
 import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 
 /**
  *
@@ -37,7 +36,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 
 		List<RelElfSection> sections = new ArrayList<>();
 
-		IOStream io = new DiskFile(f).getIO();
+		DataIOStream io = new DiskFile(f).getDataIOStream();
 
 		Map<String, ElfSection> relSections = new HashMap<>();
 
@@ -146,7 +145,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 
 		io.close();
 
-		MemoryStream code = new MemoryStream();
+		DataIOStream code = new DataIOStream();
 		for (RelElfSection s : sections) {
 			code.seek(s.targetOffset);
 			code.write(s.getBytes());

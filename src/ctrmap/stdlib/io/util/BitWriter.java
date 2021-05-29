@@ -1,9 +1,7 @@
 package ctrmap.stdlib.io.util;
 
-import ctrmap.stdlib.io.MemoryStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class BitWriter {
 	private byte bufIdx = 0;
