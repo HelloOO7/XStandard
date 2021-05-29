@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ArraySize {
-    public int elementCount() default -1;
+    public int value() default -1;
 }

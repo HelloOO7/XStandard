@@ -287,7 +287,7 @@ public class BinarySerializer extends BinarySerialization {
         else if (value instanceof String){
             if (hasAnnotation(MagicStr.class)){
                 int size = getIntSize(Integer.BYTES, ant);
-                String magic = getAnnotation(MagicStr.class, ant).text();
+                String magic = getAnnotation(MagicStr.class, ant).value();
                 if (hasAnnotation(MagicStrLE.class)){
                     magic = new StringBuilder(magic).reverse().toString();
                 }
@@ -384,7 +384,7 @@ public class BinarySerializer extends BinarySerialization {
                 int pointerSize = Integer.BYTES;
 
                 if (value.field.isAnnotationPresent(PointerSize.class)){
-                    pointerSize = value.field.getAnnotation(PointerSize.class).bytes();
+                    pointerSize = value.field.getAnnotation(PointerSize.class).value();
                 }
 
                 writeSizedInt(ptr, null, pointerSize);
@@ -405,7 +405,7 @@ public class BinarySerializer extends BinarySerialization {
     private void writeArrayLength(int length, Field field) throws IOException {
         int size = Integer.BYTES;
         if (hasAnnotation(ArrayLengthSize.class, field)){
-            size = field.getAnnotation(ArrayLengthSize.class).bytes();
+            size = field.getAnnotation(ArrayLengthSize.class).value();
         }
 
         writeSizedInt(length, null, size);
@@ -418,7 +418,7 @@ public class BinarySerializer extends BinarySerialization {
     private void writeSizedInt(Object value, Field field, int defaultSize) throws IOException {
         int size = defaultSize;
         if (hasAnnotation(Size.class, field)) {
-            size = getAnnotation(Size.class, field).bytes();
+            size = getAnnotation(Size.class, field).value();
         }
 
         switch (size){

@@ -108,7 +108,7 @@ public class BinaryDeserializer extends BinarySerialization {
 					objSizeFields.add(fld);
 				}
 				if (fld.isAnnotationPresent(Define.class)) {
-					String defineName = fld.getAnnotation(Define.class).name();
+					String defineName = fld.getAnnotation(Define.class).value();
 
 					definitions.put(defineName, value);
 					localDefinitions.add(defineName);
@@ -341,7 +341,7 @@ public class BinaryDeserializer extends BinarySerialization {
 			int ptr = 0;
 
 			if (hasAnnotation(PointerSize.class, field)) {
-				ptr += readSizedInt(field.getAnnotation(PointerSize.class).bytes());
+				ptr += readSizedInt(field.getAnnotation(PointerSize.class).value());
 			} else {
 				ptr += baseStream.readInt();
 			}
@@ -410,12 +410,12 @@ public class BinaryDeserializer extends BinarySerialization {
 			String str;
 
 			if (hasAnnotation(Size.class, field)) {
-				str = StringIO.readPaddedString(baseStream, field.getAnnotation(Size.class).bytes());
+				str = StringIO.readPaddedString(baseStream, field.getAnnotation(Size.class).value());
 			} else {
 				str = StringIO.readString(baseStream);
 			}
 			if (hasAnnotation(MagicStr.class, field)) {
-				String magic = field.getAnnotation(MagicStr.class).text();
+				String magic = field.getAnnotation(MagicStr.class).value();
 				if (hasAnnotation(MagicStrLE.class, field)) {
 					magic = new StringBuilder(magic).reverse().toString();
 				}
@@ -452,18 +452,18 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private int readArrayLength(Field field) throws IOException {
 		if (hasAnnotation(ArraySize.class, field)) {
-			return field.getAnnotation(ArraySize.class).elementCount();
+			return field.getAnnotation(ArraySize.class).value();
 		}
 		int size = Integer.BYTES;
 		if (hasAnnotation(ArrayLengthSize.class, field)) {
-			size = field.getAnnotation(ArrayLengthSize.class).bytes();
+			size = field.getAnnotation(ArrayLengthSize.class).value();
 		} else if (hasAnnotation(DefinedArraySize.class, field)) {
-			Object sizeObj = definitions.get(field.getAnnotation(DefinedArraySize.class).name());
+			Object sizeObj = definitions.get(field.getAnnotation(DefinedArraySize.class).value());
 			debugPrint("Defined array len " + sizeObj);
 			if (sizeObj instanceof Number) {
 				return ((Number) sizeObj).intValue();
 			} else {
-				throw new RuntimeException("Definition " + field.getAnnotation(DefinedArraySize.class).name() + " is not a Number!");
+				throw new RuntimeException("Definition " + field.getAnnotation(DefinedArraySize.class).value() + " is not a Number!");
 			}
 		}
 

@@ -39,7 +39,7 @@ public class BinarySerialization {
         int size = defaultSize;
         for (AnnotatedElement elem : elems) {
             if (hasAnnotation(Size.class, elem)) {
-                size = getAnnotation(Size.class, elem).bytes();
+                size = getAnnotation(Size.class, elem).value();
                 break;
             }
         }
