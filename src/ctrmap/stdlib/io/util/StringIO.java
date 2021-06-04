@@ -1,5 +1,6 @@
 package ctrmap.stdlib.io.util;
 
+import ctrmap.stdlib.io.IOCommon;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import static ctrmap.stdlib.io.util.StringIO.readString;
 import java.io.DataInput;
@@ -153,7 +154,9 @@ public class StringIO {
 	}
 	
 	public static boolean checkMagic(byte[] data, int position, String magic) {
-		return new String(Arrays.copyOfRange(data, position, position + magic.length()), StandardCharsets.US_ASCII).equals(magic);
+		String compare = new String(Arrays.copyOfRange(data, position, position + magic.length()), StandardCharsets.US_ASCII);
+		IOCommon.debugPrint("Compare magic " + compare + " to " + magic);
+		return compare.equals(magic);
 	}
 
 	public static boolean checkMagic(DataInput in, String magic) throws IOException {

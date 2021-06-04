@@ -55,36 +55,46 @@ public class VFS {
 		path = FSWildCard.getWildCardedPath(getRelativePath(path));
 		FSFile ovFile = getFileFromRefPath(overlay, path, afa);
 		FSFile target = getFileFromRefPath(root, path, afa);
-		if (ovFile.isDirectory()) {
-			if (monitor != null) {
-				monitor.setProgressTitle("Packing directory " + path);
-				monitor.setProgressPercentage(0);
-			}
-			if (target instanceof ArcFile) {
-				System.out.println("Applying arcfile..." + target.getPath());
-				ArcFile arc = (ArcFile)target;
+
+		if (target.exists()) {
+			if (ovFile.isDirectory()) {
 				if (monitor != null) {
+					monitor.setProgressTitle("Packing directory " + path);
 					monitor.setProgressPercentage(0);
-					monitor.setProgressSubTitle("Patching ArcFile...");
 				}
-				applyToArcFile(ovFile, ovFile, arc, afa, monitor);
+				if (target instanceof ArcFile) {
+					System.out.println("Applying arcfile..." + target.getPath());
+					ArcFile arc = (ArcFile) target;
+					if (monitor != null) {
+						monitor.setProgressPercentage(0);
+						monitor.setProgressSubTitle("Patching ArcFile...");
+					}
+					applyToArcFile(ovFile, ovFile, arc, afa, monitor);
+				} else {
+					for (FSFile sub : ovFile.listFiles()) {
+						applyOvFS(sub.getPath(), fs, monitor);
+					}
+				}
 			} else {
-				for (FSFile sub : ovFile.listFiles()) {
-					applyOvFS(sub.getPath(), fs, monitor);
+				if (target.isFile()) {
+					if (monitor != null) {
+						monitor.setProgressSubTitle("Writing " + target.getName());
+						List<String> siblings = target.getParent().list();
+						monitor.setProgressPercentage((int) (siblings.indexOf(target.getPath()) / (float) siblings.size() * 100));
+					}
+					if (!isFileChangeBlacklisted(path)) {
+						System.out.println("Write " + path + " to " + target.getPath());
+						FSUtil.writeBytesToFile(target, FSUtil.readFileToBytes(ovFile));
+					}
 				}
 			}
-		} else {
-			if (!target.isDirectory()) {
-				if (monitor != null) {
-					monitor.setProgressSubTitle("Writing " + target.getName());
-					List<String> siblings = target.getParent().list();
-					monitor.setProgressPercentage((int) (siblings.indexOf(target.getPath()) / (float) siblings.size() * 100));
-				}
-				if (!isFileChangeBlacklisted(path)) {
-					System.out.println("Write " + path + " to " + target.getPath());
-					FSUtil.writeBytesToFile(target, FSUtil.readFileToBytes(ovFile));
-				}
+		}
+		else {
+			if (ovFile instanceof ArcFile){
+				ovFile = ((ArcFile)ovFile).getSource(); //If the ArcFile was kept, it would get extracted to the target because ArcFile is a directory
 			}
+			
+			FSUtil.copy(ovFile, target);
 		}
 	}
 
@@ -93,10 +103,10 @@ public class VFS {
 		ensureDotArcExistence(inputs, root);
 		afa.writeToArcFile(arc, monitor, inputs.toArray(new ArcInput[inputs.size()]));
 	}
-	
-	private void ensureDotArcExistence(List<ArcInput> inputs, FSFile repackRoot){
-		for (ArcInput in : inputs){
-			if (in.targetPath.equals(DotArc.DOT_ARC_SIGNATURE)){
+
+	private void ensureDotArcExistence(List<ArcInput> inputs, FSFile repackRoot) {
+		for (ArcInput in : inputs) {
+			if (in.targetPath.equals(DotArc.DOT_ARC_SIGNATURE)) {
 				return;
 			}
 		}
@@ -132,9 +142,9 @@ public class VFS {
 			blacklist.putBlacklistPath(path);
 		}
 	}
-	
-	public void relocateBlackListFile(String oldPath, String newPath){
-		if (hasChangeBlacklist){
+
+	public void relocateBlackListFile(String oldPath, String newPath) {
+		if (hasChangeBlacklist) {
 			blacklist.relocatePaths(oldPath, newPath);
 		}
 	}
@@ -222,9 +232,9 @@ public class VFS {
 			} else {
 				currentParent = currentParent.getChild(thing);
 			}
-			if (afa != null && afa.isArcFile(currentParent)){
+			if (afa != null && afa.isArcFile(currentParent)) {
 				currentParent = new ArcFile(currentParent, afa);
-				if (i + 1 < refPath.length()){
+				if (i + 1 < refPath.length()) {
 					return currentParent.getChild(refPath.substring(i + 1));
 				}
 			}

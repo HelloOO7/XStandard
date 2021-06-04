@@ -34,10 +34,6 @@ import java.util.logging.Logger;
 
 public class BinaryDeserializer extends BinarySerialization {
 
-	public DataIOStream baseStream;
-
-	private final ReferenceType refType;
-
 	private TypeParameterStack typeParameterStack = new TypeParameterStack();
 
 	private Stack<Integer> pointerBaseStack = new Stack<>();
@@ -45,8 +41,11 @@ public class BinaryDeserializer extends BinarySerialization {
 	private Map<String, Object> definitions = new HashMap<>();
 
 	public BinaryDeserializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType) {
-		refType = referenceType;
-		this.baseStream = new DataIOStream(baseStream, bo);
+		this(baseStream, bo, referenceType, DecimalType.FLOATING_POINT);
+	}
+
+	public BinaryDeserializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType, DecimalType decimalType) {
+		super(baseStream, referenceType, decimalType);
 		pointerBaseStack.push(0);
 	}
 
@@ -291,7 +290,13 @@ public class BinaryDeserializer extends BinarySerialization {
 		} else if (cls == Boolean.TYPE) {
 			return readSizedInt(field, 1) == 1;
 		} else if (cls == Float.TYPE) {
-			return baseStream.readFloat();
+			switch (decimalType){
+				case FLOATING_POINT:
+					return baseStream.readFloat();
+				case FIXED_POINT_NNFX:
+					int intValue = readSizedInt(field);
+					return intValue / 4096f;
+			}
 		} else if (cls == Double.TYPE) {
 			return baseStream.readDouble();
 		} else if (cls == Long.TYPE) {

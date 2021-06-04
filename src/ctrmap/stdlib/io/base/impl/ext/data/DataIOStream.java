@@ -90,6 +90,10 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	public long readLong() throws IOException {
 		return interpreter.readLong(this);
 	}
+	
+	public int readAddress() throws IOException {
+		return currentBase + readInt();
+	}
 
 	@Override
 	public String readLine() throws IOException {
@@ -195,7 +199,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	public void setBaseHere() throws IOException {
-		setBase(getPositionUnbased());
+		setBase(-getPositionUnbased());
 	}
 
 	public void checkpoint() throws IOException {

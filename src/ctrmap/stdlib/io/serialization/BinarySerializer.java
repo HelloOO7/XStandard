@@ -33,15 +33,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BinarySerializer extends BinarySerialization {
-    public final DataIOStream baseStream;
-
-    private final ReferenceType refType;
 
     private Stack<Integer> pointerBaseStack = new Stack<>();
     private RefValue refValue;
 
-    public BinarySerializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType){
-        refType = referenceType;
+	public BinarySerializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType){
+		this(baseStream, bo, referenceType, DecimalType.FLOATING_POINT);
+	}
+	
+    public BinarySerializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType, DecimalType decimalType){
+        super(baseStream, referenceType, decimalType);
         this.baseStream = new DataIOStream(baseStream, bo);
         pointerBaseStack.push(0);
     }

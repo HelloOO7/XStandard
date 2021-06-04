@@ -1,5 +1,7 @@
 package ctrmap.stdlib.io.serialization;
 
+import ctrmap.stdlib.io.base.iface.IOStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.serialization.annotations.Size;
 
 import java.lang.annotation.Annotation;
@@ -10,104 +12,118 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BinarySerialization {
-	
+
+	public DataIOStream baseStream;
+
+	protected final ReferenceType refType;
+
+	protected final DecimalType decimalType;
+
 	public int fileVersion;
 	
-    protected static List<Field> getSortedFields(Class cls){
-        List<Field> l = new ArrayList<>();
+	protected BinarySerialization(IOStream baseStream, ReferenceType refType, DecimalType decimalType){
+		if (baseStream instanceof DataIOStream){
+			this.baseStream = (DataIOStream)baseStream;
+		}
+		else {
+			this.baseStream = new DataIOStream(baseStream);
+		}
+		this.refType = refType;
+		this.decimalType = decimalType;
+	}
 
-        addFields(cls, l);
+	protected static List<Field> getSortedFields(Class cls) {
+		List<Field> l = new ArrayList<>();
 
-        return l;
-    }
+		addFields(cls, l);
 
-    protected static void addFields(Class cls, List<Field> l){
-        if (cls == null){
-            return;
-        }
+		return l;
+	}
 
-        addFields(cls.getSuperclass(), l);
+	protected static void addFields(Class cls, List<Field> l) {
+		if (cls == null) {
+			return;
+		}
 
-        for (Field fld : cls.getDeclaredFields()){
-            int mod = fld.getModifiers();
-            if (!Modifier.isStatic(mod)) {
-                fld.setAccessible(true);
+		addFields(cls.getSuperclass(), l);
 
-                l.add(fld);
-            }
-        }
-    }
+		for (Field fld : cls.getDeclaredFields()) {
+			int mod = fld.getModifiers();
+			if (!Modifier.isStatic(mod)) {
+				fld.setAccessible(true);
 
-    protected static int getIntSize(int defaultSize, AnnotatedElement... elems){
-        int size = defaultSize;
-        for (AnnotatedElement elem : elems) {
-            if (hasAnnotation(Size.class, elem)) {
-                size = getAnnotation(Size.class, elem).value();
-                break;
-            }
-        }
-        return size;
-    }
+				l.add(fld);
+			}
+		}
+	}
 
-    protected static boolean hasAnnotation(Class<? extends Annotation> annot, AnnotatedElement... elems){
-        for (AnnotatedElement e : elems){
-            if (e != null) {
-                if (e instanceof Field) {
-                    Field fld = (Field) e;
-                    if (fld.isAnnotationPresent(annot) || fld.getType().isAnnotationPresent(annot)){
-                        return true;
-                    }
-                }
-                else {
-                    if (e.isAnnotationPresent(annot)){
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+	protected static int getIntSize(int defaultSize, AnnotatedElement... elems) {
+		int size = defaultSize;
+		for (AnnotatedElement elem : elems) {
+			if (hasAnnotation(Size.class, elem)) {
+				size = getAnnotation(Size.class, elem).value();
+				break;
+			}
+		}
+		return size;
+	}
 
-    protected static <T extends Annotation> T getAnnotation(Class<T> annot, AnnotatedElement... elems){
-        for (AnnotatedElement e : elems){
-            if (e != null) {
-                if (e instanceof Field) {
-                    Field fld = (Field) e;
-                    if (fld.isAnnotationPresent(annot)){
-                        return fld.getAnnotation(annot);
-                    }
-                    else {
-                        return fld.getType().getAnnotation(annot);
-                    }
-                }
-                else {
-                    if (e.isAnnotationPresent(annot)){
-                        return e.getAnnotation(annot);
-                    }
-                }
-            }
-        }
-        return null;
-    }
+	protected static boolean hasAnnotation(Class<? extends Annotation> annot, AnnotatedElement... elems) {
+		for (AnnotatedElement e : elems) {
+			if (e != null) {
+				if (e instanceof Field) {
+					Field fld = (Field) e;
+					if (fld.isAnnotationPresent(annot) || fld.getType().isAnnotationPresent(annot)) {
+						return true;
+					}
+				} else {
+					if (e.isAnnotationPresent(annot)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
 
-    protected static Class getUnboxedClass(Class clazz) {
-        if (clazz == Integer.class) {
-            return Integer.TYPE;
-        } else if (clazz == Float.class) {
-            return Float.TYPE;
-        } else if (clazz == Long.class) {
-            return Long.TYPE;
-        } else if (clazz == Double.class) {
-            return Double.TYPE;
-        } else if (clazz == Short.class) {
-            return Short.TYPE;
-        } else if (clazz == Byte.class) {
-            return Byte.TYPE;
-        } else if (clazz == Boolean.class) {
-            return Boolean.TYPE;
-        } else if (clazz == Character.class){
-            return Character.TYPE;
-        }
-        return clazz;
-    }
+	protected static <T extends Annotation> T getAnnotation(Class<T> annot, AnnotatedElement... elems) {
+		for (AnnotatedElement e : elems) {
+			if (e != null) {
+				if (e instanceof Field) {
+					Field fld = (Field) e;
+					if (fld.isAnnotationPresent(annot)) {
+						return fld.getAnnotation(annot);
+					} else {
+						return fld.getType().getAnnotation(annot);
+					}
+				} else {
+					if (e.isAnnotationPresent(annot)) {
+						return e.getAnnotation(annot);
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	protected static Class getUnboxedClass(Class clazz) {
+		if (clazz == Integer.class) {
+			return Integer.TYPE;
+		} else if (clazz == Float.class) {
+			return Float.TYPE;
+		} else if (clazz == Long.class) {
+			return Long.TYPE;
+		} else if (clazz == Double.class) {
+			return Double.TYPE;
+		} else if (clazz == Short.class) {
+			return Short.TYPE;
+		} else if (clazz == Byte.class) {
+			return Byte.TYPE;
+		} else if (clazz == Boolean.class) {
+			return Boolean.TYPE;
+		} else if (clazz == Character.class) {
+			return Character.TYPE;
+		}
+		return clazz;
+	}
 }

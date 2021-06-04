@@ -52,6 +52,12 @@ public class Vec3f extends Vector3f implements AbstractVector {
 		y = 0f;
 		z = 0f;
 	}
+	
+	public void set(DataInput in) throws IOException {
+		x = in.readFloat();
+		y = in.readFloat();
+		z = in.readFloat();
+	}
 
 	public static Vec3f parseVec3f(String src) {
 		src = src.trim();

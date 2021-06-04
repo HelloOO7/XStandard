@@ -45,6 +45,26 @@ public class FSUtil {
 		return path;
 	}
 
+	public static void copyDirectory(FSFile source, FSFile target) {
+		if (!target.exists()) {
+			target.mkdirs();
+			copyChildren(source, target);
+		}
+	}
+
+	private static void copyChildren(FSFile parent1, FSFile parent2) {
+		List<FSFile> files = parent1.listFiles();
+		for (FSFile f : files) {
+			FSFile f2 = parent2.getChild(f.getName());
+			if (f.isDirectory()) {
+				f2.mkdirs();
+				copyChildren(f, f2);
+			} else {
+				copy(f, f2);
+			}
+		}
+	}
+
 	public static void copy(File source, File target) {
 		try {
 			Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -62,6 +82,10 @@ public class FSUtil {
 	}
 
 	public static void copy(FSFile source, FSFile target) {
+		if (source.isDirectory() && target.isDirectory()) {
+			copyDirectory(source, target);
+			return;
+		}
 		if (source instanceof DiskFile && target instanceof DiskFile) {
 			//Optimized copy for real filesystem files
 			DiskFile dfSrc = (DiskFile) source;
