@@ -11,10 +11,20 @@ import java.util.Map;
 public class StringTable {
 	private Map<String, List<TemporaryOffset>> registOffsets = new HashMap<>();
 	
+	private Map<String, Integer> nonRegistOffsets = new HashMap<>();
+	
 	private DataIOStream out;
 	
 	public StringTable(DataIOStream out){
 		this.out = out;
+	}
+	
+	public void putString(String str) {
+		nonRegistOffsets.put(str, -1);
+	}
+	
+	public int getNonRegistStringAddr(String str){
+		return nonRegistOffsets.get(str);
 	}
 	
 	public void putStringOffset(String str) throws IOException {
@@ -32,6 +42,14 @@ public class StringTable {
 				o.setHere();
 			}
 			StringIO.writeString(out, e.getKey());
+		}
+		registOffsets.clear();
+		
+		for (Map.Entry<String, Integer> e : nonRegistOffsets.entrySet()){
+			if (e.getValue() == -1){
+				e.setValue(out.getPosition());
+				out.writeString(e.getKey());
+			}
 		}
 	}
 }

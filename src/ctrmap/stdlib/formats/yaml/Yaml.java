@@ -15,11 +15,11 @@ public class Yaml {
 	
 	public static final ExtensionFilter EXTENSION_FILTER = new ExtensionFilter("Yet Another Markup Language", "*.yml", "*.yaml");
 
-	protected FSFile document;
+	protected transient FSFile document;
 
-	public String documentName;
+	public transient String documentName;
 
-	public YamlNode root = new YamlNode();
+	public transient YamlNode root = new YamlNode();
 
 	public Yaml() {
 

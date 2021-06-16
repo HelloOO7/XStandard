@@ -14,13 +14,14 @@ public class ReflectionHash {
 	private static final boolean REFLHASH_DEBUG = false;
 	
 	private int hash = 0;
+	private int pendingHash = 0;
 	private Object object;
 	private boolean changedFlag = false;
 
 	public ReflectionHash(Object o) {
 		object = o;
 		recalculate();
-		changedFlag = false;
+		resetChangedFlag();
 	}
 
 	private static int hashObj(Object o, List<Object> cache) throws IllegalArgumentException, IllegalAccessException {
@@ -92,10 +93,9 @@ public class ReflectionHash {
 
 	public boolean recalculate() {
 		try {
-			int newHash = hashObj(object, new ArrayList<>());
+			pendingHash = hashObj(object, new ArrayList<>());
 
-			if (newHash != hash) {
-				hash = newHash;
+			if (pendingHash != hash) {
 				changedFlag = true;
 				return true;
 			}
@@ -123,5 +123,6 @@ public class ReflectionHash {
 
 	public void resetChangedFlag() {
 		changedFlag = false;
+		hash = pendingHash;
 	}
 }

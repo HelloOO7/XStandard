@@ -9,6 +9,11 @@ import ctrmap.stdlib.text.FormattingUtils;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +33,7 @@ public class YamlReflectUtil {
 		return null;
 	}
 
-	private static void deserializeToObject(YamlNode n, Object obj) {
+	public static void deserializeToObject(YamlNode n, Object obj) {
 		try {
 			readNodeToFields(n, obj);
 		} catch (IllegalAccessException | InstantiationException ex) {
@@ -37,16 +42,38 @@ public class YamlReflectUtil {
 	}
 
 	private static void readNodeToFields(YamlNode n, Object obj) throws IllegalAccessException, InstantiationException {
-		for (Field field : obj.getClass().getFields()) {
-			int mods = field.getModifiers();
-			if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
-				YamlNode valueNode = n.getChildByNameIgnoreCase(field.getName());
-				field.set(obj, readObject(valueNode, field.getType()));
+		for (Field field : getSortedFields(obj.getClass())) {
+			YamlNode valueNode = n.getChildByNameIgnoreCase(field.getName());
+			field.set(obj, readObject(valueNode, field.getType(), field));
+		}
+	}
+
+	private static List<Field> getSortedFields(Class cls) {
+		List<Field> l = new ArrayList<>();
+
+		addFields(cls, l);
+
+		return l;
+	}
+
+	private static void addFields(Class cls, List<Field> l) {
+		if (cls == null) {
+			return;
+		}
+
+		addFields(cls.getSuperclass(), l);
+
+		for (Field fld : cls.getDeclaredFields()) {
+			int mod = fld.getModifiers();
+			if (!Modifier.isStatic(mod) && !Modifier.isTransient(mod)) {
+				fld.setAccessible(true);
+
+				l.add(fld);
 			}
 		}
 	}
 
-	private static Object readObject(YamlNode node, Class type) throws InstantiationException, IllegalAccessException {
+	private static Object readObject(YamlNode node, Class type, Field fld) throws InstantiationException, IllegalAccessException {
 		if (node != null) {
 			if (type.isPrimitive()) {
 				if (type == Double.TYPE) {
@@ -79,9 +106,22 @@ public class YamlReflectUtil {
 				Class componentType = type.getComponentType();
 				Object arr = Array.newInstance(type.getComponentType(), node.children.size());
 				for (int i = 0; i < node.children.size(); i++) {
-					Array.set(arr, i, readObject(node.children.get(i), componentType));
+					Array.set(arr, i, readObject(node.children.get(i), componentType, fld));
 				}
 				return arr;
+			} else if (Collection.class.isAssignableFrom(type)) {
+				if (type == List.class){
+					type = ArrayList.class;
+				}
+				Collection coll = (Collection) type.newInstance();
+
+				Class componentType = (Class) ((ParameterizedType) fld.getGenericType()).getActualTypeArguments()[0];
+
+				for (YamlNode nd : node.children) {
+					coll.add(readObject(nd, componentType, fld));
+				}
+
+				return coll;
 			} else {
 				Object obj = type.newInstance();
 				readNodeToFields(node, obj);
@@ -116,7 +156,7 @@ public class YamlReflectUtil {
 			for (Field field : obj.getClass().getFields()) {
 				int mods = field.getModifiers();
 				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
-					addValueToNode(n, field.getName(), field.getType(), field.get(obj));
+					addValueToNode(n, field.getName(), field.getType(), field, field.get(obj));
 				}
 			}
 		} catch (IllegalAccessException ex) {
@@ -124,7 +164,10 @@ public class YamlReflectUtil {
 		}
 	}
 
-	private static void addValueToNode(YamlNode n, String key, Class type, Object value) throws IllegalArgumentException, IllegalAccessException {
+	private static void addValueToNode(YamlNode n, String key, Class type, Field field, Object value) throws IllegalArgumentException, IllegalAccessException {
+		if (value == null) {
+			return; //will be set to null during deserialization anyway, pointless to write
+		}
 		if (type.isPrimitive() || type.isEnum() || value == null || type == String.class) {
 			if (key != null) {
 				n.addChild(FormattingUtils.camelToPascal(key), value);
@@ -137,7 +180,15 @@ public class YamlReflectUtil {
 			int size = Array.getLength(value);
 			for (int i = 0; i < size; i++) {
 				YamlNode elem = new YamlNode(new YamlListElement());
-				addValueToNode(elem, null, type.getComponentType(), Array.get(value, i));
+				addValueToNode(elem, null, type.getComponentType(), field, Array.get(value, i));
+				list.addChild(elem);
+			}
+		} else if (Collection.class.isAssignableFrom(type)) {
+			YamlNode list = n.addChildKey(FormattingUtils.camelToPascal(key));
+
+			for (Object o : (Collection) value) {
+				YamlNode elem = new YamlNode(new YamlListElement());
+				addValueToNode(elem, null, (Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0], field, o);
 				list.addChild(elem);
 			}
 		} else {

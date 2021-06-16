@@ -6,10 +6,17 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-public class Vec3f extends Vector3f implements AbstractVector {
+public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 
-	public static final Vec3f IDENTITY = new Vec3f();
+	public static final Vec3f ONE() {
+		return new Vec3f(1f, 1f, 1f);
+	}
+	
+	public static final Vec3f ZERO() {
+		return new Vec3f(0f, 0f, 0f);
+	}
 
 	public Vec3f(float x, float y, float z) {
 		this.x = x;
@@ -58,6 +65,13 @@ public class Vec3f extends Vector3f implements AbstractVector {
 		y = in.readFloat();
 		z = in.readFloat();
 	}
+	
+	public float[] get(float[] arr){
+		arr[0] = x;
+		arr[1] = y;
+		arr[2] = z;
+		return arr;
+	}
 
 	public static Vec3f parseVec3f(String src) {
 		src = src.trim();
@@ -104,7 +118,7 @@ public class Vec3f extends Vector3f implements AbstractVector {
 	}
 
 	public Vec3f invert() {
-		return multiplyScalar(-1);
+		return mul(-1);
 	}
 
 	public Vec3f getInverse() {
@@ -116,8 +130,20 @@ public class Vec3f extends Vector3f implements AbstractVector {
 		return this;
 	}
 
-	public Vec3f multiplyScalar(float mul) {
-		mul(mul);
+	public Vec3f sub(Vec3f v){
+		super.sub(v);
+		return this;
+	}
+	
+	@Override
+	public Vec3f mul(float mul) {
+		super.mul(mul);
+		return this;
+	}
+	
+	@Override
+	public Vec3f mulAdd(float s, Vector3fc v){
+		super.mulAdd(s, v);
 		return this;
 	}
 
@@ -168,6 +194,11 @@ public class Vec3f extends Vector3f implements AbstractVector {
 			return v.x == x && v.y == y && v.z == z;
 		}
 		return false;
+	}
+	
+	@Override
+	public Vec3f clone(){
+		return new Vec3f(this);
 	}
 
 	public boolean equalsImprecise(Object o, float precision) {

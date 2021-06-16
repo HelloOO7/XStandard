@@ -7,6 +7,14 @@ import org.joml.Vector2f;
 
 public class Vec2f extends Vector2f implements AbstractVector {
 
+	public static final Vec2f ONE() {
+		return new Vec2f(1f, 1f);
+	}
+	
+	public static final Vec2f ZERO() {
+		return new Vec2f(0f, 0f);
+	}
+
 	public Vec2f(float x, float y) {
 		super(x, y);
 	}
@@ -70,6 +78,12 @@ public class Vec2f extends Vector2f implements AbstractVector {
 		x = y;
 		y = temp;
 		return this;
+	}
+	
+	public float[] get(float[] arr){
+		arr[0] = x;
+		arr[1] = y;
+		return arr;
 	}
 
 	@Override

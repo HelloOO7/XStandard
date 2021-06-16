@@ -90,7 +90,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	public long readLong() throws IOException {
 		return interpreter.readLong(this);
 	}
-	
+
 	public int readAddress() throws IOException {
 		return currentBase + readInt();
 	}
@@ -207,6 +207,8 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	public void resetCheckpoint() throws IOException {
-		seekUnbased(checkpoints.pop());
+		if (!checkpoints.empty()) {
+			seekUnbased(checkpoints.pop());
+		}
 	}
 }

@@ -14,6 +14,10 @@ public enum SectionType {
 		if (elfSecName == null) {
 			return EXTERN;
 		}
+		if (elfSecName.startsWith(".rodata")){
+			//-O2 can create multiple of them with different names
+			return RODATA;
+		}
 		switch (elfSecName) {
 			case ".text":
 				return TEXT;

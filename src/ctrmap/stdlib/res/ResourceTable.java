@@ -18,7 +18,17 @@ public class ResourceTable {
 	private List<ResourceInfo> data = new ArrayList<>();
 
 	public ResourceTable(File root) {
-		addFile(root, -1, false);
+		this(root, null);
+	}
+
+	public ResourceTable(File root, String rootPathName) {
+		if (rootPathName != null) {
+			ResourceInfo rootInfo = new ResourceInfo(rootPathName, this);
+			data.add(rootInfo);
+			addFile(root, 0, false);
+		} else {
+			addFile(root, -1, false);
+		}
 	}
 
 	public ResourceTable() {
@@ -85,6 +95,13 @@ public class ResourceTable {
 		public ResourceInfo(File f, ResourceTable table) {
 			resourceName = f.getName();
 			isDirectory = f.isDirectory();
+			parentIdx = -1;
+			this.table = table;
+		}
+		
+		public ResourceInfo(String directoryName, ResourceTable table) {
+			resourceName = directoryName;
+			isDirectory = true;
 			parentIdx = -1;
 			this.table = table;
 		}

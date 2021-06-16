@@ -27,7 +27,7 @@ import java.util.zip.ZipInputStream;
  */
 public class ZipArchive extends FSFileAdapter {
 
-	public static final String MAGIC = "PK\u0004\u0003";
+	public static final String MAGIC = "PK\u0003\u0004";
 	
 	protected List<ZipEntry> entries = new ArrayList<>();
 
@@ -95,7 +95,11 @@ public class ZipArchive extends FSFileAdapter {
 
 	public ZipEntry getEntryForPath(String path) {
 		for (ZipEntry e : entries) {
-			if (e.getName().equals(path)) {
+			String cmpName = e.getName();
+			if (e.isDirectory()){
+				cmpName = cmpName.replace("/", "");
+			}
+			if (cmpName.equals(path)) {
 				return e;
 			}
 		}

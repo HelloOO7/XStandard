@@ -66,6 +66,14 @@ public class Vec4f extends Vector4f {
 	public Vec3f toVec3() {
 		return new Vec3f(x, y, z);
 	}
+	
+	public float[] get(float[] arr){
+		arr[0] = x;
+		arr[1] = y;
+		arr[2] = z;
+		arr[3] = w;
+		return arr;
+	}
 
 	public void write(DataOutput out) throws IOException{
 		out.writeFloat(x);

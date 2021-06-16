@@ -47,7 +47,7 @@ public abstract class FSFile {
 	public abstract int getPermissions();
 
 	public boolean canRead() {
-		return (getPermissions() & FSF_ATT_READ) != 0;
+		return exists() && (getPermissions() & FSF_ATT_READ) != 0;
 	}
 
 	public boolean canWrite() {

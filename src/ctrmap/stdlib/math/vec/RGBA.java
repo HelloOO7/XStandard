@@ -90,6 +90,25 @@ public class RGBA {
 		this(vec4.x, vec4.y, vec4.z, vec4.w);
 	}
 	
+	public RGBA(float[] floats){
+		this(floats, 4);
+	}
+	
+	public RGBA(float[] floats, int count){
+		if (count > 0){
+			r = (short)(floats[0] * 255f);
+		}
+		if (count > 1){
+			g = (short)(floats[1] * 255f);
+		}
+		if (count > 2){
+			b = (short)(floats[2] * 255f);
+		}
+		if (count > 3){
+			a = (short)(floats[3] * 255f);
+		}
+	}
+	
 	public Color toColor(){
 		return new Color(r, g, b, a);
 	}
@@ -99,7 +118,15 @@ public class RGBA {
 	}
 	
 	public byte[] toByteArray(){
-		return new byte[]{(byte)r, (byte)g, (byte)b, (byte)a};
+		return toByteArray(new byte[4]);
+	}
+	
+	public byte[] toByteArray(byte[] bytes){
+		bytes[0] = (byte)r;
+		bytes[1] = (byte)g;
+		bytes[2] = (byte)b;
+		bytes[3] = (byte)a;
+		return bytes;
 	}
 	
 	public float[] getFloatUniform(){

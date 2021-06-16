@@ -16,6 +16,8 @@ public class ResourceAccess {
 	private static final List<String> loadedTables = new ArrayList<>();
 
 	public static ResourceTable resTbl = new ResourceTable();
+	
+	private static final ClassLoader classLoader = ResourceAccess.class.getClassLoader();
 
 	public static ResourceFile getResourceFile(String pathname) {
 		ResourceTable.ResourceInfo i = resTbl.getResInfo(pathname);
@@ -30,7 +32,7 @@ public class ResourceAccess {
 	}
 
 	public static InputStream getStream(String name) {
-		return ResourceAccess.class.getClassLoader().getResourceAsStream("ctrmap/resources/" + name);
+		return classLoader.getResourceAsStream("ctrmap/resources/" + name);
 	}
 
 	public static File copyToTemp(String name) {
@@ -51,6 +53,11 @@ public class ResourceAccess {
 
 	public static void buildResourceTable(File root, String tableName) {
 		ResourceTable rt = new ResourceTable(root);
+		rt.write(new File(root + "/" + tableName));
+	}
+	
+	public static void buildResourceTable(File root, String rootPrefix, String tableName) {
+		ResourceTable rt = new ResourceTable(root, rootPrefix);
 		rt.write(new File(root + "/" + tableName));
 	}
 

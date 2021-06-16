@@ -15,8 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import ctrmap.stdlib.arm.ThumbAssembler;
 import ctrmap.stdlib.gui.file.ExtensionFilter;
-import ctrmap.stdlib.io.base.iface.IOStream;
-import ctrmap.stdlib.io.base.impl.access.MemoryStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.structs.StringTable;
 import java.util.HashMap;
@@ -34,7 +32,11 @@ public class RPM {
 
 	public static final int RPM_PADDING = 0x10;
 
-	public static final int RPM_FOOTER_SIZE = 0x10;
+	public static final int RPM_FOOTER_SIZE_LEGACY = 0x10;
+	public static final int RPM_FOOTER_SIZE = 0x20;
+
+	public String productId;
+	public int productVersion;
 
 	public int baseAddress;
 	public List<RPMSymbol> symbols = new ArrayList<>();
@@ -47,42 +49,67 @@ public class RPM {
 	public RPM(FSFile fsf) {
 		this(fsf.getBytes());
 	}
-
-	public RPM(byte[] bytes) {
+	
+	public RPM(DataIOStream io, int startPos, int endPos){
 		try {
-			DataIOStream ft = new DataIOStream(bytes);
-			ft.seek(bytes.length - 16);
-			if (!StringIO.checkMagic(ft, RPM_MAGIC)) {
-				throw new InvalidMagicException("Not an RPM file!");
+			io.seek(endPos - RPM_FOOTER_SIZE);
+			if (!StringIO.checkMagic(io, RPM_MAGIC)) {
+				io.seek(endPos - RPM_FOOTER_SIZE_LEGACY);
+				if (!StringIO.checkMagic(io, RPM_MAGIC)) {
+					throw new InvalidMagicException("Not an RPM file!");
+				}
 			}
-			int version = ft.read() - '0';
-			int symbolsOffset = ft.readInt();
-			int relocationsOffset = ft.readInt();
-			int codeSize = ft.readInt();
+			int version = io.read();
+			if (version != 0xFF) {
+				version = version - '0';
+			} else {
+				version = io.readInt();
+				if (version >= RPMRevisions.REV_PRODUCT_INFO) {
+					productId = StringIO.readStringWithAddress(io);
+					productVersion = io.readInt();
+				}
+				else {
+					io.skipBytes(8);
+				}
+			}
+			int symbolsOffset = io.readInt();
+			int relocationsOffset = io.readInt();
+			int codeSize = io.readInt();
 
-			ft.seek(symbolsOffset);
-			if (!StringIO.checkMagic(ft, SYM_MAGIC)) {
+			io.seek(symbolsOffset);
+			if (!StringIO.checkMagic(io, SYM_MAGIC)) {
 				throw new InvalidMagicException("SYM section not present!");
 			}
-			int symbolCount = ft.readUnsignedShort();
+			int symbolCount = io.readUnsignedShort();
 			for (int i = 0; i < symbolCount; i++) {
-				symbols.add(new RPMSymbol(this, ft, version));
+				symbols.add(new RPMSymbol(this, io, version));
 			}
 
-			ft.seek(relocationsOffset);
-			if (!StringIO.checkMagic(ft, REL_MAGIC)) {
+			io.seek(relocationsOffset);
+			if (!StringIO.checkMagic(io, REL_MAGIC)) {
 				throw new InvalidMagicException("REL section not present!");
 			}
-			baseAddress = ft.readInt();
-			int relocationCount = ft.readInt();
+			baseAddress = io.readInt();
+			int relocationCount = io.readInt();
 			for (int i = 0; i < relocationCount; i++) {
-				relocations.add(new RPMRelocation(ft, this));
+				relocations.add(new RPMRelocation(io, this));
 			}
 
-			code = new DataIOStream(Arrays.copyOf(bytes, codeSize));
+			byte[] codeArr = new byte[codeSize];
+			if (startPos == -1){
+				startPos = symbolsOffset - BitUtils.getPaddedInteger(codeSize, RPM_PADDING);
+			}
+			io.seek(startPos);
+			io.read(codeArr);
+			
+			this.code = new DataIOStream(codeArr);
 		} catch (IOException ex) {
 			Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+
+	public RPM(byte[] bytes) {
+		this(new DataIOStream(bytes), 0, bytes.length);
 	}
 
 	public RPM() {
@@ -94,8 +121,12 @@ public class RPM {
 			try {
 				DataIOStream io = f.getDataIOStream();
 
-				io.seek(f.length() - 16);
+				io.seek(f.length() - RPM_FOOTER_SIZE);
 				boolean rsl = StringIO.checkMagic(io, RPM_MAGIC);
+				if (!rsl) {
+					io.seek(f.length() - RPM_FOOTER_SIZE_LEGACY);
+					rsl = StringIO.checkMagic(io, RPM_MAGIC);;
+				}
 
 				io.close();
 				return rsl;
@@ -120,7 +151,7 @@ public class RPM {
 					}
 				}
 			}
-			
+
 			Map<RPMSymbol, RPMSymbol> oldToNewSymbolMap = new HashMap<>();
 
 			for (RPMSymbol symbol : source.symbols) {
@@ -223,6 +254,7 @@ public class RPM {
 			rel.target.addStrings(strings);
 			size += rel.getSize();
 		}
+		strings.add(productId);
 
 		size = BitUtils.getPaddedInteger(size, RPM_PADDING);
 		size += 4;
@@ -262,14 +294,22 @@ public class RPM {
 			ba.pad(RPM_PADDING);
 
 			ba.writeStringUnterminated(STR_MAGIC);
+			strings.putString(productId);
 			strings.writeTable();
 			ba.pad(RPM_PADDING);
 
+			//HEADER
 			ba.writeStringUnterminated(RPM_MAGIC);
-			ba.write(RPMRevisions.REV_CURRENT + '0');
+			ba.write(0xFF);
+			ba.writeInt(RPMRevisions.REV_CURRENT);
+			ba.writeInt(strings.getNonRegistStringAddr(productId));
+			ba.writeInt(productVersion);
+
 			ba.writeInt(symbOffset);
 			ba.writeInt(relOffset);
 			ba.writeInt(codeSize);
+			ba.writeInt(0);
+
 			ba.close();
 			return ba.toByteArray();
 		} catch (IOException ex) {
@@ -337,11 +377,22 @@ public class RPM {
 				if (Math.abs((out.getPosition() + 4) - addr) < 2048) {
 					ThumbAssembler.writeSmallBranchInstruction(out, addr);
 				} else {
-					int tgtAddr = ThumbAssembler.writePcRelativeLoadAbs(out, 0, out.getPosition() + 4);
-					ThumbAssembler.writeBXInstruction(out, 0);
+					//BUGFIX: DO NOT USE R0. It will overwrite function arguments.
+					//ARM call standard uses registers R0,R1,R2,R3 for args
+					//Using R4+ could potentially break caller functions that use them
+					//(spoiler alert: it will)
+					//The only option I think we are left with is to just do a branch with link
+					//The size will be the same since BL does not require the extra 4 bytes of address
+
+					/*int tgtAddr = ThumbAssembler.writePcRelativeLoadAbs(out, 4, out.getPosition() + 4);
+					ThumbAssembler.writeBXInstruction(out, 4);
 					System.out.println("load rsl " + Integer.toHexString(tgtAddr));
 					out.seek(tgtAddr);
-					out.writeInt(addr);
+					out.writeInt(addr);*/
+					//Potentially destructive if the address does not fit under 4MB
+					ThumbAssembler.writePushPopInstruction(out, false, true);
+					ThumbAssembler.writeBranchLinkInstruction(out, addr);
+					ThumbAssembler.writePushPopInstruction(out, true, true);
 				}
 				break;
 			case FULL_COPY:

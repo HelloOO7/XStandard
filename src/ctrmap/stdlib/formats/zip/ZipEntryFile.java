@@ -12,8 +12,7 @@ import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.InputStreamReadable;
-import java.io.InputStream;
-import java.io.OutputStream;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
 
@@ -94,7 +93,7 @@ public class ZipEntryFile extends FSFile {
 
 	@Override
 	public IOStream getIO() {
-		throw new UnsupportedOperationException("Zip archives are not yet editable.");
+		return new DataIOStream(getBytes());
 	}
 
 	@Override

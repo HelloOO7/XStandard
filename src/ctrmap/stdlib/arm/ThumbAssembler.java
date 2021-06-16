@@ -11,6 +11,14 @@ public class ThumbAssembler {
 	public static final int BL_MASK = (0b11111 << 11);
 	public static final int BL_HIGH_IDENT = (0b11110 << 11);
 	public static final int BL_LOW_IDENT = (0b11111 << 11);
+	
+	public static void writePushPopInstruction(DataIOStream out, boolean isPop, boolean changeLRPC, int... registers) throws IOException {
+		int bits = (0b10110100 << 8) | ((isPop ? 1 : 0) << 11) | ((changeLRPC ? 1 : 0) << 8);
+		for (int reg : registers){
+			bits |= (1 << reg);
+		}
+		out.writeShort(bits);
+	}
 
 	public static void writeBranchLinkInstruction(DataIOStream out, int branchTarget) throws IOException {
 		int currentOffset = out.getPosition() + 4;
