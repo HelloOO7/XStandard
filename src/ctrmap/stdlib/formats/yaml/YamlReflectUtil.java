@@ -153,9 +153,10 @@ public class YamlReflectUtil {
 
 	public static void addFieldsToNode(YamlNode n, Object obj) {
 		try {
-			for (Field field : obj.getClass().getFields()) {
+			for (Field field : obj.getClass().getDeclaredFields()) {
 				int mods = field.getModifiers();
 				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
+					field.setAccessible(true);
 					addValueToNode(n, field.getName(), field.getType(), field, field.get(obj));
 				}
 			}

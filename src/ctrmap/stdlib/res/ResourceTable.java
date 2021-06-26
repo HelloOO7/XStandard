@@ -23,8 +23,8 @@ public class ResourceTable {
 
 	public ResourceTable(File root, String rootPathName) {
 		if (rootPathName != null) {
-			ResourceInfo rootInfo = new ResourceInfo(rootPathName, this);
-			data.add(rootInfo);
+			ResourceInfo parentRootInfo = new ResourceInfo(rootPathName, this);
+			data.add(parentRootInfo);
 			addFile(root, 0, false);
 		} else {
 			addFile(root, -1, false);
@@ -42,11 +42,12 @@ public class ResourceTable {
 	private void addFile(File f, int parentIdx, boolean addThis) {
 		ResourceInfo i = new ResourceInfo(f, this);
 		i.parentIdx = parentIdx;
+		
 		if (addThis) {
 			data.add(i);
 		}
 		if (f.isDirectory()) {
-			int newPIdx = data.indexOf(i);
+			int newPIdx = addThis ? data.indexOf(i) : parentIdx;
 			for (File sub : f.listFiles()) {
 				addFile(sub, newPIdx, true);
 			}

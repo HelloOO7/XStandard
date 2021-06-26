@@ -16,7 +16,9 @@ public class RPZIndex extends RPZYmlBase {
 		super(fsf);
 	}
 	
-	public RPZIndex(){
+	public RPZIndex(FSFile fsf, String productId){
 		modules = new ArrayList<>();
+		this.productId = productId;
+		writeToFile(fsf);
 	}
 }

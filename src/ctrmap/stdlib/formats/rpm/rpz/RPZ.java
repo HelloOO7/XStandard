@@ -36,6 +36,24 @@ public class RPZ extends FSFileAdapter {
 
 		index = new RPZIndex(meta.getChild(RPZ_INDEX_FILENAME));
 	}
+	
+	public RPZ(FSFile file, String productId){
+		super(file);
+		
+		meta = file.getChild(RPZ_META_DIRNAME);
+		code = file.getChild(RPZ_CODE_DIRNAME);
+		content = file.getChild(RPZ_CONTENT_DIRNAME);
+
+		meta.mkdir();
+		code.mkdir();
+		content.mkdir();
+		
+		index = new RPZIndex(meta.getChild(RPZ_INDEX_FILENAME), productId);
+	}
+	
+	public RPZIndex getIndex(){
+		return index;
+	}
 
 	public String getProductId() {
 		return index.productId;

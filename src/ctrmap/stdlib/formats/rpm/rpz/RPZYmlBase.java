@@ -16,6 +16,7 @@ public class RPZYmlBase extends Yaml {
 	
 	public RPZYmlBase(){
 		super();
+		version = new RPZVersion();
 	}
 
 	@Override

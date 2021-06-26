@@ -28,10 +28,10 @@ public class ArcFile extends FSFileAdapter {
 		throw new UnsupportedOperationException("ArcFiles can not be directories.");
 	}
 
-	@Override
+	/*@Override
 	public boolean isDirectory() {
 		return true;
-	}
+	}*/
 
 	@Override
 	public List<FSFile> listFiles() {
@@ -40,7 +40,8 @@ public class ArcFile extends FSFileAdapter {
 
 	@Override
 	public void delete() {
-		throw new SecurityException("ArcFiles should not be deleted.");
+		System.err.println("ArcFiles should not be deleted.");
+		super.delete();
 	}
 
 	@Override
