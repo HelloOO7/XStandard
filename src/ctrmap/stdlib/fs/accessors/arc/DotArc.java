@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * A metadata file containing various information about an extracted ArcFile.
  */
 public class DotArc {
 

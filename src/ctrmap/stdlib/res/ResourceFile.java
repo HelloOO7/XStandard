@@ -7,17 +7,26 @@ import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.InputStreamReadable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Abstraction of ResourceInfo into a file system object.
+ */
 public class ResourceFile extends FSFile{
 
-	private ResourceTable.ResourceInfo info;
+	private final ResourceTable.ResourceInfo info;
 	
+	/**
+	 * Creates a ResourceFile linked with a ResourceInfo.
+	 * @param i A valid ResourceInfo.
+	 */
 	public ResourceFile(ResourceTable.ResourceInfo i){
+		if (i == null){
+			throw new RuntimeException("ResourceInfo can not be null!");
+		}
 		info = i;
 	}
 	

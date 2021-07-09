@@ -20,6 +20,7 @@ import ctrmap.stdlib.io.serialization.annotations.DefinedArraySize;
 import ctrmap.stdlib.io.serialization.annotations.IfVersion;
 import ctrmap.stdlib.io.serialization.annotations.Ignore;
 import ctrmap.stdlib.io.serialization.annotations.Inline;
+import ctrmap.stdlib.io.serialization.annotations.LengthPos;
 import ctrmap.stdlib.io.serialization.annotations.MagicStr;
 import ctrmap.stdlib.io.serialization.annotations.MagicStrLE;
 import ctrmap.stdlib.io.serialization.annotations.ObjSize;
@@ -290,7 +291,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		} else if (cls == Boolean.TYPE) {
 			return readSizedInt(field, 1) == 1;
 		} else if (cls == Float.TYPE) {
-			switch (decimalType){
+			switch (decimalType) {
 				case FLOATING_POINT:
 					return baseStream.readFloat();
 				case FIXED_POINT_NNFX:
@@ -312,11 +313,20 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		int ordinal = readSizedInt(field, getIntSize(defaultSize, field, cls));
 
-		if (ordinal < 0 || ordinal >= constants.length) {
+		if (ISerializableEnum.class.isAssignableFrom(cls)) {
+			for (Object ev : constants) {
+				if (((ISerializableEnum) ev).getOrdinal() == ordinal) {
+					return (Enum) ev;
+				}
+			}
 			return null;
-		}
+		} else {
+			if (ordinal < 0 || ordinal >= constants.length) {
+				return null;
+			}
 
-		return (Enum) constants[ordinal];
+			return (Enum) constants[ordinal];
+		}
 	}
 
 	private Object readArray(Class cls, Field field) throws InstantiationException, IllegalAccessException, IOException {
@@ -352,37 +362,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		return ptr;
 	}
 
-	private Object readObject(Class cls, Field field, boolean isListElem) throws InstantiationException, IllegalAccessException, IOException {
-		if (Collection.class.isAssignableFrom(cls)) {
-			if (cls == List.class) {
-				cls = ArrayList.class;
-			}
-			Collection collection = null;
-			try {
-				collection = (Collection) cls.newInstance();
-			} catch (InstantiationException ex) {
-				throw new InstantiationException("Could not instantiate collection of type " + cls + " (field " + field + ").");
-			}
-
-			int size = readArrayLength(field);
-
-			Type componentType = typeParameterStack.resolveType(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
-
-			debugPrint("Resolved list component type to " + componentType);
-
-			for (int i = 0; i < size; i++) {
-				debugPrint("Reading list element " + i + " of " + size);
-				collection.add(readValue(componentType, field, true));
-			}
-
-			return collection;
-		}
-
-		AnnotatedElement[] ant = new AnnotatedElement[]{field, cls};
-
-		int posBeforePtr = baseStream.getPosition();
-		int posAfterPtr = -1;
-
+	private int readPointer(Field field, int posBeforePtr, boolean isListElem, AnnotatedElement... ant) throws IOException {
 		if ((field != null || isListElem) && !hasAnnotation(Inline.class, ant) && refType != ReferenceType.NONE) {
 			debugPrint("Object " + field + " is noninline !!");
 			int ptr = 0;
@@ -392,10 +372,9 @@ public class BinaryDeserializer extends BinarySerialization {
 			} else {
 				ptr += baseStream.readInt();
 			}
-			posAfterPtr = baseStream.getPosition();
 
 			if (ptr == 0) {
-				return null;
+				return 0;
 			}
 
 			if (refType == ReferenceType.SELF_RELATIVE_POINTER) {
@@ -405,7 +384,60 @@ public class BinaryDeserializer extends BinarySerialization {
 			}
 			debugPrint("Final ptr " + Integer.toHexString(ptr));
 
+			return ptr;
+		}
+		return -1;
+	}
+
+	private void seekPointer(int ptr) throws IOException {
+		if (ptr != -1) {
 			baseStream.seek(ptr);
+		}
+	}
+
+	private static boolean getIsClassNeedsSize(Class cls, AnnotatedElement... ant) {
+		boolean obj_NeedsSize = false;
+		if (Collection.class.isAssignableFrom(cls)) {
+			obj_NeedsSize = true;
+		} else if (cls == String.class && hasAnnotation(LengthPos.class, ant)) {
+			obj_NeedsSize = true;
+		}
+		return obj_NeedsSize;
+	}
+
+	private Object readObject(Class cls, Field field, boolean isListElem) throws InstantiationException, IllegalAccessException, IOException {
+		AnnotatedElement[] ant = new AnnotatedElement[]{field, cls};
+
+		int posBeforePtr = baseStream.getPosition();
+		boolean obj_NeedsSize = getIsClassNeedsSize(cls, ant);
+
+		int posAfterPtr = -1;
+		int obj_Size = -1;
+
+		int ptr = -1;
+
+		if (obj_NeedsSize) {
+			LengthPos.LengthPosType lengthPos = LengthPos.LengthPosType.BEFORE_PTR;
+			if (hasAnnotation(LengthPos.class, ant)) {
+				lengthPos = getAnnotation(LengthPos.class, ant).value();
+			}
+
+			if (lengthPos == LengthPos.LengthPosType.BEFORE_PTR) {
+				obj_Size = readArrayLength(field);
+				ptr = readPointer(field, posBeforePtr, isListElem, ant);
+				posAfterPtr = baseStream.getPosition();
+			} else {
+				ptr = readPointer(field, posBeforePtr, isListElem, ant);
+				obj_Size = readArrayLength(field);
+				posAfterPtr = baseStream.getPosition();
+			}
+		} else {
+			ptr = readPointer(field, posBeforePtr, isListElem, ant);
+			posAfterPtr = baseStream.getPosition();
+		}
+		seekPointer(ptr);
+		if (ptr == 0) {
+			return null;
 		}
 
 		int posBeforeObj = baseStream.getPosition();
@@ -455,13 +487,21 @@ public class BinaryDeserializer extends BinarySerialization {
 		if (cls == String.class) {
 			String str;
 
+			String magic = null;
+			if (hasAnnotation(MagicStr.class, field)) {
+				magic = field.getAnnotation(MagicStr.class).value();
+			}
+
 			if (hasAnnotation(Size.class, field)) {
 				str = StringIO.readPaddedString(baseStream, field.getAnnotation(Size.class).value());
+			} else if (magic != null) {
+				str = StringIO.readPaddedString(baseStream, magic.length());
+			} else if (obj_Size != -1) {
+				str = StringIO.readPaddedString(baseStream, obj_Size);
 			} else {
 				str = StringIO.readString(baseStream);
 			}
-			if (hasAnnotation(MagicStr.class, field)) {
-				String magic = field.getAnnotation(MagicStr.class).value();
+			if (magic != null) {
 				if (hasAnnotation(MagicStrLE.class, field)) {
 					magic = new StringBuilder(magic).reverse().toString();
 				}
@@ -471,8 +511,34 @@ public class BinaryDeserializer extends BinarySerialization {
 			}
 
 			obj = str;
+		} else if (Collection.class.isAssignableFrom(cls)) {
+			Collection collection = null;
+			if (cls == List.class) {
+				cls = ArrayList.class;
+			}
+			try {
+				collection = (Collection) cls.newInstance();
+			} catch (InstantiationException ex) {
+				throw new InstantiationException("Could not instantiate collection of type " + cls + " (field " + field + ").");
+			}
+
+			Type componentType = typeParameterStack.resolveType(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+
+			debugPrint("Resolved list component type to " + componentType);
+
+			for (int i = 0; i < obj_Size; i++) {
+				debugPrint("Reading list element " + i + " of " + obj_Size);
+				collection.add(readValue(componentType, field, true));
+			}
+
+			obj = collection;
 		} else {
-			obj = cls.newInstance();
+			try {
+				obj = cls.newInstance();
+			} catch (InstantiationException ex) {
+				System.err.println("Could not instantiate " + field + "!");
+				throw ex;
+			}
 
 			if (Modifier.isAbstract(cls.getModifiers())) {
 				throw new InstantiationException("Can not instantiate abstract class " + cls + ". Check for invalid TypeChoice?");
@@ -481,7 +547,7 @@ public class BinaryDeserializer extends BinarySerialization {
 			readObjectFields(obj, cls, posBeforeObj);
 		}
 
-		if (posAfterPtr != -1) {
+		if (ptr != -1) {
 			baseStream.seek(posAfterPtr);
 		}
 
@@ -500,6 +566,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		if (hasAnnotation(ArraySize.class, field)) {
 			return field.getAnnotation(ArraySize.class).value();
 		}
+
 		int size = Integer.BYTES;
 		if (hasAnnotation(ArrayLengthSize.class, field)) {
 			size = field.getAnnotation(ArrayLengthSize.class).value();

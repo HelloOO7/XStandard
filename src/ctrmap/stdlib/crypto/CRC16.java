@@ -4,12 +4,19 @@ import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.io.IOException;
 
 /**
- *
+ * CRC16 Checksum calculation.
  */
 public class CRC16 {
 
-	/*
-	Checksums.cs in PKHex.
+	/**
+	 * Calculate a CRC16_CCIITT checksum of a stream.Taken from Checksums.cs in
+	 * kwsch/PKHex.
+	 *
+	 * @param in A DataIOStream to read data from.
+	 * @param off Starting position in the stream.
+	 * @param len Number of bytes to hash.
+	 * @return Checksum of the data region in the stream.
+	 * @throws java.io.IOException
 	 */
 	public static int CRC16_CCIITT(DataIOStream in, int off, int len) throws IOException {
 		int top = 0xFF;

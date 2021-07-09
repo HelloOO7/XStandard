@@ -1,6 +1,7 @@
 
 package ctrmap.stdlib.math.vec;
 
+import ctrmap.stdlib.math.MathEx;
 import ctrmap.stdlib.math.MatrixUtil;
 import java.io.DataInput;
 import java.io.IOException;
@@ -77,6 +78,57 @@ public class Matrix4 extends Matrix4f{
 	
 	public float[] getMatrix(){
 		return super.get(new float[16]);
+	}
+	
+	public Matrix4 getRotationMtx(){
+		Matrix4 mtx = new Matrix4();
+		mtx.set3x3(this);
+		mtx.scale(getScale().recip());
+		return mtx;
+	}
+	
+	public Matrix4 clearRotation() {
+		setRotationZYX(0, 0, 0);
+		return this;
+	}
+	
+	public Matrix4 rotateZYXDeg(float z, float y, float x){
+		rotateZYX(MathEx.toRadiansf(z), MathEx.toRadiansf(y), MathEx.toRadiansf(x));
+		return this;
+	}
+	
+	public void clearRotationX(){
+		float siny = -m02();
+		float yAngle = (float)Math.asin(-siny);
+		float cosy = (float)Math.cos(yAngle);
+		float cosz = m00() / cosy;
+		float sinz = m01() / cosy;
+		
+		float cosx = 1f; //cos 0
+		float sinx = 0f;
+		m10(-sinz);
+		m11(cosz);
+		m12(0);
+		m20(cosz * siny);
+		m21(sinz * siny);
+		m22(cosy);
+	}
+	
+	public void clearRotationZ(){
+		float siny = -m02();
+		float yAngle = (float)Math.asin(-siny);
+		float cosy = (float)Math.cos(yAngle);
+		float cosx = m22() / cosy;
+		float sinx = m12() / cosy;
+		
+		float cosz = 1f; //cos 0
+		float sinz = 0f;
+		m00(cosy);
+		m01(0);
+		m10(siny * sinx);
+		m11(cosx);
+		m20(cosx * siny);
+		m21(-sinx);
 	}
 	
 	public Matrix4 clearTranslation() {

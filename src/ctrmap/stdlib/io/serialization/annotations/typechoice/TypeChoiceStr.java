@@ -7,6 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import javax.lang.model.type.NullType;
 
+/**
+ * A TypeChoice attribute decided using a String magic.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(TypeChoicesStr.class)
 @Target({ElementType.FIELD, ElementType.TYPE})

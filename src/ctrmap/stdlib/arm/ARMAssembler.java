@@ -1,7 +1,7 @@
 package ctrmap.stdlib.arm;
 
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
-import ctrmap.stdlib.io.util.BitUtils;
+import ctrmap.stdlib.io.util.IOUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -110,7 +110,7 @@ public class ARMAssembler {
 	
 	public static int getBranchInstructionTarget(DataIOStream in) throws IOException{
 		int currentOffset = in.getPosition() + 8;
-		int v = (BitUtils.readInt24LE(in) << 2) + currentOffset;
+		int v = (in.readInt24() << 2) + currentOffset;
 		in.skipBytes(1);
 		return v;
 	}
@@ -119,7 +119,7 @@ public class ARMAssembler {
 		int currentOffset = out.getPosition() + 8;
 		int diff = branchTarget - currentOffset;
 		int value = (diff >> 2);
-		BitUtils.writeInt24LE(value, out);
+		out.writeInt24(value);
 		out.write(CONDITION_ALWAYS << 4 | 0b101 << 1 | (link ? 1 : 0));
 	}
 	

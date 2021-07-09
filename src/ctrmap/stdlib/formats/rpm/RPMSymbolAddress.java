@@ -8,7 +8,7 @@ import java.io.IOException;
 public class RPMSymbolAddress {
 	
 	private int bits;
-	private RPM rpm;
+	private final RPM rpm;
 	
 	public RPMSymbolAddress(RPM rpm, DataInput in) throws IOException{
 		this.rpm = rpm;
@@ -62,7 +62,13 @@ public class RPMSymbolAddress {
 	}
 	
 	public static enum RPMAddrType {
+		/**
+		 * Fixed, non-relocatable address.
+		 */
 		GLOBAL,
+		/**
+		 * Address pointing inside this RPM, relocatable.
+		 */
 		LOCAL
 	}
 }

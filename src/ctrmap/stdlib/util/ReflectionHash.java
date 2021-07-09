@@ -9,8 +9,14 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Utility class to dynamically calculate a unique hash of an object's fields.
+ */
 public class ReflectionHash {
 
+	/**
+	 * Enables printing of debug information for the class.
+	 */
 	private static final boolean REFLHASH_DEBUG = false;
 	
 	private int hash = 0;
@@ -18,12 +24,24 @@ public class ReflectionHash {
 	private Object object;
 	private boolean changedFlag = false;
 
+	/**
+	 * Instantiates the hash calculator for an object and calculates the initial hash.
+	 * The constructor should be called after the object's initialization.
+	 * @param o The object to calculate this and subsequent hashes for.
+	 */
 	public ReflectionHash(Object o) {
 		object = o;
-		recalculate();
-		resetChangedFlag();
+		reset();
 	}
 
+	/**
+	 * Internal method used to calculate a full field hash of an object.
+	 * @param o The object to calculate the hash for.
+	 * @param cache A modifiable list used to store already calculated object references to prevent stack overflows.
+	 * @return A hash of the input object. If the object has not been modified in any way, this method is guaranteed to always return the same value.
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException 
+	 */
 	private static int hashObj(Object o, List<Object> cache) throws IllegalArgumentException, IllegalAccessException {
 		if (o == null) {
 			return 0;
@@ -90,7 +108,19 @@ public class ReflectionHash {
 		}
 		return l;
 	}
+	
+	/**
+	 * Recalculates the hash and resets the modification flag if it was raised by the recalculation.
+	 */
+	public void reset(){
+		recalculate();
+		resetChangedFlag();
+	}
 
+	/**
+	 * Recalculates the assigned object's hash and raises the modification flag if the object has been tampered with.
+	 * @return True if the newly calculated hash doesn't match the previous hash.
+	 */
 	public boolean recalculate() {
 		try {
 			pendingHash = hashObj(object, new ArrayList<>());
@@ -105,22 +135,38 @@ public class ReflectionHash {
 		return false;
 	}
 
+	/**
+	 * Queries the status of the modification flag.
+	 * @return True if the assigned object has been modified, false if otherwise.
+	 */
 	public boolean hasChanged() {
 		return changedFlag;
 	}
 	
+	/**
+	 * Forces the modification flag to tripped state and sets the object hash to 0 to make it remain so if the hash were to be recalculated.
+	 */
 	public void forceSetChangedFlag(){
 		changedFlag = true;
 		hash = 0; //if the data was to be recalculated, the changed flag will remain set
 	}
 
+	/**
+	 * Convenience method to query the modification flag with automatic hash recalculation if it was not set at the time that the method is called.
+	 * @return 
+	 */
 	public boolean getChangeFlagRecalcIfNeeded() {
-		if (!changedFlag) {
+		//An update allowed the changed flag to be possibly reset if the changes were reverted, making this method identical to recalculate()
+		
+		//if (!changedFlag) {
 			return recalculate();
-		}
-		return true;
+		//}
+		//return true;
 	}
 
+	/**
+	 * Resets the state of the modification flag to untripped.
+	 */
 	public void resetChangedFlag() {
 		changedFlag = false;
 		hash = pendingHash;

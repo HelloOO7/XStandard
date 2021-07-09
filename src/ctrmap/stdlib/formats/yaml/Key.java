@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.yaml;
 
+import ctrmap.stdlib.text.FormattingUtils;
 import java.io.PrintStream;
 
 public class Key extends YamlContent {
@@ -15,7 +16,7 @@ public class Key extends YamlContent {
 		if (ddotIdx != -1) {
 			String[] values = KeyValuePair.splitToKeyAndValue(ddotIdx, line);
 			if (values[1].trim().isEmpty()) {
-				String key = values[0].trim();
+				String key = FormattingUtils.makeStringFromLiteral(values[0].trim());
 				if (!key.isEmpty()) {
 					return new Key(key);
 				}
@@ -31,7 +32,7 @@ public class Key extends YamlContent {
 
 	@Override
 	public void print(PrintStream out) {
-		out.print(key);
+		printLiteral(key, out);
 		out.print(":");
 	}
 

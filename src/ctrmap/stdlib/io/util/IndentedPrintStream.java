@@ -1,15 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ctrmap.stdlib.io.util;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
 
 /**
- *
+ * A PrintStream wrapper that allows setting per-line indentation.
  */
 public class IndentedPrintStream extends PrintStream {
 
@@ -21,30 +16,53 @@ public class IndentedPrintStream extends PrintStream {
 	
 	private boolean isNextPrintLineBegin = true;
 
+	/**
+	 * Creates an IndentedPrintStream for an output stream.
+	 * @param out An OutputStream.
+	 */
 	public IndentedPrintStream(OutputStream out) {
 		super(out);
 	}
 
+	/**
+	 * Directly set the level of indentation.
+	 * @param il Level of indentation.
+	 */
 	public void setIndentLevel(int il) {
 		indentLevel = il;
 		updateIndentor();
 	}
 
+	/**
+	 * Increases the level of indentation by one.
+	 */
 	public void incrementIndentLevel() {
 		setIndentLevel(indentLevel + 1);
 	}
 
+	/**
+	 * If possible, decreases the level of indentation by one.
+	 */
 	public void decrementIndentLevel() {
 		if (indentLevel != 0) {
 			setIndentLevel(indentLevel - 1);
 		}
 	}
 
+	/**
+	 * Sets how many spaces represent one indentation level.
+	 * If the stream uses tabs for indentation, the value is ignored.
+	 * @param is Number of spaces per indentor.
+	 */
 	public void setIndentStep(int is) {
-		indentStep = 4;
+		indentStep = is;
 		updateIndentor();
 	}
 
+	/**
+	 * Set if the stream should use tabs for indentation.
+	 * @param b True to use tabs, false to use spaces.
+	 */
 	public void setIndentIsTabs(boolean b) {
 		indentIsTabs = b;
 		updateIndentor();

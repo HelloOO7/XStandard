@@ -1,11 +1,12 @@
 
 package ctrmap.stdlib.arm.elf.rpmconv.exec;
 
-import ctrmap.stdlib.io.util.BitUtils;
+import ctrmap.stdlib.io.util.IOUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
+import ctrmap.stdlib.math.MathEx;
 
 /**
  *
@@ -24,7 +25,7 @@ public class ETExecRelocationState {
 			targetSectionOffsets.put(c.id, targetOffset);
 			System.out.println("section " + c.type + " size " + c.getSectionSize() + " placed at " + Integer.toHexString(targetOffset) + " orig " + c.getOriginalSectionOffset());
 			targetOffset += c.getSectionSize();
-			targetOffset = BitUtils.getPaddedInteger(targetOffset, 4);
+			targetOffset = MathEx.padInteger(targetOffset, 4);
 		}
 	}
 	

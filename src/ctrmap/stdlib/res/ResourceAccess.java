@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Utility for retrieving bundled program resources using prebuilt tables.
+ */
 public class ResourceAccess {
 
 	private static final List<String> loadedTables = new ArrayList<>();
@@ -19,6 +22,11 @@ public class ResourceAccess {
 	
 	private static final ClassLoader classLoader = ResourceAccess.class.getClassLoader();
 
+	/**
+	 * Constructs a ResourceFile object with a pathname.
+	 * @param pathname Path of the resource file.
+	 * @return A ResourceFile that links to the resource in the filesystem/JAR.
+	 */
 	public static ResourceFile getResourceFile(String pathname) {
 		ResourceTable.ResourceInfo i = resTbl.getResInfo(pathname);
 		if (i == null) {
@@ -27,14 +35,29 @@ public class ResourceAccess {
 		return new ResourceFile(i);
 	}
 
+	/**
+	 * Reads a resource into a byte array.
+	 * @param name Path of the resource.
+	 * @return An array of bytes containing the entire resource's data.
+	 */
 	public static byte[] getByteArray(String name) {
-		return FSUtil.readStreamToBytes(getStream(name));
+		return FSUtil.readStreamToBytesFastAndDangerous(getStream(name));
 	}
 
+	/**
+	 * Returns an InputStream linked to a program resource.
+	 * @param name Path of the resource.
+	 * @return An InputStream of the resource data.
+	 */
 	public static InputStream getStream(String name) {
 		return classLoader.getResourceAsStream("ctrmap/resources/" + name);
 	}
 
+	/**
+	 * Copies a resource to the default temporary directory.
+	 * @param name Path of the resource.
+	 * @return The File into which the resource was copied.
+	 */
 	public static File copyToTemp(String name) {
 		try {
 			InputStream in = getStream(name);
@@ -56,11 +79,22 @@ public class ResourceAccess {
 		rt.write(new File(root + "/" + tableName));
 	}
 	
+	/**
+	 * Builds a resource table from a file tree.
+	 * @param root The root directory of the resource tree,
+	 * @param rootPrefix A path prefix to add to all files in the resource table.
+	 * @param tableName Name of the table file in 'root'.
+	 */
 	public static void buildResourceTable(File root, String rootPrefix, String tableName) {
 		ResourceTable rt = new ResourceTable(root, rootPrefix);
 		rt.write(new File(root + "/" + tableName));
 	}
 
+	/**
+	 * Loads a resource table from a program resource location.
+	 * If the table was already loaded, nothing is done.
+	 * @param tableName Path to the table in program resources.
+	 */
 	public static void loadResourceTable(String tableName) {
 		if (!loadedTables.contains(tableName)) {
 			InputStream stm = getStream(tableName);

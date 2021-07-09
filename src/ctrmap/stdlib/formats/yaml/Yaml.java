@@ -24,6 +24,10 @@ public class Yaml {
 	public Yaml() {
 
 	}
+	
+	public FSFile getFile(){
+		return document;
+	}
 
 	public Yaml(FSFile fsf) {
 		if (fsf.exists()) {

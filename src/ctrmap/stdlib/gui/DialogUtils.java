@@ -16,6 +16,7 @@ public class DialogUtils {
 
 	public static int getSelectedNumber(JFrame parent, String title, int initialValue, int minimum, int maximum){
 		NumberInputDialog dlg = new NumberInputDialog(parent, true, title, initialValue, minimum, maximum);
+		dlg.setLocationRelativeTo(parent);
 		dlg.setVisible(true);
 		boolean isResult = dlg.getConfirmed();
 		if (isResult){
@@ -61,6 +62,7 @@ public class DialogUtils {
 	}
 
 	public static void showExceptionTraceDialog(Exception ex) {
+		ex.printStackTrace();
 		StringWriter writer = new StringWriter();
 		if (ex.getCause() != null) {
 			ex.getCause().printStackTrace(new PrintWriter(writer));

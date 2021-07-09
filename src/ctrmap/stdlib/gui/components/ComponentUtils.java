@@ -1,6 +1,7 @@
 
 package ctrmap.stdlib.gui.components;
 
+import ctrmap.stdlib.math.vec.Vec3f;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
@@ -14,6 +15,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.NumberFormatter;
@@ -79,6 +81,18 @@ public class ComponentUtils {
 			return field.getText();
 		}
 	}
+	
+	public static void setTFsVector(Vec3f vec, JFormattedTextField x, JFormattedTextField y, JFormattedTextField z){
+		x.setValue(vec.x);
+		y.setValue(vec.y);
+		z.setValue(vec.z);
+	}
+	
+	public static void addDocumentListenerToTFs(DocumentListener listener, JTextField... fields){
+		for (JTextField f : fields){
+			f.getDocument().addDocumentListener(listener);
+		}
+	}
 
 	public static float getFloatFromDocument(JFormattedTextField docOwner) {
 		return getFloatFromDocument(docOwner, 0.0F);
@@ -86,13 +100,13 @@ public class ComponentUtils {
 
 	public static float getFloatFromDocument(JFormattedTextField docOwner, float defaultValue) {
 		try {
-			String val = docOwner.getDocument().getText(0, docOwner.getDocument().getLength()).replace(',', '.');
+			String val = getDocTextFromField(docOwner).replace(',', '.');
 			if (val.length() > 0 && !val.equals("-")) {
 				return Float.valueOf(val);
 			} else {
 				return defaultValue;
 			}
-		} catch (BadLocationException | NumberFormatException ex) {
+		} catch (NumberFormatException ex) {
 			return defaultValue;
 		}
 	}

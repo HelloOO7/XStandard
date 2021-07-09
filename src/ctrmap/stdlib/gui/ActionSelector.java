@@ -29,6 +29,8 @@ public class ActionSelector extends javax.swing.JDialog {
 
 	private void aSelInit(ASelAction... actions) {
 		initComponents();
+		
+		getRootPane().setDefaultButton(btnConfirm);
 
 		for (ASelAction act : actions) {
 			actionHash = 31 * actionHash + act.actionName.hashCode();

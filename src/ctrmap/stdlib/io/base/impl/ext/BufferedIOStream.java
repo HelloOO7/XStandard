@@ -1,7 +1,5 @@
 package ctrmap.stdlib.io.base.impl.ext;
 
-import ctrmap.stdlib.fs.FSUtil;
-import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.io.IOCommon;
 import ctrmap.stdlib.io.base.impl.IOStreamWrapper;
 import ctrmap.stdlib.io.base.iface.IOStream;

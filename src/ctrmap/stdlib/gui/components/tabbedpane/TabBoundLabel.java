@@ -1,5 +1,6 @@
 package ctrmap.stdlib.gui.components.tabbedpane;
 
+import java.awt.Font;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
@@ -29,5 +30,17 @@ public class TabBoundLabel extends JLabel {
 			return tab.getIcon();
 		}
 		return super.getIcon();
+	}
+	
+	Font getFontInternal(){
+		return super.getFont();
+	}
+	
+	@Override
+	public Font getFont(){
+		if (tab != null){
+			return tab.getHeaderFont();
+		}
+		return super.getFont();
 	}
 }

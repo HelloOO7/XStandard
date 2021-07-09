@@ -17,9 +17,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Very rudimentary class for downloading files from the Internet.
  */
 public class FileDownloader {
+	
+	/**
+	 * Creates a ReadableStream from a HTTP URL.
+	 * Bear in mind that the stream's available() method will NOT function correctly.
+	 * @param url An HTTP Internet address.
+	 * @return A ReadableStream bound to the URL, or null if the URL could not be resolved.
+	 */
 	public static ReadableStream getNetworkStream(String url){
 		try {
 			return new InputStreamReadable(new URL(url).openStream());
@@ -31,10 +38,20 @@ public class FileDownloader {
 		return null;
 	}
 	
+	/**
+	 * Downloads a file from an URL into memory.
+	 * @param url Internet address of the file.
+	 * @return A MemoryFile wrapped around a byte[] of the network file's data.
+	 */
 	public static MemoryFile downloadToMemory(String url){
 		return new MemoryFile(url, FSUtil.readStreamToBytes(new BufferedInputStream(getNetworkStream(url).getInputStream())));
 	}
 	
+	/**
+	 * Transfers a file from an URL onto the disk.
+	 * @param f Destination file to download to.
+	 * @param url Internet address of the file.
+	 */
 	public static void downloadToFile(File f, String url){
 		try {
 			FileOutputStream fstrm = new FileOutputStream(f);

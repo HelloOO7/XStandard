@@ -4,7 +4,7 @@ import ctrmap.stdlib.formats.yaml.Yaml;
 import ctrmap.stdlib.formats.yaml.YamlReflectUtil;
 import ctrmap.stdlib.fs.FSFile;
 
-public class RPZYmlBase extends Yaml {
+class RPZYmlBase extends Yaml {
 
 	public String name;
 	public RPZVersion version;

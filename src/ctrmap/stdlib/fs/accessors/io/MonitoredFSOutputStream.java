@@ -43,7 +43,7 @@ public class MonitoredFSOutputStream extends WriteableWrapper {
 				int baseLen = vfsf.getBaseFile().length();
 				int ovLen = vfsf.getOvFile().length();
 				if (baseLen != ovLen){
-					System.out.println("(length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
+					System.out.println("(Length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
 				}
 				vfsf.getVFS().notifyFileChange(vfsf.getPath());
 			}

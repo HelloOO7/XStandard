@@ -1,7 +1,7 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
 import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.util.BitUtils;
+import ctrmap.stdlib.io.util.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import ctrmap.stdlib.formats.rpm.RPMRelocationTarget;
 import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
+import ctrmap.stdlib.math.MathEx;
 
 /**
  *
@@ -57,7 +58,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 		for (RelElfSection sec : sections) {
 			sec.prepareForRPM(rpm, offs, esdb);
 			offs += sec.length;
-			offs = BitUtils.getPaddedInteger(offs, Integer.BYTES);
+			offs = MathEx.padInteger(offs, Integer.BYTES);
 		}
 
 		ElfSymbolTableSection symbs = elf.getSymbolTableSection();
@@ -77,14 +78,14 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 					int elfRelocOffs = relocOffs + sec.sourceOffset;
 
 					int armRelocType = io.read();
-					int relocTypeArg = BitUtils.readUInt24LE(io);
+					int relocTypeArg = io.readUnsignedInt24();
 
 					RPMRelocation rel = new RPMRelocation();
 					rel.target = new RPMRelocationTarget(rpmRelocOffs);
 					rel.sourceType = RPMRelocation.RPMRelSourceType.SYMBOL_INTERNAL;
 
 					switch (armRelocType) {
-						case ARMELFRelTypes.R_ARM_ABS32: {
+						case ARMELFRelType.R_ARM_ABS32: {
 							io.seek(elfRelocOffs);
 							int addend = io.readInt();
 							rel.targetType = RPMRelocation.RPMRelTargetType.OFFSET;
@@ -113,7 +114,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						}
-						case ARMELFRelTypes.R_ARM_THM_CALL: {
+						case ARMELFRelType.R_ARM_THM_CALL: {
 							rel.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
 							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, symbs.symbols[relocTypeArg], 0, true);
 							if (s == null) {
@@ -125,7 +126,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						}
-						case ARMELFRelTypes.R_ARM_CALL:
+						case ARMELFRelType.R_ARM_CALL:
 							rel.targetType = RPMRelocation.RPMRelTargetType.ARM_BRANCH_LINK;
 							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, symbs.symbols[relocTypeArg], 0, true);
 							if (s == null) {

@@ -2,7 +2,7 @@
 package ctrmap.stdlib.io;
 
 /**
- *
+ * Thrown if a file version is not supported.
  */
 public class UnsupportedVersionException extends RuntimeException {
 

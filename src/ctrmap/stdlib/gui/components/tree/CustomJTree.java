@@ -15,8 +15,8 @@ import javax.swing.tree.DefaultTreeModel;
  *
  */
 public class CustomJTree extends JTree {
-	private CustomJTreeRootNode root;
-	private DefaultTreeModel model;
+	protected final CustomJTreeRootNode root;
+	protected DefaultTreeModel model;
 	protected TreeIconResourceProvider iconProvider = new TreeIconResourceProvider();
 	
 	public CustomJTree(){
@@ -27,6 +27,15 @@ public class CustomJTree extends JTree {
 		model = new DefaultTreeModel(root);
 		setModel(model);
 		setShowsRootHandles(true);
+	}
+	
+	@Override
+	public DefaultTreeModel getModel(){
+		return model;
+	}
+	
+	public void setModel(){
+		throw new UnsupportedOperationException();
 	}
 	
 	public void removeAllChildren(){

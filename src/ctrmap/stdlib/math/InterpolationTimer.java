@@ -1,5 +1,8 @@
 package ctrmap.stdlib.math;
 
+/**
+ * TODO: Exterminate this class.
+ */
 public class InterpolationTimer {
 	private double duration;
 	private float slope;

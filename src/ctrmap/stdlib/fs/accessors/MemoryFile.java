@@ -6,22 +6,32 @@ import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.access.MemoryStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MemoryFile extends FSFile{
+/**
+ * A file-system wrapper of a byte array.
+ */
+public class MemoryFile extends FSFile {
 
 	private byte[] data;
 	private String name;
-	
-	public MemoryFile(String name, byte[] data){
+
+	/**
+	 * Creates a MemoryFile using a byte array with the given name.
+	 *
+	 * @param name An arbitrary name of the file.
+	 * @param data File data.
+	 */
+	public MemoryFile(String name, byte[] data) {
 		this.data = data;
 		this.name = name;
 	}
-	
+
+	/**
+	 * @return False on all MemoryFiles.
+	 */
 	@Override
 	public boolean isDirectory() {
 		return false;
@@ -44,11 +54,34 @@ public class MemoryFile extends FSFile{
 
 	@Override
 	public IOStream getIO() {
-		return new MemoryStream(data);
+		//
+		// Create a MemoryStream that sets the byte[] of this MemoryFile to the MemoryStream contents when flushed.
+		//
+		return new MemoryStream(data) {
+			@Override
+			public void close() throws IOException {
+				data = toByteArray();
+			}
+		};
+	}
+
+	/**
+	 * Gets the byte[] backing the MemoryFile.
+	 *
+	 * @return The byte[] this MemoryFile was created from.
+	 */
+	public final byte[] getBackingArray() {
+		return data;
 	}
 	
-	public byte[] getBackingArray(){
+	@Override
+	public byte[] getBytes(){
 		return data;
+	}
+	
+	@Override
+	public void setBytes(byte[] bytes){
+		data = bytes;
 	}
 
 	@Override
@@ -98,6 +131,6 @@ public class MemoryFile extends FSFile{
 
 	@Override
 	public int getPermissions() {
-		return FSF_ATT_READ;
+		return FSF_ATT_READ | FSF_ATT_WRITE;
 	}
 }

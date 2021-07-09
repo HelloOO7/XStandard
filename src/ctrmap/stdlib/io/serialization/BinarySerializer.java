@@ -2,23 +2,9 @@ package ctrmap.stdlib.io.serialization;
 
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.base.iface.IOStream;
-import ctrmap.stdlib.io.serialization.annotations.ArrayLengthSize;
-import ctrmap.stdlib.io.serialization.annotations.ArraySize;
-import ctrmap.stdlib.io.serialization.annotations.ByteOrderMark;
-import ctrmap.stdlib.io.serialization.annotations.DefinedArraySize;
-import ctrmap.stdlib.io.serialization.annotations.Ignore;
-import ctrmap.stdlib.io.serialization.annotations.Inline;
-import ctrmap.stdlib.io.serialization.annotations.MagicStr;
-import ctrmap.stdlib.io.serialization.annotations.MagicStrLE;
-import ctrmap.stdlib.io.serialization.annotations.ObjSize;
-import ctrmap.stdlib.io.serialization.annotations.PointerBase;
-import ctrmap.stdlib.io.serialization.annotations.PointerSize;
-import ctrmap.stdlib.io.serialization.annotations.Size;
+import ctrmap.stdlib.io.serialization.annotations.*;
 import ctrmap.stdlib.io.util.StringIO;
-import ctrmap.stdlib.io.serialization.annotations.typechoice.TypeChoiceInt;
-import ctrmap.stdlib.io.serialization.annotations.typechoice.TypeChoiceStr;
-import ctrmap.stdlib.io.serialization.annotations.typechoice.TypeChoicesInt;
-import ctrmap.stdlib.io.serialization.annotations.typechoice.TypeChoicesStr;
+import ctrmap.stdlib.io.serialization.annotations.typechoice.*;
 import java.io.DataOutput;
 
 import javax.lang.model.type.NullType;
@@ -120,6 +106,9 @@ public class BinarySerializer extends BinarySerialization {
                         else if (cls == Short.TYPE){
                             baseStream.writeShort((short)bomValue);
                         }
+						else if (cls == Byte.TYPE){
+							baseStream.write(bomValue);
+						}
                         else {
                             throw new RuntimeException("Unsupported BOM class: " + cls);
                         }
@@ -192,7 +181,15 @@ public class BinarySerializer extends BinarySerialization {
 
         int defaultSize = constants.length <= 0x100 ? 1 : constants.length <= 0x10000 ? 2 : 4;
 
-        writeSizedInt(((Enum)value).ordinal(), field, getIntSize(defaultSize, field, cls));
+		int ordinal;
+		if (value instanceof ISerializableEnum){
+			ordinal = ((ISerializableEnum)value).getOrdinal();
+		}
+		else {
+			ordinal = ((Enum)value).ordinal();
+		}
+		
+        writeSizedInt(ordinal, field, getIntSize(defaultSize, field, cls));
     }
 
     private RefValue writeArray(Object value, Class cls, Field field) throws InstantiationException, IllegalAccessException, IOException {
@@ -329,10 +326,10 @@ public class BinarySerializer extends BinarySerialization {
                 Class fieldClass = getUnboxedClass(fld.getType());
 
                 if (fieldClass == Integer.TYPE){
-                    fld.setShort(value, (short)objSize);
+                    fld.setInt(value, (int)objSize);
                 }
                 else if (fieldClass == Short.TYPE){
-                    fld.setInt(value, (int)objSize);
+                    fld.setShort(value, (short)objSize);
                 }
                 else {
                     throw new UnsupportedOperationException("ObjSize field " + fld + " is not an Integer nor a Short.");
@@ -348,7 +345,7 @@ public class BinarySerializer extends BinarySerialization {
     }
 
     private RefValue writeObjectReference(Object value, Class cls, Field field) throws InstantiationException, IllegalAccessException, IOException {
-        if (hasAnnotation(Inline.class, cls, field) || refType == ReferenceType.NONE || field == null){
+        if (hasAnnotation(Inline.class, cls, field) || refType == ReferenceType.NONE || field == null || hasAnnotation(MagicStr.class, cls, field)){
             RefValue val = new RefValue();
 
             val.children = writeInlineObject(value, field);
@@ -437,7 +434,7 @@ public class BinarySerializer extends BinarySerialization {
         }
     }
 
-    public static class RefValue {
+    static class RefValue {
         public int pointerPosition;
         public int pointerBase;
         public Field field;

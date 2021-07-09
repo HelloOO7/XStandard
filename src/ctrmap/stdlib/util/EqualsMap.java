@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A key-value dictionary that uses the equals(Object) method for matching keys. Slow.
+ * @param <K> Key type.
+ * @param <V> Value type.
+ */
 public class EqualsMap<K, V> {
 
 	private List<K> keys = new ArrayList<>();

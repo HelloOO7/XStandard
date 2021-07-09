@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ctrmap.stdlib.formats.yaml;
 
 import ctrmap.stdlib.text.FormattingUtils;
@@ -10,7 +5,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -153,7 +147,7 @@ public class YamlReflectUtil {
 
 	public static void addFieldsToNode(YamlNode n, Object obj) {
 		try {
-			for (Field field : obj.getClass().getDeclaredFields()) {
+			for (Field field : getSortedFields(obj.getClass())) {
 				int mods = field.getModifiers();
 				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
 					field.setAccessible(true);

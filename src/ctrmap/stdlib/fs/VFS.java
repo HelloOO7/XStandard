@@ -8,7 +8,12 @@ import ctrmap.stdlib.util.ProgressMonitor;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A layered file system with support for archive mounting.
+ */
 public class VFS {
+
+	private final FSManager fs;
 
 	private VFSRootFile root;
 	private VFSRootFile overlay;
@@ -16,45 +21,93 @@ public class VFS {
 	private boolean hasChangeBlacklist = false;
 	private VFSChangeBlacklist blacklist;
 
+	/**
+	 * Creates a VFS using the provided FSManager.
+	 *
+	 * @param fs
+	 */
+	public VFS(FSManager fs) {
+		this.fs = fs;
+	}
+
+	/**
+	 * Initializes the VFS with the given layer roots.
+	 *
+	 * @param root Root file of the base layer.
+	 * @param location Root file of the overlay.
+	 */
 	public void initVFS(VFSRootFile root, VFSRootFile location) {
 		this.root = root;
 		overlay = location;
-
-		final VFS mInstance = this;
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
 				if (hasChangeBlacklist) {
-					blacklist.doRemoveFiles(mInstance);
+					blacklist.doRemoveFiles();
 					blacklist.terminate();
 				}
 			}
 		});
 	}
 
+	/**
+	 * Gets the FSManager associated with this VFS.
+	 *
+	 * @return
+	 */
+	public FSManager getFS() {
+		return fs;
+	}
+
+	/**
+	 * Creates a file change blacklist at the given location and assigns it to
+	 * this VFS.
+	 *
+	 * @param location A FSFile to write the change info into.
+	 */
 	public void createChangeBlacklist(FSFile location) {
-		blacklist = new VFSChangeBlacklist(location);
+		blacklist = new VFSChangeBlacklist(location, this);
 		hasChangeBlacklist = true;
 	}
 
+	/**
+	 * Gets the root file of the base layer.
+	 *
+	 * @return
+	 */
 	public FSFile getBaseFSRoot() {
 		return root;
 	}
 
+	/**
+	 * Gets the root file of the overlay layer.
+	 *
+	 * @return
+	 */
 	public FSFile getOvFSRoot() {
 		return overlay;
 	}
 
-	public void applyOvFS(String path, FSManager fs) {
-		applyOvFS(path, fs, null);
+	/**
+	 * Applies all contents of the OvFS, starting at 'path'.
+	 *
+	 * @param path The path to apply.
+	 */
+	public void applyOvFS(String path) {
+		applyOvFS(path, null);
 	}
 
-	public void applyOvFS(String path, FSManager fs, ProgressMonitor monitor) {
-		ArcFileAccessor afa = fs.getArcFileAccessor();
-		path = FSWildCard.getWildCardedPath(getRelativePath(path));
-		FSFile ovFile = getFileFromRefPath(overlay, path, afa);
-		FSFile target = getFileFromRefPath(root, path, afa);
+	/**
+	 * Applies all contents of the OvFS, starting at 'path',
+	 *
+	 * @param path The path to apply.
+	 * @param monitor A progress monitor interface.
+	 */
+	public void applyOvFS(String path, ProgressMonitor monitor) {
+		path = fs.getWildCardManager().getWildCardedPath(getRelativePath(path));
+		FSFile ovFile = fs.getFileFromRefPath(overlay, path);
+		FSFile target = fs.getFileFromRefPath(root, path);
 
 		if (target.exists()) {
 			if (ovFile.isDirectory()) {
@@ -69,10 +122,10 @@ public class VFS {
 						monitor.setProgressPercentage(0);
 						monitor.setProgressSubTitle("Patching ArcFile...");
 					}
-					applyToArcFile(ovFile, ovFile, arc, afa, monitor);
+					applyToArcFile(ovFile, ovFile, arc, monitor);
 				} else {
 					for (FSFile sub : ovFile.listFiles()) {
-						applyOvFS(sub.getPath(), fs, monitor);
+						applyOvFS(sub.getPath(), monitor);
 					}
 				}
 			} else {
@@ -88,23 +141,22 @@ public class VFS {
 					}
 				}
 			}
-		}
-		else {
-			if (ovFile instanceof ArcFile){
-				ovFile = ((ArcFile)ovFile).getSource(); //If the ArcFile was kept, it would get extracted to the target because ArcFile is a directory
+		} else {
+			if (ovFile instanceof ArcFile) {
+				ovFile = ((ArcFile) ovFile).getSource(); //If the ArcFile was kept, it would get extracted to the target because ArcFile is a directory
 			}
-			
+
 			FSUtil.copy(ovFile, target);
 		}
 	}
 
-	private void applyToArcFile(FSFile root, FSFile fsf, ArcFile arc, ArcFileAccessor afa, ProgressMonitor monitor) {
+	private void applyToArcFile(FSFile root, FSFile fsf, ArcFile arc, ProgressMonitor monitor) {
 		List<ArcInput> inputs = getArcInputs(root, fsf);
 		ensureDotArcExistence(inputs, root);
-		afa.writeToArcFile(arc, monitor, inputs.toArray(new ArcInput[inputs.size()]));
+		fs.getArcFileAccessor().writeToArcFile(arc, monitor, inputs.toArray(new ArcInput[inputs.size()]));
 	}
 
-	private void ensureDotArcExistence(List<ArcInput> inputs, FSFile repackRoot) {
+	private static void ensureDotArcExistence(List<ArcInput> inputs, FSFile repackRoot) {
 		for (ArcInput in : inputs) {
 			if (in.targetPath.equals(DotArc.DOT_ARC_SIGNATURE)) {
 				return;
@@ -122,7 +174,7 @@ public class VFS {
 			}
 		} else {
 			ArcInput thisInput = new ArcInput(fsf.getPathRelativeTo(root), fsf);
-			String fsPath = FSWildCard.getWildCardedPath(getRelativePath(fsf.getPath()));
+			String fsPath = fs.getWildCardManager().getWildCardedPath(getRelativePath(fsf.getPath()));
 			if (!isFileChangeBlacklisted(fsPath)) {
 				System.out.println("Include ArcInput " + fsPath);
 				inputs.add(thisInput);
@@ -131,24 +183,50 @@ public class VFS {
 		return inputs;
 	}
 
+	/**
+	 * Notifies the VFS to remove a file from the blacklist as a result of its
+	 * modification. The method does nothing if no blacklist is assigned.
+	 *
+	 * @param changedPath Wildcarded path of the changed file.
+	 */
 	public void notifyFileChange(String changedPath) {
 		if (hasChangeBlacklist) {
 			blacklist.removePathFromBlacklist(changedPath);
 		}
 	}
 
+	/**
+	 * Notifies the VFS that a new file has been created in the OvFS. This will
+	 * register the file in the blacklist, if one is present.
+	 *
+	 * @param path Wildcarded path of the added file.
+	 */
 	public void notifyOvFsNewFileInit(String path) {
 		if (hasChangeBlacklist) {
 			blacklist.putBlacklistPath(path);
 		}
 	}
 
+	/**
+	 * Renames a path in the blacklist to another. Does nothing if no blacklist
+	 * is attached.
+	 *
+	 * @param oldPath The path to be renamed.
+	 * @param newPath Name of the path after renaming.
+	 */
 	public void relocateBlackListFile(String oldPath, String newPath) {
 		if (hasChangeBlacklist) {
 			blacklist.relocatePaths(oldPath, newPath);
 		}
 	}
 
+	/**
+	 * Checks if a file path is in the blacklist.
+	 *
+	 * @param path Wildcarded path of the file.
+	 * @return Whether or not the blacklist contains the path, or false if no
+	 * blacklist is attached.
+	 */
 	public boolean isFileChangeBlacklisted(String path) {
 		if (hasChangeBlacklist) {
 			return blacklist.hasPath(path);
@@ -156,7 +234,14 @@ public class VFS {
 		return false;
 	}
 
-	public FSFile getFile(String path, FSManager fs) {
+	/**
+	 * Gets a file from either the OvFS or BaseFS using a path, accounting for
+	 * ArcFile mounting and expansion.
+	 *
+	 * @param path Wildcarded path of the requested file.
+	 * @return A VFSFile descriptor linked to the OvFS and BaseFS results.
+	 */
+	public FSFile getFile(String path) {
 		//System.out.println("Requested file " + path);
 		ArcFileAccessor afa = fs.getArcFileAccessor();
 		path = getRelativePath(path);
@@ -164,22 +249,17 @@ public class VFS {
 			path = path.substring(1);
 		}
 		boolean isExistingBase = false;
-		FSFile existing = getFileFromRefPath(overlay, path, afa);
+		FSFile existing = fs.getFileFromRefPath(overlay, path);
 		if (existing != null && !existing.exists()) {
 			isExistingBase = true;
-			existing = getFileFromRefPath(root, path, afa);
-		} else {
-			/*FSFile arcTest = getFileFromRefPath(root, path, afa);
-			if (arcTest.exists() && afa.isArcFile(arcTest) && !(existing instanceof ArcFile)) {
-				existing = new ArcFile(arcTest, afa);
-			}*/
+			existing = fs.getFileFromRefPath(root, path);
 		}
 		FSFile result;
 		if (existing != null && existing.exists()) {
 			if (isExistingBase) {
-				result = new VFSFile(path, this, existing, afa);
+				result = new VFSFile(path, this, existing);
 			} else {
-				result = new VFSFile(path, this, afa);
+				result = new VFSFile(path, this);
 			}
 		} else {
 			//If it does not exist, we will create empty files on the overlay, also expand ArcFiles with an accessor
@@ -188,13 +268,13 @@ public class VFS {
 			for (int t = 0; t < splitPath.length; t++) {
 				String token = splitPath[t];
 				if (token.startsWith(":") && token.endsWith(":")) {
-					result = getExistingRefFile(result, token);
+					result = fs.getWildCardManager().getExistingRefFile(result, token);
 				} else {
 					result = result.getChild(token);
 				}
 				//If expandArcs is allowed, this takes into account ArcFiles in origin and casts them accordingly
 				//The ArcFileAccessor will then deliver the extracted ArcFileMember with its implementation
-				FSFile origin = root.getMatchingChild(result.getPathRelativeTo(overlay));
+				FSFile origin = root.getMatchingChild(result.getPathRelativeTo(overlay), fs.getWildCardManager());
 				if (origin != null && afa.isArcFile(origin)) {
 					//System.out.println("Expanding ArcFile " + origin.getPath());
 					ArcFile af = new ArcFile(origin, afa);
@@ -206,7 +286,7 @@ public class VFS {
 						pathInArc.append(splitPath[t2]);
 					}
 					if (pathInArc.length() > 0) {
-						result = new VFSFile(path, this, af.getChild(pathInArc.toString()), afa);
+						result = new VFSFile(path, this, af.getChild(pathInArc.toString()));
 						break;
 					}
 				}
@@ -216,62 +296,15 @@ public class VFS {
 		return result;
 	}
 
+	/**
+	 * Converts a path to be relative to either the BaseFS or OvFS.
+	 *
+	 * @param path The path to convert.
+	 * @return The input path, relative.
+	 */
 	public String getRelativePath(String path) {
 		path = FSFile.getPathRelativeTo(path, overlay.getPath());
 		path = FSFile.getPathRelativeTo(path, root.getPath());
 		return path;
-	}
-
-	public static FSFile getFileFromRefPath(FSFile parent, String refPath, ArcFileAccessor afa) {
-		FSFile currentParent = parent;
-		for (int i = 0; i < refPath.length(); i++) {
-			String thing = getTextUntilSlash(refPath, i);
-			i += thing.length();
-			if (thing.startsWith(":") && thing.endsWith(":")) {
-				currentParent = getExistingRefFile(currentParent, thing);
-			} else {
-				currentParent = currentParent.getChild(thing);
-			}
-			if (afa != null && afa.isArcFile(currentParent)) {
-				currentParent = new ArcFile(currentParent, afa);
-				if (i + 1 < refPath.length()) {
-					return currentParent.getChild(refPath.substring(i + 1));
-				}
-			}
-		}
-		return currentParent;
-	}
-
-	public static FSFile getExistingRefFile(FSFile parent, String ref) {
-		String pattern = ref.replace(":", "");
-		for (FSWildCard wc : FSWildCard.values()) {
-			if (wc.ddotId.equals(pattern)) {
-				return getFirstExistingFile(parent, wc.getFirstOption(), wc.getOtherOptions());
-			}
-		}
-		return null;
-	}
-
-	private static FSFile getFirstExistingFile(FSFile parent, String defaultOption, String... otherOptions) {
-		FSFile f = parent.getChild(defaultOption);
-		for (String opt : otherOptions) {
-			if (!f.exists()) {
-				FSFile f2 = parent.getChild(opt);
-				if (f2.exists()) {
-					f = f2;
-				}
-			} else {
-				break;
-			}
-		}
-		return f;
-	}
-
-	private static String getTextUntilSlash(String str, int start) {
-		int idx = str.indexOf('/', start);
-		if (idx == -1) {
-			idx = str.length();
-		}
-		return str.substring(start, idx);
 	}
 }

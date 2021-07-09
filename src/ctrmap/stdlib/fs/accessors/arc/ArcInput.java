@@ -1,11 +1,10 @@
 package ctrmap.stdlib.fs.accessors.arc;
 
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.MemoryFile;
 
 /**
- *
+ * A request for inserting an entry into an ArcFile.
  */
 public class ArcInput {
 

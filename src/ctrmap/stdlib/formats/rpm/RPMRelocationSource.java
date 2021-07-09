@@ -1,9 +1,11 @@
 package ctrmap.stdlib.formats.rpm;
 
-import ctrmap.stdlib.io.util.StringIO;
+import ctrmap.stdlib.io.structs.StringTable;
+import ctrmap.stdlib.util.ArraysEx;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 /**
  *
@@ -19,8 +21,10 @@ public interface RPMRelocationSource {
 	public int getLength();
 	
 	public int getDataSize();
+	
+	public void addStrings(List<String> l);
 
-	public void write(DataOutput out) throws IOException;
+	public void write(DataOutput out, StringTable strtab) throws IOException;
 
 	public static class RPMRelSrcInternalSymbol implements RPMRelocationSource {
 
@@ -47,7 +51,7 @@ public interface RPMRelocationSource {
 		}
 
 		@Override
-		public void write(DataOutput out) throws IOException {
+		public void write(DataOutput out, StringTable strtab) throws IOException {
 			out.writeShort(rpm.getSymbolNo(symb));
 		}
 
@@ -74,6 +78,10 @@ public interface RPMRelocationSource {
 		public int getDataSize() {
 			return 2;
 		}
+
+		@Override
+		public void addStrings(List<String> l) {
+		}
 	}
 
 	public static class RPMRelSrcExternalSymbol extends RPMRelSrcInternalSymbol {
@@ -81,9 +89,9 @@ public interface RPMRelocationSource {
 		public String ns;
 		public String symbolName;
 
-		public RPMRelSrcExternalSymbol(RPM rpm, DataInput in) throws IOException {
-			ns = StringIO.readString(in);
-			symbolName = StringIO.readString(in);
+		RPMRelSrcExternalSymbol(RPM rpm, RPMReader in) throws IOException {
+			ns = in.readStringWithAddress();
+			symbolName = in.readStringWithAddress();
 			this.rpm = rpm;
 			symb = rpm.getExternalSymbol(ns, symbolName);
 		}
@@ -96,14 +104,20 @@ public interface RPMRelocationSource {
 		}
 
 		@Override
-		public void write(DataOutput out) throws IOException {
-			StringIO.writeString(out, ns);
-			StringIO.writeString(out, symb.name);
+		public void write(DataOutput out, StringTable strtab) throws IOException {
+			strtab.putStringOffset(ns);
+			strtab.putStringOffset(symb.name);
+		}
+		
+		@Override
+		public void addStrings(List<String> l) {
+			ArraysEx.addIfNotNullOrContains(l, ns);
+			ArraysEx.addIfNotNullOrContains(l, symb.name);
 		}
 		
 		@Override
 		public int getDataSize() {
-			return ns.length() + symb.name.length() + 2;
+			return 4;
 		}
 	}
 }

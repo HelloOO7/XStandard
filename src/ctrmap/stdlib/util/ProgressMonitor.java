@@ -1,5 +1,8 @@
 package ctrmap.stdlib.util;
 
+/**
+ * Interface class for passing progress of operations.
+ */
 public interface ProgressMonitor {
 	public void setProgressPercentage(int value);
 	public void setProgressTitle(String value);

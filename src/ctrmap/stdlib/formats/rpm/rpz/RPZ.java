@@ -1,15 +1,26 @@
 package ctrmap.stdlib.formats.rpm.rpz;
 
 import ctrmap.stdlib.formats.rpm.RPM;
+import ctrmap.stdlib.formats.rpm.RPMMetaData;
 import ctrmap.stdlib.formats.zip.ZipArchive;
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Relocatable Program Zip
+ *
+ * Format handler.
+ */
 public class RPZ extends FSFileAdapter {
+
+	public static final String RPM_MVK_RPZ_PRODUCT_ID = "ProductID";
+	public static final String RPM_MVK_RPZ_PRODUCT_VERSION = "ProductVersion";
 
 	private static final String RPZ_INDEX_FILENAME = "_Index.yml";
 
@@ -25,21 +36,21 @@ public class RPZ extends FSFileAdapter {
 
 	public RPZ(FSFile file) {
 		super(file = getFsFileMaybeZip(file));
-		
-		if (!isRPZ(file)){
+
+		if (!isRPZ(file)) {
 			throw new IllegalArgumentException("File is not an RPZ!");
 		}
-		
+
 		meta = file.getChild(RPZ_META_DIRNAME);
 		code = file.getChild(RPZ_CODE_DIRNAME);
 		content = file.getChild(RPZ_CONTENT_DIRNAME);
 
 		index = new RPZIndex(meta.getChild(RPZ_INDEX_FILENAME));
 	}
-	
-	public RPZ(FSFile file, String productId){
+
+	public RPZ(FSFile file, String productId) {
 		super(file);
-		
+
 		meta = file.getChild(RPZ_META_DIRNAME);
 		code = file.getChild(RPZ_CODE_DIRNAME);
 		content = file.getChild(RPZ_CONTENT_DIRNAME);
@@ -47,30 +58,90 @@ public class RPZ extends FSFileAdapter {
 		meta.mkdir();
 		code.mkdir();
 		content.mkdir();
-		
+
 		index = new RPZIndex(meta.getChild(RPZ_INDEX_FILENAME), productId);
 	}
-	
-	public RPZIndex getIndex(){
+
+	/**
+	 * Gets the Index metadata of the RPZ.
+	 *
+	 * @return
+	 */
+	public RPZIndex getIndex() {
 		return index;
 	}
 
+	/**
+	 * Gets the unique Product ID of the RPZ, as per its index.
+	 *
+	 * @return
+	 */
 	public String getProductId() {
 		return index.productId;
 	}
 
+	/**
+	 * Gets the friendly name of the RPZ's program.
+	 *
+	 * @return
+	 */
 	public String getProductName() {
 		return index.productId;
 	}
 
+	/**
+	 * Gets the Product ID of an RPM installed from an RPZ. The Product ID is
+	 * inserted as a reserved metadata value when installed. If the value is not
+	 * found in the RPM's metadata, the function returns null.
+	 *
+	 * @param rpm The RPM to return the Product ID of.
+	 * @return
+	 */
+	public static String getProductIDOfRPM(RPM rpm) {
+		RPMMetaData.RPMMetaValue prodId = rpm.metaData.findValue(RPM_MVK_RPZ_PRODUCT_ID);
+		if (prodId != null) {
+			return prodId.stringValue();
+		}
+		return null;
+	}
+
+	/**
+	 * Gets the Product Version of an RPM installed from an RPZ. The Product
+	 * Version is inserted as a reserved metadata value when installed. If the
+	 * value is not found in the RPM's metadata, the function returns -1.
+	 *
+	 * @param rpm The RPM to return the Product ID of.
+	 * @return Product Version of the RPM, or -1 if none detected.
+	 */
+	public static int getProductVersionOfRPM(RPM rpm) {
+		RPMMetaData.RPMMetaValue prodVer = rpm.metaData.findValue(RPM_MVK_RPZ_PRODUCT_VERSION);
+		if (prodVer != null) {
+			return prodVer.intValue();
+		}
+		return -1;
+	}
+
+	/**
+	 * Gets the friendly description from this RPZ's metadata.
+	 * @return 
+	 */
 	public String getDescription() {
 		return index.description;
 	}
 
+	/**
+	 * Gets the Product Version of the RPZ.
+	 * @return 
+	 */
 	public RPZVersion getVersion() {
 		return index.version;
 	}
 
+	/**
+	 * Installs the RPZ using an IRPZHandler.
+	 * @param handler The handler/installer to use.
+	 * @return True if the installation succeeded.
+	 */
 	public boolean install(IRPZHandler handler) {
 		try {
 			int presentVersion = handler.getInstalledProductVersion(getProductId());
@@ -95,13 +166,9 @@ public class RPZ extends FSFileAdapter {
 			String desiredTarget = handler.getTarget();
 			RPZModuleInfo targetModuleInfo = null;
 
-			Map<String, RPZModuleInfo> moduleInfos = new HashMap<>();
+			Map<String, List<RPZModuleInfo>> moduleInfos = new HashMap<>();
 
 			for (RPZYmlBase.RPZYmlReference moduleRef : index.modules) {
-				if (targetModuleInfo != null) {
-					break;
-				}
-
 				FSFile moduleInfoFile = meta.getChild(moduleRef.ymlPath);
 				if (!moduleInfoFile.exists()) {
 					if (handler.throwError(IRPZHandler.RPZErrorCode.FILE_NOT_FOUND, "Referenced module info " + moduleRef.ymlPath + " not present in RPZ!")) {
@@ -109,17 +176,14 @@ public class RPZ extends FSFileAdapter {
 					}
 				}
 				RPZModuleInfo moduleInfo = new RPZModuleInfo(moduleInfoFile);
-				moduleInfos.put(moduleInfo.name, moduleInfo);
-				if (moduleInfo.isDependencyModule) {
-					continue;
+				List<RPZModuleInfo> moduleInfoList = moduleInfos.get(moduleInfo.productId);
+				if (moduleInfoList == null){
+					moduleInfoList = new ArrayList<>();
+					moduleInfos.put(moduleInfo.productId, moduleInfoList);
 				}
-				for (RPZModuleInfo.RPZTarget tgt : moduleInfo.targets) {
-					if (Objects.equals(desiredTarget, tgt.targetName)) {
-						targetModuleInfo = moduleInfo;
-						break;
-					}
-				}
+				moduleInfoList.add(moduleInfo);
 			}
+			targetModuleInfo = findModuleByTarget(moduleInfos.get(getProductId()), desiredTarget);
 
 			if (targetModuleInfo != null) {
 				return installModule(targetModuleInfo, moduleInfos, handler);
@@ -133,8 +197,19 @@ public class RPZ extends FSFileAdapter {
 			return false;
 		}
 	}
+	
+	private RPZModuleInfo findModuleByTarget(List<RPZModuleInfo> l, String target){
+		if (l != null){
+			for (RPZModuleInfo i : l){
+				if (i.supportsTarget(target)){
+					return i;
+				}
+			}
+		}
+		return null;
+	}
 
-	private boolean installModule(RPZModuleInfo module, Map<String, RPZModuleInfo> modules, IRPZHandler handler) {
+	private boolean installModule(RPZModuleInfo module, Map<String, List<RPZModuleInfo>> modules, IRPZHandler handler) {
 		if (module.contentInfo != null) {
 			FSFile contentInfoFile = meta.getChild(module.contentInfo.ymlPath);
 			if (!contentInfoFile.exists()) {
@@ -147,7 +222,7 @@ public class RPZ extends FSFileAdapter {
 			FSFile contentDest = handler.getDestContentDirectory();
 
 			for (RPZContentInfo.RPZContentReference ref : contentInfo.content) {
-				if (ref.destinationPath == null){
+				if (ref.destinationPath == null) {
 					handler.throwError(IRPZHandler.RPZErrorCode.UNKNOWN, "Malicious content reference! Applying this would delete your whole FS root.");
 					continue;
 				}
@@ -181,15 +256,22 @@ public class RPZ extends FSFileAdapter {
 			int presentDepVersion = handler.getInstalledProductVersion(dep.productId);
 
 			if (presentDepVersion == -1) {
-				if (dep.bundledDepModule != null) {
-					RPZModuleInfo depModuleInfo = modules.get(dep.productId);
+				if (dep.hasBundledDepModule) {
+					RPZModuleInfo depModuleInfo = findModuleByTarget(modules.get(dep.productId), handler.getTarget());
 					if (depModuleInfo == null) {
-						if (handler.throwError(IRPZHandler.RPZErrorCode.DEPENDENCY_NOT_RESOLVED, "Module info for dependency " + dep.productId + " not found.")) {
+						boolean errorResult;
+						if (modules.containsKey(dep.productId)){
+							errorResult = handler.throwError(IRPZHandler.RPZErrorCode.TARGET_NOT_SUPPORTED, "Dependency " + dep.productId + " does not support target " + handler.getTarget() + ".");
+						}
+						else {
+							errorResult = handler.throwError(IRPZHandler.RPZErrorCode.DEPENDENCY_NOT_RESOLVED, "Module info for dependency " + dep.productId + " not found.");
+						}
+						if (errorResult) {
 							return false;
 						}
 					} else {
-						if (!depModuleInfo.isDependencyModule){
-							if (handler.throwError(IRPZHandler.RPZErrorCode.DEPENDENCY_NOT_RESOLVED, "Module info for dependency is not flagged as a dependency. (" + dep.productId + ")")){
+						if (!depModuleInfo.isDependencyModule) {
+							if (handler.throwError(IRPZHandler.RPZErrorCode.DEPENDENCY_NOT_RESOLVED, "Module info for dependency is not flagged as a dependency. (" + dep.productId + ")")) {
 								return false;
 							}
 							continue;
@@ -232,8 +314,9 @@ public class RPZ extends FSFileAdapter {
 		}
 
 		RPM execRpm = new RPM(execRpmFile);
-		execRpm.productId = getProductId();
-		execRpm.productVersion = getVersion().number;
+		execRpm.metaData.putValue(new RPMMetaData.RPMMetaValue(RPM_MVK_RPZ_PRODUCT_ID, getProductId()));
+		execRpm.metaData.putValue(new RPMMetaData.RPMMetaValue(RPM_MVK_RPZ_PRODUCT_VERSION, getVersion().number));
+
 		if (!handler.installRPM(execRpm)) {
 			handler.throwError(IRPZHandler.RPZErrorCode.RPM_INSTALL_FAILED, "Could not install module RPM (" + execRpmFile + ").");
 			return false;
@@ -241,6 +324,11 @@ public class RPZ extends FSFileAdapter {
 		return true;
 	}
 
+	/**
+	 * Checks if a directory/archive can be read as an RPZ.
+	 * @param fsf The directory or a ZIP archive to check.
+	 * @return True if the directory/archive contains RPZ data.
+	 */
 	public static boolean isRPZ(FSFile fsf) {
 		fsf = getFsFileMaybeZip(fsf);
 		FSFile meta = fsf.getChild(RPZ_META_DIRNAME);

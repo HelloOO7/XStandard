@@ -1,4 +1,3 @@
-
 package ctrmap.stdlib.formats.yaml;
 
 import ctrmap.stdlib.text.FormattingUtils;
@@ -8,57 +7,67 @@ import java.io.PrintStream;
  *
  */
 public class KeyValuePair extends YamlContent {
+
 	public String key;
 	public String value;
-	
-	public KeyValuePair(String key, String value){
+
+	public KeyValuePair(String key, String value) {
 		this.key = key;
 		this.value = value;
 	}
-	
-	public static KeyValuePair trySet(String line){
+
+	public static KeyValuePair trySet(String line) {
 		int ddotIdx = getDDotIdx(line);
-		if (ddotIdx != -1){
+		if (ddotIdx != -1) {
 			String[] values = splitToKeyAndValue(ddotIdx, line);
-			
-			if (values.length == 2){
-				String key = values[0].trim();
+
+			if (values.length == 2) {
+				String key = FormattingUtils.makeStringFromLiteral(values[0].trim());
 				String value = FormattingUtils.makeStringFromLiteral(values[1].trim());
-				if (!key.isEmpty() && (value == null || !value.isEmpty())){
+				if (!key.isEmpty() && (value == null || !value.isEmpty())) {
 					return new KeyValuePair(key, value);
 				}
 			}
 		}
 		return null;
 	}
-	
-	public static String[] splitToKeyAndValue(int idx, String str){
+
+	public static String[] splitToKeyAndValue(int idx, String str) {
 		return new String[]{str.substring(0, idx), str.substring(idx + 1, str.length())};
 	}
-	
-	public static int getDDotIdx(String line){
-		int quoteIdx = line.indexOf('"');
-		int ddotIdx = line.indexOf(':');
-		return (quoteIdx > ddotIdx || quoteIdx == -1) ? ddotIdx : -1;
+
+	public static int getDDotIdx(String line) {
+		boolean discardNext = false;
+		boolean applies = true;
+		for (int i = 0; i < line.length(); i++) {
+			char c = line.charAt(i);
+			if (c == '\\') {
+				discardNext = true;
+			} else {
+				discardNext = false;
+			}
+			if (c == '"') {
+				if (!discardNext) {
+					applies = !applies;
+				}
+			}
+			else if (c == ':' && applies){
+				return i;
+			}
+		}
+		return -1;
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString() {
 		return key + ": " + value;
 	}
 
 	@Override
 	public void print(PrintStream out) {
-		out.print(key);
+		printLiteral(key, out);
 		out.print(": ");
-		boolean printQuotes = value != null && (value.contains(":") || value.equals("null"));
-		if (printQuotes){
-			out.print("\"");
-		}
-		out.print(value);
-		if (printQuotes){
-			out.print("\"");
-		}
+		printLiteral(value, out);
 	}
 
 	@Override

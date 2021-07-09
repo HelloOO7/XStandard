@@ -7,7 +7,7 @@ import ctrmap.stdlib.io.base.iface.WriteableStream;
 import java.util.List;
 
 /**
- *
+ * An intermediate class used for wrapping FSFiles into other FSFiles.
  */
 public class FSFileAdapter extends FSFile {
 	
@@ -17,6 +17,10 @@ public class FSFileAdapter extends FSFile {
 		source = toWrap;
 	}
 
+	/**
+	 * Gets the FSFile that the FSFileAdapter is wrapped around.
+	 * @return 
+	 */
 	public FSFile getSource(){
 		return source;
 	}
@@ -82,7 +86,7 @@ public class FSFileAdapter extends FSFile {
 	}
 
 	@Override
-	public List<FSFile> listFiles() {
+	public List<? extends FSFile> listFiles() {
 		return source.listFiles();
 	}
 

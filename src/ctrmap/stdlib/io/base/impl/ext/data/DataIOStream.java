@@ -8,6 +8,7 @@ import ctrmap.stdlib.io.base.iface.DataOutputEx;
 import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.impl.access.FileStream;
 import ctrmap.stdlib.io.base.impl.access.MemoryStream;
+import ctrmap.stdlib.io.util.StringIO;
 import java.io.File;
 
 import java.io.IOException;
@@ -93,6 +94,10 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 
 	public int readAddress() throws IOException {
 		return currentBase + readInt();
+	}
+	
+	public String readStringWithAddress() throws IOException {
+		return StringIO.readStringWithAddress(this);
 	}
 
 	@Override

@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package ctrmap.stdlib.formats.zip;
 
 import ctrmap.stdlib.fs.FSFile;
@@ -13,6 +7,7 @@ import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.InputStreamReadable;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
 
@@ -27,7 +22,7 @@ public class ZipEntryFile extends FSFile {
 	
 	public ZipEntryFile(ZipArchive arc, String path){
 		this.arc = arc;
-		this.path = path;
+		this.path = ZipArchive.stripLastSlash(path);
 		this.e = arc.getEntryForPath(path);
 	}
 	
@@ -38,7 +33,7 @@ public class ZipEntryFile extends FSFile {
 
 	@Override
 	public FSFile getParent() {
-		return arc.getChild(FSUtil.getParentFileName(path));
+		return arc.getChild(FSUtil.getParentFilePath(path));
 	}
 	
 	@Override
@@ -83,7 +78,10 @@ public class ZipEntryFile extends FSFile {
 
 	@Override
 	public ReadableStream getInputStream() {
-		return new InputStreamReadable(arc.getEntryInputStream(e));
+		if (e == null){
+			return null;
+		}
+		return new ZipReadableFixup(arc.getEntryInputStream(e), e);
 	}
 
 	@Override
@@ -93,6 +91,9 @@ public class ZipEntryFile extends FSFile {
 
 	@Override
 	public IOStream getIO() {
+		if (e == null){
+			return null;
+		}
 		return new DataIOStream(getBytes());
 	}
 
@@ -104,5 +105,21 @@ public class ZipEntryFile extends FSFile {
 	@Override
 	public int getPermissions() {
 		return FSF_ATT_READ;
+	}
+	
+	public static class ZipReadableFixup extends InputStreamReadable {
+		
+		private int size;
+		
+		public ZipReadableFixup(InputStream in, ZipEntry e) {
+			super(in);
+			size = (int)e.getSize();
+		}
+		
+		@Override
+		public int getLength(){
+			return size;
+		}
+		
 	}
 }

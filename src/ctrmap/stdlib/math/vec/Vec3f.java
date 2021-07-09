@@ -60,6 +60,13 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 		z = 0f;
 	}
 	
+	public static Vec3f hitY(Vec3f pos, Vec3f dir, float y, Vec3f dest){
+		float t = (y - pos.y) / dir.y;
+		dest.set(dir);
+		dest.mulAdd(t, pos);
+		return dest;
+	}
+	
 	public void set(DataInput in) throws IOException {
 		x = in.readFloat();
 		y = in.readFloat();
@@ -120,6 +127,13 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 	public Vec3f invert() {
 		return mul(-1);
 	}
+	
+	public Vec3f recip(){
+		x = 1f / x;
+		y = 1f / y;
+		z = 1f / z;
+		return this;
+	}
 
 	public Vec3f getInverse() {
 		return new Vec3f(this).invert();
@@ -144,6 +158,12 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 	@Override
 	public Vec3f mulAdd(float s, Vector3fc v){
 		super.mulAdd(s, v);
+		return this;
+	}
+	
+	@Override
+	public Vec3f rotateY(float angle){
+		super.rotateY(angle);
 		return this;
 	}
 

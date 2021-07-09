@@ -23,14 +23,25 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * A FSFile constructed from a real file-system File.
+ */
 public class DiskFile extends FSFile {
 
 	private File file;
 
+	/**
+	 * Creates a DiskFile from a path in the file-system.
+	 * @param path Relative or absolute path of the file.
+	 */
 	public DiskFile(String path) {
 		this(new File(path));
 	}
 
+	/**
+	 * Creates a DiskFile from a java.io.File object.
+	 * @param f A File.
+	 */
 	public DiskFile(File f) {
 		file = f;
 	}
@@ -123,7 +134,7 @@ public class DiskFile extends FSFile {
 		if (exists() && !isDirectory()) {
 			return null;
 		}
-		if (forName == null || forName.length() == 0){
+		if (forName == null || forName.isEmpty()){
 			return this;
 		}
 		return new DiskFile(file.getPath() + "/" + forName);
@@ -136,6 +147,11 @@ public class DiskFile extends FSFile {
 
 	@Override
 	public void delete() {
+		if (isDirectory()){
+			for (FSFile child : listFiles()){
+				child.delete();
+			}
+		}
 		file.delete();
 	}
 

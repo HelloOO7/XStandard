@@ -5,10 +5,15 @@ import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
 import java.util.List;
 
+/**
+ * A FSFile adapter linked to an ArcFileAccessor for obtaining files from
+ * mounted archives.
+ */
 public class ArcFile extends FSFileAdapter {
+
 	private ArcFileAccessor accessor;
-	
-	public ArcFile(FSFile source, ArcFileAccessor accessor){
+
+	public ArcFile(FSFile source, ArcFileAccessor accessor) {
 		super(source);
 		this.source = source;
 		this.accessor = accessor;
@@ -16,11 +21,11 @@ public class ArcFile extends FSFileAdapter {
 
 	@Override
 	public FSFile getChild(String forName) {
-		if (forName.startsWith(".")){
+		if (forName.startsWith(".")) {
 			return null;
 		}
 		//System.out.println("ArcFile getChild requested " + this + "/" + forName);
-		return new ArcFileMember(this, FSUtil.cleanPath(forName), accessor);
+		return new ArcFileMember(this, FSUtil.cleanPathFromRootSlash(forName), accessor);
 	}
 
 	@Override
@@ -32,7 +37,6 @@ public class ArcFile extends FSFileAdapter {
 	public boolean isDirectory() {
 		return true;
 	}*/
-
 	@Override
 	public List<FSFile> listFiles() {
 		return accessor.getArcFiles(this);

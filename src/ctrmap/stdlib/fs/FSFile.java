@@ -11,53 +11,165 @@ import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataOutStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 public abstract class FSFile {
 
+	/**
+	 * Indicates that the file can be read from.
+	 */
 	public static final int FSF_ATT_READ = 1;
+	/**
+	 * Indicates that the file can be written to.
+	 */
 	public static final int FSF_ATT_WRITE = 2;
+	/**
+	 * Indicates that the file can be executed.
+	 */
 	public static final int FSF_ATT_EXECUTE = 4;
 
+	/**
+	 * Gets a child file in this directory,
+	 *
+	 * @param forName Name of the child file.
+	 * @return
+	 */
 	public abstract FSFile getChild(String forName);
 
+	/**
+	 * Gets the parent directory of this file.
+	 *
+	 * @return The parent directory, or null if this is the root folder.
+	 */
 	public abstract FSFile getParent();
 
+	/**
+	 * Creates a directory denoted by this file.
+	 */
 	public abstract void mkdir();
 
+	/**
+	 * Changes this file's path. Also known as moving/renaming,
+	 *
+	 * @param newPath New path of the file.
+	 */
 	public abstract void setPath(String newPath);
 
+	/**
+	 * Deletes this file/directory.
+	 */
 	public abstract void delete();
 
+	/**
+	 * Gets the number of bytes in this file.
+	 *
+	 * @return The file length, or 0 if it is a directory.
+	 */
 	public abstract int length();
 
+	/**
+	 * Checks if the file is a directory.
+	 *
+	 * @return True if the file is a directory, false if it is a file.
+	 */
 	public abstract boolean isDirectory();
 
+	/**
+	 * Checks if the file exists.
+	 *
+	 * @return True if the file exists, false if otherwise.
+	 */
 	public abstract boolean exists();
 
+	/**
+	 * Gets the file's name.
+	 *
+	 * @return The file name.
+	 */
 	public abstract String getName();
 
+	/**
+	 * Creates a ReadableStream directly from the file.
+	 *
+	 * @return
+	 */
 	public abstract ReadableStream getInputStream();
 
+	/**
+	 * Creates a WriteableStream from the file. Any bytes written into the
+	 * stream must sooner or later be reflected in the file.
+	 *
+	 * @return
+	 */
 	public abstract WriteableStream getOutputStream();
 
+	/**
+	 * Creates an IOStream from the file. Any bytes written into the stream must
+	 * sooner or later be reflected in the file.
+	 *
+	 * @return
+	 */
 	public abstract IOStream getIO();
 
-	public abstract List<FSFile> listFiles();
+	/**
+	 * Lists all child files in this directory.
+	 *
+	 * @return A list of all child files, or an empty list if this is not a
+	 * directory.
+	 */
+	public abstract List<? extends FSFile> listFiles();
 
+	/**
+	 * Gets the permission atributes of the file.
+	 *
+	 * @return A bitfield of the permissions. See FSF_ATT_READ, FSF_ATT_WRITE
+	 * and FSF_ATT_EXECUTE.
+	 */
 	public abstract int getPermissions();
 
+	/**
+	 * Checks if the file can be read from.
+	 *
+	 * @return
+	 */
 	public boolean canRead() {
 		return exists() && (getPermissions() & FSF_ATT_READ) != 0;
 	}
 
+	/**
+	 * Checks if the file can be written to.
+	 *
+	 * @return
+	 */
 	public boolean canWrite() {
 		return (getPermissions() & FSF_ATT_WRITE) != 0;
 	}
 
+	/**
+	 * Checks if the file can be executed.
+	 *
+	 * @return
+	 */
 	public boolean canExecute() {
 		return (getPermissions() & FSF_ATT_EXECUTE) != 0;
 	}
 
+	/**
+	 * Gets the name of this file without the extension, if one is present.
+	 *
+	 * @return
+	 */
+	public String getNameWithoutExtension() {
+		return FSUtil.getFileNameWithoutExtension(getName());
+	}
+
+	/**
+	 * Checks for multiple file permissions.
+	 *
+	 * @param flags The permissions to check. Can be either FSF_ATT_READ,
+	 * FSF_ATT_WRITE or FSF_ATT_EXECUTE.
+	 * @return True if the file has all of the permissions.
+	 */
 	//privilege check sounds better but does not look good in code
 	public boolean checkPrivileges(int... flags) {
 		int p = getPermissions();
@@ -69,48 +181,100 @@ public abstract class FSFile {
 		return true;
 	}
 
+	/**
+	 * Gets the number of files in this directory.
+	 *
+	 * @return Number of files in the directory, or 0 if this is a file.
+	 */
 	public int getChildCount() {
 		return listFiles().size();
 	}
 
+	/**
+	 * Reads the file into a byte array.
+	 *
+	 * @return
+	 */
 	public byte[] getBytes() {
 		return FSUtil.readFileToBytes(this);
 	}
 
+	/**
+	 * Writes a byte array in whole into the file.
+	 *
+	 * @param bytes
+	 */
 	public void setBytes(byte[] bytes) {
 		FSUtil.writeBytesToFile(this, bytes);
 	}
-	
-	public DataInStream getDataInputStream(){
+
+	/**
+	 * Creates a DataInStream from the file.
+	 *
+	 * @return
+	 */
+	public DataInStream getDataInputStream() {
 		return new DataInStream(getInputStream());
 	}
-	
-	public DataOutStream getDataOutputStream(){
+
+	/**
+	 * Creates a DataOutStream to the file.
+	 *
+	 * @return
+	 */
+	public DataOutStream getDataOutputStream() {
 		return new DataOutStream(getOutputStream());
 	}
-	
-	public DataIOStream getDataIOStream(){
+
+	/**
+	 * Creates a DataIOStream of the file.
+	 *
+	 * @return
+	 */
+	public DataIOStream getDataIOStream() {
 		return new DataIOStream(getIO());
 	}
-	
-	public InputStream getNativeInputStream(){
+
+	/**
+	 * Creates an InputStream from the file.
+	 *
+	 * @return
+	 */
+	public InputStream getNativeInputStream() {
 		return getInputStream().getInputStream();
 	}
-	
-	public OutputStream getNativeOutputStream(){
+
+	/**
+	 * Creates an OutputStream to the file.
+	 *
+	 * @return
+	 */
+	public OutputStream getNativeOutputStream() {
 		return getOutputStream().getOutputStream();
 	}
 
+	/**
+	 * Gets the number of visible files in this directory. A hidden file is any
+	 * whose file name begins with '.'.
+	 *
+	 * @return
+	 */
 	public int getVisibleChildCount() {
-		List<FSFile> files = listFiles();
+		List<? extends FSFile> files = listFiles();
 		return files.size() - getHiddenCount(files);
 	}
 
+	/**
+	 * Gets the number of hidden files in this directory. A hidden file is any
+	 * whose file name begins with '.'.
+	 *
+	 * @return
+	 */
 	public int getHiddenChildCount() {
 		return getHiddenCount(listFiles());
 	}
 
-	public static int getHiddenCount(List<FSFile> children) {
+	protected static int getHiddenCount(List<? extends FSFile> children) {
 		int hidden = 0;
 
 		for (FSFile f : children) {
@@ -122,10 +286,20 @@ public abstract class FSFile {
 		return hidden;
 	}
 
+	/**
+	 * Checks if the file is a file - that is, it exists and isn't a directory.
+	 *
+	 * @return
+	 */
 	public boolean isFile() {
 		return exists() && !isDirectory();
 	}
 
+	/**
+	 * Gets the full path of the file.
+	 *
+	 * @return
+	 */
 	public String getPath() {
 		if (getParent() != null) {
 			return (getParent().getPath() + "/" + getName()).replace('\\', '/');
@@ -133,6 +307,11 @@ public abstract class FSFile {
 		return getName();
 	}
 
+	/**
+	 * Renames the file.
+	 *
+	 * @param name New name of the file.
+	 */
 	public void renameTo(String name) {
 		FSFile p = getParent();
 		if (p == null) {
@@ -142,6 +321,12 @@ public abstract class FSFile {
 		}
 	}
 
+	/**
+	 * Compares the file to an object.
+	 *
+	 * @param o
+	 * @return True if the object is the file and its path matches this file's.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (o != null && o instanceof FSFile) {
@@ -150,10 +335,23 @@ public abstract class FSFile {
 		return false;
 	}
 
+	/**
+	 * Gets this file's path, stripped of a parent file's.
+	 *
+	 * @param relativeTo The parent file to base the path from.
+	 * @return
+	 */
 	public String getPathRelativeTo(FSFile relativeTo) {
 		return getPathRelativeTo(getPath(), relativeTo.getPath());
 	}
 
+	/**
+	 * Gets a path relative to another.
+	 *
+	 * @param path The full path.
+	 * @param relPath The path to make the full path relative to.
+	 * @return 'path' relative to 'relPath'.
+	 */
 	public static String getPathRelativeTo(String path, String relPath) {
 		relPath += "/";
 		if (path.startsWith(relPath)) {
@@ -163,6 +361,10 @@ public abstract class FSFile {
 		return path;
 	}
 
+	/**
+	 * Creates a directory denoted by this file, and all parent directories
+	 * required for this operation to succeed.
+	 */
 	public void mkdirs() {
 		Stack<FSFile> parentStack = new Stack<>();
 		FSFile currentParent = this;
@@ -178,27 +380,37 @@ public abstract class FSFile {
 		}
 	}
 
-	public FSFile getMatchingChild(String childPath) {
+	/**
+	 * Gets an existing child file with wild card support.
+	 * @param childPath Path of the child file.
+	 * @param mng A WildCard manager.
+	 * @return The child file, or null if it could not be matched.
+	 */
+	public FSFile getMatchingChild(String childPath, FSWildCardManager mng) {
 		int slashIdx = childPath.indexOf("/");
 		String immChildName = childPath.substring(0, slashIdx != -1 ? slashIdx : childPath.length());
 		String followChildPath = childPath.substring(slashIdx + 1);
 		FSFile child;
 		if (immChildName.startsWith(":") && immChildName.endsWith(":")) {
-			child = VFS.getExistingRefFile(this, immChildName);
+			child = mng.getExistingRefFile(this, immChildName);
 		} else {
 			child = getChild(immChildName);
 		}
 		if (child != null) {
-			if (FSWildCard.getWildCardedPath(child.getName()).equals(FSWildCard.getWildCardedPath(childPath))) {
+			if (mng.getWildCardedPath(child.getName()).equals(mng.getWildCardedPath(childPath))) {
 				return child;
 			}
-			return child.getMatchingChild(followChildPath);
+			return child.getMatchingChild(followChildPath, mng);
 		}
 		return null;
 	}
 
+	/**
+	 * Lists the child files as a String array.
+	 * @return 
+	 */
 	public List<String> list() {
-		List<FSFile> files = listFiles();
+		List<? extends FSFile> files = listFiles();
 		List<String> ret = new ArrayList<>();
 		for (FSFile f : files) {
 			ret.add(f.getPath());
@@ -209,5 +421,10 @@ public abstract class FSFile {
 	@Override
 	public String toString() {
 		return getPath();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(getPath());
 	}
 }

@@ -1,38 +1,11 @@
 package ctrmap.stdlib.io.util;
 
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class BitUtils {
-
-	public static int readUInt24LE(DataInput in) throws IOException {
-		return (int) (in.readUnsignedByte()
-			| in.readUnsignedByte() << 8
-			| in.readUnsignedByte() << 16);
-	}
-
-	public static int readInt24LE(DataInput in) throws IOException {
-		return signExtend(readUInt24LE(in), 24);
-	}
-
-	public static void writeInt24LE(int v, DataOutput out) throws IOException {
-		out.write(v & 0xFF);
-		out.write((v >> 8) & 0xFF);
-		out.write((v >> 16));
-	}
-
-	public static int signExtend(int value, int bits) {
-		int output = (int) value;
-		boolean sign = (value & (1 << (bits - 1))) > 0;
-		if (sign) {
-			output -= (1 << bits);
-		}
-		return output;
-	}
+public class IOUtils {
 
 	public static byte[] integerToByteArrayBE(int i) {
 		return new byte[]{(byte) (i >>> 24), (byte) (i >>> 16), (byte) (i >>> 8), (byte) i};
@@ -72,16 +45,6 @@ public class BitUtils {
 
 	public static int byteArrayToIntegerLE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
-	}
-
-	public static byte[] getPadding(int offsetInPack, int length) {
-		int endingOffset = (int) Math.ceil((offsetInPack + length) / 128.0F) * 128;
-		return new byte[endingOffset - offsetInPack - length];
-	}
-
-	public static int getPaddedInteger(int v, int padTo) {
-		v += (padTo - (v % padTo)) % padTo;
-		return v;
 	}
 
 	public static byte[] getTrimmedArray(byte[] in) {

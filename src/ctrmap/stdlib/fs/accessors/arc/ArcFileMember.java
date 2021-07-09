@@ -4,11 +4,12 @@ import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An entry inside an ArcFile.
+ */
 public class ArcFileMember extends FSFile{
 	private ArcFile arc;
 	private String path;

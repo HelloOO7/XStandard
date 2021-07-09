@@ -42,9 +42,6 @@
     <Component class="ctrmap.stdlib.gui.components.tabbedpane.TabCloseButton" name="btnCloseTab">
       <Properties>
         <Property name="text" type="java.lang.String" value="x"/>
-        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
-          <Insets value="[0, 0, 0, 0]"/>
-        </Property>
       </Properties>
     </Component>
   </SubComponents>

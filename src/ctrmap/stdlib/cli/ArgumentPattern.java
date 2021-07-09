@@ -2,12 +2,8 @@ package ctrmap.stdlib.cli;
 
 import ctrmap.stdlib.util.ParsingUtils;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-/**
- *
- */
 public class ArgumentPattern {
 
 	public String key;

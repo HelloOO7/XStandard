@@ -2,7 +2,6 @@
 package ctrmap.stdlib.arm.elf;
 
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
-import ctrmap.stdlib.fs.accessors.DiskFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;

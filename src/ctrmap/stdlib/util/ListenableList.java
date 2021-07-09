@@ -5,18 +5,31 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
+/**
+ * An ArrayList extension able to notify listeners of changes to the array.
+ *
+ * @param <T> Element type.
+ */
 public class ListenableList<T> extends ArrayList<T> {
 
 	@ReflectionHashIgnore
-	private List<EntityChangeListener> listeners = new ArrayList<>();
+	private List<ElementChangeListener> listeners = new ArrayList<>();
 
-	public void addListener(EntityChangeListener l) {
-		if (!listeners.contains(l) && l != null) {
-			listeners.add(l);
-		}
+	/**
+	 * Binds an ElementChangeListener to this array.
+	 *
+	 * @param l The listener.
+	 */
+	public void addListener(ElementChangeListener l) {
+		ArraysEx.addIfNotNullOrContains(listeners, l);
 	}
 
-	public void removeListener(EntityChangeListener l) {
+	/**
+	 * Removes a previously bound listener from this array.
+	 *
+	 * @param l The listener to remove.
+	 */
+	public void removeListener(ElementChangeListener l) {
 		listeners.remove(l);
 	}
 
@@ -70,7 +83,9 @@ public class ListenableList<T> extends ArrayList<T> {
 	public boolean remove(Object elem) {
 		int idx = indexOf(elem);
 		boolean rsl = super.remove(elem);
-		fireRemoveEvent(elem, idx);
+		if (rsl) {
+			fireRemoveEvent(elem, idx);
+		}
 		return rsl;
 	}
 
@@ -103,14 +118,19 @@ public class ListenableList<T> extends ArrayList<T> {
 		throw new UnsupportedOperationException("Not supported.");
 	}
 
-	public void fireAddEvent(T entity) {
+	protected void fireAddEvent(T entity) {
 		fireChangeEvent(entity, ElementChangeType.ADD, indexOf(entity));
 	}
 
-	public void fireRemoveEvent(Object entity, int index) {
+	protected void fireRemoveEvent(Object entity, int index) {
 		fireChangeEvent(entity, ElementChangeType.REMOVE, index);
 	}
 
+	/**
+	 * Fire an event to this array's listener, indicating that the contents of an element have changed.
+	 *
+	 * @param entity An element in this array whose content has been changed externally.
+	 */
 	public void fireModifyEvent(T entity) {
 		fireChangeEvent(entity, ElementChangeType.MODIFY, indexOf(entity));
 	}
@@ -120,7 +140,7 @@ public class ListenableList<T> extends ArrayList<T> {
 	}
 
 	private void fireChangeEvent(ElementChangeEvent evt) {
-		for (EntityChangeListener l : listeners) {
+		for (ElementChangeListener l : listeners) {
 			l.onEntityChange(evt);
 		}
 	}
@@ -138,7 +158,7 @@ public class ListenableList<T> extends ArrayList<T> {
 		}
 	}
 
-	public interface EntityChangeListener {
+	public interface ElementChangeListener {
 
 		public void onEntityChange(ElementChangeEvent evt);
 	}

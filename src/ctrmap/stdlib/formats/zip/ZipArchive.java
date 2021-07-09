@@ -1,14 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ctrmap.stdlib.formats.zip;
 
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
+import ctrmap.stdlib.io.base.iface.WriteableStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +24,7 @@ import java.util.zip.ZipInputStream;
 public class ZipArchive extends FSFileAdapter {
 
 	public static final String MAGIC = "PK\u0003\u0004";
-	
+
 	protected List<ZipEntry> entries = new ArrayList<>();
 
 	private ZipFile zf;
@@ -58,8 +54,38 @@ public class ZipArchive extends FSFileAdapter {
 			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
-	public static boolean isZip(FSFile fsf){
+
+	public static ZipArchive extractZipToFile(FSFile target, FSFile zip) {
+		try {
+			ZipInputStream in = new ZipInputStream(zip.getNativeInputStream());
+
+			ZipEntry e;
+			while ((e = in.getNextEntry()) != null) {
+				FSFile newFile = target.getChild(e.getName());
+				if (e.isDirectory()) {
+					newFile.mkdirs();
+				} else {
+					newFile.getParent().mkdirs();
+					WriteableStream out = newFile.getOutputStream();
+
+					byte[] buffer = new byte[32768];
+					int read;
+					while ((read = in.read(buffer)) != -1) {
+						out.write(buffer, 0, read);
+					}
+
+					out.close();
+				}
+			}
+
+			in.close();
+		} catch (IOException ex) {
+			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return null;
+	}
+
+	public static boolean isZip(FSFile fsf) {
 		return FSUtil.checkFileMagic(fsf, MAGIC);
 	}
 
@@ -84,21 +110,43 @@ public class ZipArchive extends FSFileAdapter {
 	}
 
 	public List<FSFile> listFilesByParentPath(String parentPath) {
+		parentPath = stripLastSlash(parentPath);
 		List<FSFile> l = new ArrayList<>();
 		for (ZipEntry e : entries) {
-			if (Objects.equals(FSUtil.getParentFileName(e.getName()), parentPath)) {
+			String nameWithoutEndSlash = stripLastSlash(e.getName());
+			if (Objects.equals(FSUtil.getParentFilePath(nameWithoutEndSlash), parentPath)) {
 				l.add(new ZipEntryFile(this, e.getName()));
 			}
 		}
 		return l;
 	}
 
-	public ZipEntry getEntryForPath(String path) {
-		for (ZipEntry e : entries) {
-			String cmpName = e.getName();
-			if (e.isDirectory()){
-				cmpName = cmpName.replace("/", "");
+	public static void main(String[] args) {
+		ZipArchive arc = new ZipArchive(new DiskFile("C:\\Users\\Čeněk\\eclipse-workspace\\GRParser\\src\\ctrmap\\resources\\scripting\\cm_ide\\sdk\\EV_GEN_V\\PokeScriptSDK5-master.lib"));
+		for (FSFile test : arc.listFilesByParentPath("src")) {
+			if (test.isDirectory()) {
+				for (FSFile f : test.listFiles()){
+					if (f.getName().equals("Battle.nd")){
+						System.out.println(new String(f.getBytes()));
+					}
+				}
 			}
+		}
+	}
+
+	public static String stripLastSlash(String str) {
+		String nameWithoutEndSlash = str;
+		if (nameWithoutEndSlash.endsWith("/")) {
+			nameWithoutEndSlash = nameWithoutEndSlash.substring(0, nameWithoutEndSlash.length() - 1);
+		}
+		return nameWithoutEndSlash;
+	}
+
+	public ZipEntry getEntryForPath(String path) {
+		path = stripLastSlash(path);
+		for (ZipEntry e : entries) {
+			String cmpName = stripLastSlash(e.getName());
+			
 			if (cmpName.equals(path)) {
 				return e;
 			}
@@ -106,8 +154,8 @@ public class ZipArchive extends FSFileAdapter {
 		return null;
 	}
 
-	public InputStream getEntryInputStream(ZipEntry entry) {
-		if (entry == null){
+	InputStream getEntryInputStream(ZipEntry entry) {
+		if (entry == null) {
 			return null;
 		}
 		try {
@@ -119,7 +167,7 @@ public class ZipArchive extends FSFileAdapter {
 				ZipInputStream in = new ZipInputStream(source.getNativeInputStream());
 				ZipEntry e;
 				while ((e = in.getNextEntry()) != null) {
-					if (Objects.equals(e.getName(), entry.getName())){
+					if (Objects.equals(e.getName(), entry.getName())) {
 						return new BufferedInputStream(in);
 					}
 				}

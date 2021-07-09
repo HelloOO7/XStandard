@@ -140,8 +140,8 @@ public class StringIO {
 	}
 
 	private static void writePaddedString(DataOutput dos, String str, Charset charset, int len) throws IOException {
-		str = str.substring(0, Math.min(len, str.length()));
 		if (str != null) {
+			str = str.substring(0, Math.min(len, str.length()));
 			dos.write(str.getBytes(charset));
 		}
 		for (int i = str == null ? 0 : str.length(); i < len; i++) {

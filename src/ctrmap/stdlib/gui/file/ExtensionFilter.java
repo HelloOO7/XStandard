@@ -16,6 +16,9 @@ public class ExtensionFilter {
 	}
 	
 	public static ExtensionFilter findByFileName(File f, ExtensionFilter... filters){
+		if (filters == null){
+			return null;
+		}
 		String ext = FSUtil.getFileExtensionWithDot(f.getName());
 		for (ExtensionFilter flt : filters){
 			if (flt.getExtensions().contains(ext)){

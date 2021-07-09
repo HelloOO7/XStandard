@@ -70,6 +70,10 @@ public class YamlNode {
 		return addChild(new YamlNode(new Value(value)));
 	}
 	
+	public YamlNode addChildListElem(){
+		return addChild(new YamlNode(new YamlListElement()));
+	}
+	
 	public YamlNode addChild(YamlNode n) {
 		children.add(n);
 		n.parent = this;

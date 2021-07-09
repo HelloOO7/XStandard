@@ -1,12 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ctrmap.stdlib.gui.components.tree;
 
 import java.awt.Component;
-import javax.swing.JComponent;
+import java.awt.event.MouseEvent;
 import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -14,9 +9,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 
-/**
- *
- */
 public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 
 	private JLabel label = new JLabel();
@@ -33,14 +25,15 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	public void onNodeSelected(){
 		
 	}
+	
+	public void onNodePopupInvoke(MouseEvent e){
+		
+	}
 
 	@Override
 	public void setParent(MutableTreeNode parent) {
 		if (parent instanceof CustomJTreeNode) {
 			iconProvider = ((CustomJTreeNode) parent).iconProvider;
-			if (iconProvider != null) {
-				loadRenderingComponents();
-			}
 		}
 		super.setParent(parent);
 		for (int ch = 0; ch < getChildCount(); ch++){
@@ -53,6 +46,9 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 
 	private void loadRenderingComponents() {
 		label.setText(getNodeName());
+		if (iconProvider == null){
+			throw new NullPointerException("Icon provider not set !! " + getNodeName());
+		}
 		label.setIcon(iconProvider.getImageIcon(getIconResourceID()));
 	}
 
@@ -74,6 +70,7 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 			this.selected = sel;
 			if (value instanceof CustomJTreeNode) {
 				CustomJTreeNode b = (CustomJTreeNode) value;
+				b.loadRenderingComponents();
 				setText(b.label.getText());
 				setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
 				setIcon(b.label.getIcon());

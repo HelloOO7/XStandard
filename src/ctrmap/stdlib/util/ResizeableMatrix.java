@@ -6,6 +6,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A resizeable 2D array.
+ * @param <T> Element type of the array.
+ */
 public class ResizeableMatrix<T> implements Iterable<T> {
 
 	private int originX = 0;
@@ -14,6 +18,12 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 	public ArrayList<ArrayList<T>> list = new ArrayList<>();
 	private T defaultValue;
 
+	/**
+	 * Creates a dynamic 2D array with an initial width, height and a default value reference.
+	 * @param width The matrix's initial width.
+	 * @param height The matrix's initial height.
+	 * @param defaultValue The value to use for uninitialized fields.
+	 */
 	public ResizeableMatrix(int width, int height, T defaultValue) {
 		this.defaultValue = defaultValue;
 		populateList(list, width, false);
@@ -22,6 +32,11 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Merges the contents of mtx with this matrix.
+	 * If the element is of the Collection interface, its elements will be merged instead of replacing.
+	 * @param mtx The matrix to merge with this one.
+	 */
 	public void merge(ResizeableMatrix<T> mtx) {
 		expandMatrixToPoint(mtx.originX, mtx.originY);
 		expandMatrixToPoint(mtx.originX + mtx.getWidth(), mtx.originY + mtx.getHeight());
@@ -43,6 +58,11 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 	
+	/**
+	 * Returns a list of all elements of a row.
+	 * @param idx Index of the row.
+	 * @return A list with the row elements. Changes to the list will not be reflected in the matrix.
+	 */
 	public List<T> getRow(int idx){
 		List<T> r = new ArrayList<>();
 		int relocIdx = idx - originY;
@@ -55,6 +75,10 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		return r;
 	}
 	
+	/**
+	 * Returns the entire matrix row-wise.
+	 * @return A list of lists containing all of the matrix's rows. Changes to the lists will not be reflected in the matrix.
+	 */
 	public List<T> getRows(){
 		List<T> r = new ArrayList<>();
 		for (int i = 0; i < getHeight(); i++){
@@ -63,6 +87,11 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		return r;
 	}
 	
+	/**
+	 * Returns a list of all elements of a column.
+	 * @param idx Index of the column.
+	 * @return A list with the column elements. Changes to the list will not be reflected in the matrix.
+	 */
 	public List<T> getColumn(int idx){
 		List<T> r = new ArrayList<>();
 		int relocIdx = idx - originX;
@@ -73,16 +102,27 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		return r;
 	}
 
+	/**
+	 * Removes all elements from the matrix.
+	 */
 	public void clear() {
 		list.clear();
 		originX = 0;
 		originY = 0;
 	}
 
+	/**
+	 * Gets the width of the matrix.
+	 * @return The matrix's width.
+	 */
 	public int getWidth() {
 		return list.size();
 	}
 
+	/**
+	 * Gets the height of the matrix.
+	 * @return The matrix's height.
+	 */
 	public int getHeight() {
 		if (list.size() > 0) {
 			return list.get(0).size();
@@ -91,10 +131,22 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Gets the origin point of the matrix.
+	 * @return A Point object representing the horizontal/vertical offset of matrix data coordinates.
+	 */
 	public Point getOrigin() {
 		return new Point(originX, originY);
 	}
 
+	/**
+	 * Creates a "cut-out" sub-matrix of this matrix.
+	 * @param x The horizontal offset of the sub-matrix in this matrix.
+	 * @param y The vertical offset of the sub-matrix in this matrix.
+	 * @param w The width of the sub-matrix.
+	 * @param h The height of the sub-matrix.
+	 * @return 
+	 */
 	public ResizeableMatrix getSubMatrix(int x, int y, int w, int h) {
 		ResizeableMatrix r = new ResizeableMatrix(w, h, defaultValue);
 		for (int px = x; px < x + w; px++) {
@@ -127,18 +179,40 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Sets the matrix element at the given coordinates to the given value.
+	 * @param x X coordinate of the element.
+	 * @param y Y coordinate of the element.
+	 * @param value 
+	 */
 	public void set(int x, int y, T value) {
 		list.get(x - originX).set(y - originY, value);
 	}
 
+	/**
+	 * Gets the element at the given coordinates.
+	 * @param x X coordinate of the element.
+	 * @param y Y coordinate of the element.
+	 * @return Value of the matrix element at (x,y).
+	 */
 	public T get(int x, int y) {
 		return list.get(x - originX).get(y - originY);
 	}
 
+	/**
+	 * Gets the element at the given Point.
+	 * @param p Point containing the (x,y) coordinates of the element.
+	 * @return Value of the matrix element at (p.x, p.y).
+	 */
 	public T get(Point p) {
 		return get(p.x, p.y);
 	}
 
+	/**
+	 * Trims or expands the matrix to new dimensions.
+	 * @param newWidth The new width of this matrix.
+	 * @param newHeight The new height of this matrix.
+	 */
 	public void resizeMatrix(int newWidth, int newHeight) {
 		for (int i = list.size() - 1; i >= 0; i--) {
 			if (i >= newWidth) {
@@ -160,10 +234,17 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Adds a column to the matrix.
+	 */
 	public void addColumn() {
 		addColumns(1);
 	}
 
+	/**
+	 * Adds columns to the matrix.
+	 * @param count Number of columns to add.
+	 */
 	public void addColumns(int count) {
 		int origHeight = (list.size() > 0) ? list.get(0).size() : 0;
 		for (int i = 0; i < count; i++) {
@@ -172,10 +253,17 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Adds a row to the matrix.
+	 */
 	public void addRow() {
 		addRows(1);
 	}
 
+	/**
+	 * Adds rows to the matrix.
+	 * @param count Number of columns to add.
+	 */
 	public void addRows(int count) {
 		int origHeight = (list.size() > 0) ? list.get(0).size() : 0;
 		for (int i = 0; i < list.size(); i++) {
@@ -183,20 +271,34 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Removes the last column of the matrix.
+	 */
 	public void removeColumn() {
 		removeColumns(1);
 	}
 
+	/**
+	 * Removes columns from the end of the matrix.
+	 * @param count Number of columns to remove.
+	 */
 	public void removeColumns(int count) {
 		for (int i = 0; i < count; i++) {
 			list.remove(list.size() - 1);
 		}
 	}
 
+	/**
+	 * Removes a row from the end of the matrix.
+	 */
 	public void removeRow() {
 		removeRows(1);
 	}
 
+	/**
+	 * Removes rows from the end of the matrix.
+	 * @param count Number of rows to remove.
+	 */
 	public void removeRows(int count) {
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = 0; j < count; j++) {
@@ -205,6 +307,12 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Checks if a point is inside the matrix's boundaries.
+	 * @param x X location of the point.
+	 * @param y Y location of the point.
+	 * @return True if the point is inside the matrix, false if it is outside.
+	 */
 	public boolean containsPoint(int x, int y) {
 		x -= originX;
 		y -= originY;
@@ -216,6 +324,11 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		return false;
 	}
 
+	/**
+	 * Ensures that the matrix contains a given point.
+	 * @param x X coordinate of the point.
+	 * @param y Y coordinate of the point.
+	 */
 	public void expandMatrixToPoint(int x, int y) {
 		if (!containsPoint(x, y)) {
 			int tx = x - originX;
