@@ -1,32 +1,24 @@
 package ctrmap.stdlib.arm.elf;
 
+import ctrmap.stdlib.arm.elf.format.ELFSectionHeader;
+
 /**
  *
  */
 public enum SectionType {
 	TEXT, 
-	DATA, 
-	RODATA, 
 	BSS,
 	EXTERN;
 	
-	public static SectionType getSectionTypeFromElf(String elfSecName) {
-		if (elfSecName == null) {
+	public static SectionType getSectionTypeFromElf(ELFSectionHeader hdr) {
+		if (hdr.name == null) {
 			return EXTERN;
 		}
-		if (elfSecName.startsWith(".rodata")){
-			//-O2 can create multiple of them with different names
-			return RODATA;
-		}
-		switch (elfSecName) {
-			case ".text":
-				return TEXT;
-			case ".rodata":
-				return RODATA;
-			case ".data":
-				return DATA;
-			case ".bss":
+		switch (hdr.type.getSectionType()){
+			case NOBITS:
 				return BSS;
+			case PROGBITS:
+				return TEXT;
 		}
 		return null;
 	}

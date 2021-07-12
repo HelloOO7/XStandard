@@ -5,14 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.fornwall.jelf.ElfFile;
-import net.fornwall.jelf.ElfSection;
-import net.fornwall.jelf.ElfSymbol;
-import net.fornwall.jelf.ElfSymbolTableSection;
 import ctrmap.stdlib.arm.ThumbAssembler;
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
 import ctrmap.stdlib.arm.elf.SectionType;
 import ctrmap.stdlib.arm.elf.SymbInfo;
+import ctrmap.stdlib.arm.elf.format.ELF;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSection;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSymbolSection;
 import ctrmap.stdlib.formats.rpm.RPM;
 import ctrmap.stdlib.formats.rpm.RPMRelocation;
 import ctrmap.stdlib.formats.rpm.RPMRelocationSource;
@@ -27,11 +26,11 @@ public class ExecElfSection {
 
 	public int id;
 
-	private ElfSymbolTableSection symbols;
-	private ElfFile elf;
+	private ELFSymbolSection symbols;
+	private ELF elf;
 
 	public final SectionType type;
-	private int offset;
+	private int loadAddr;
 	private int length;
 	private DataIOStream buf;
 
@@ -43,41 +42,41 @@ public class ExecElfSection {
 	
 	private RPM rpm;
 	
-	public ExecElfSection(int sectionId, ElfSection sec, SectionType type, ElfFile elf, DataIOStream io, RPM rpm) throws IOException {
-		id = sectionId;
+	public ExecElfSection(ELFSection sec, SectionType type, ELF elf, DataIOStream io, RPM rpm) throws IOException {
+		id = elf.getSectionIndex(sec);
 		this.rpm = rpm;
 		this.elf = elf;
-		offset = (int) sec.header.address;
+		loadAddr = (int) sec.header.loadAddr;
 		length = (int) sec.header.size;
 		byte[] b = new byte[length];
 		if (type != SectionType.BSS) {
-			io.seek((int) sec.header.section_offset);
+			io.seek((int) sec.header.offset);
 			io.read(b);
 		}
 		buf = new DataIOStream(b);
 		this.type = type;
-		this.symbols = elf.getSymbolTableSection();
-		buf.setBase(offset);
+		this.symbols = elf.sectionsByClass(ELFSymbolSection.class).get(0);
+		buf.setBase(loadAddr);
 		loadSubSections(symbols);
 		loadFunctionInfo(symbols);
 	}
 	
 	public int getOriginalSectionOffset() {
-		return offset;
+		return loadAddr;
 	}
 
 	public int getSectionSize() {
 		return length;
 	}
 
-	private void loadSubSections(ElfSymbolTableSection symbTable) {
-		int eo = offset + length;
-		for (ElfSymbol s : symbTable.symbols) {
-			if (s.st_shndx == id) {
+	private void loadSubSections(ELFSymbolSection symbTable) {
+		int eo = loadAddr + length;
+		for (ELFSymbolSection.ELFSymbol s : symbTable.symbols) {
+			if (s.sectionIndex == id) {
 				int v = getSymbolValue(s);
-				if (v >= offset && v < eo) {
-					if (s.getName() != null) {
-						switch (s.getName()) {
+				if (v >= loadAddr && v < eo) {
+					if (s.name != null) {
+						switch (s.name) {
 							case "$d":
 								addSubSection(SubSection.SubSectionType.DATA, s);
 								break;
@@ -90,15 +89,15 @@ public class ExecElfSection {
 			}
 		}
 		if (!subSections.isEmpty()) {
-			subSections.get(subSections.size() - 1).endOffset = offset + length;
+			subSections.get(subSections.size() - 1).endOffset = loadAddr + length;
 		}
 	}
 
-	private void loadFunctionInfo(ElfSymbolTableSection symbTable) {
-		for (ElfSymbol s : symbTable.symbols) {
-			if (s.st_shndx == id) {
-				if (s.getType() == ElfSymbol.STT_FUNC) {
-					SymbInfo f = new SymbInfo(s.getName(), getSymbolValue(s));
+	private void loadFunctionInfo(ELFSymbolSection symbTable) {
+		for (ELFSymbolSection.ELFSymbol s : symbTable.symbols) {
+			if (s.sectionIndex == id) {
+				if (s.getSymType() == ELFSymbolSection.ELFSymbolType.FUNC) {
+					SymbInfo f = new SymbInfo(s.name, getSymbolValue(s));
 					f.absoluteAddress -= f.absoluteAddress % 2; //hword align
 					functions.add(f);
 				}
@@ -106,11 +105,11 @@ public class ExecElfSection {
 		}
 	}
 
-	private int getSymbolValue(ElfSymbol smb){
-		return (int)smb.st_value;
+	private int getSymbolValue(ELFSymbolSection.ELFSymbol smb){
+		return (int)smb.value;
 	}
 	
-	private void addSubSection(SubSection.SubSectionType type, ElfSymbol smb) {
+	private void addSubSection(SubSection.SubSectionType type, ELFSymbolSection.ELFSymbol smb) {
 		int offs = getSymbolValue(smb);
 		if (!subSections.isEmpty()) {
 			subSections.get(subSections.size() - 1).endOffset = offs;
@@ -128,10 +127,10 @@ public class ExecElfSection {
 		return null;
 	}
 
-	private ElfSymbol findSymbol(int symbolOffsetAbsolute) {
+	private ELFSymbolSection.ELFSymbol findSymbol(int symbolOffsetAbsolute) {
 		symbolOffsetAbsolute -= symbolOffsetAbsolute % 4; //word-align
-		for (ElfSymbol s : symbols.symbols) {
-			if (s.getType() != ElfSymbol.STT_SECTION && getSymbolValue(s) == symbolOffsetAbsolute) {
+		for (ELFSymbolSection.ELFSymbol s : symbols.symbols) {
+			if (s.getSymType() != ELFSymbolSection.ELFSymbolType.SECTION && getSymbolValue(s) == symbolOffsetAbsolute) {
 				return s;
 			}
 		}
@@ -154,17 +153,17 @@ public class ExecElfSection {
 							if (symbOffs == 0) {
 								continue;
 							}
-							ElfSymbol symb = findSymbol(symbOffs);
+							ELFSymbolSection.ELFSymbol symb = findSymbol(symbOffs);
 							if (symb != null) {
-								if (esdb.isFuncExternal(symb.getName())) {
+								if (esdb.isFuncExternal(symb.name)) {
 									buf.seek(pos);
-									buf.writeInt(esdb.getOffsetOfFunc(symb.getName()));
+									buf.writeInt(esdb.getOffsetOfFunc(symb.name));
 								} else {
-									int targetSectionOffset = state.getTargetSectionOffsetById(symb.st_shndx);
+									int targetSectionOffset = state.getTargetSectionOffsetById(symb.sectionIndex);
 									if (targetSectionOffset == -1) {
 										System.err.println("WARN: Could not find section for symbol: " + symb + " at " + Integer.toHexString(symbOffs));
 									} else {
-										int srcSectionOffset = state.getSourceSectionOffsetById(symb.st_shndx);
+										int srcSectionOffset = state.getSourceSectionOffsetById(symb.sectionIndex);
 										int finalSymbOffset = getSymbolValue(symb) - srcSectionOffset + targetSectionOffset;
 										//System.out.println("Relocating symbol ref " + Integer.toHexString(pos) + " from " + srcSectionOffset + " to " + targetSectionOffset);
 										buf.seek(pos);

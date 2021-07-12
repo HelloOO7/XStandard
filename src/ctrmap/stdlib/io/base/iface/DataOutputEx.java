@@ -13,6 +13,10 @@ public interface DataOutputEx extends DataOutput, WriteableBase {
 	public default void writeString(String str) throws IOException {
 		StringIO.writeString(this, str);
 	}
+	
+	public default void writeByteLengthString(String str) throws IOException {
+		StringIO.writeByteLengthString(this, str);
+	}
 
 	public default void writeStringUTF16(String str) throws IOException {
 		StringIO.writeStringUTF16(this, str);

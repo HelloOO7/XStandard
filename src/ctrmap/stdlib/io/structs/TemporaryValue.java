@@ -19,7 +19,7 @@ public class TemporaryValue {
 	 */
 	public TemporaryValue(DataIOStream dos) throws IOException {
 		dosref = dos;
-		position = dos.getPosition();
+		position = dos.getPositionUnbased();
 		writePointer(0);
 	}
 
@@ -30,7 +30,7 @@ public class TemporaryValue {
 	 */
 	public void set(int value) throws IOException {
 		int rememberpos = dosref.getPosition();
-		dosref.seek(position);
+		dosref.seekUnbased(position);
 		writePointer(value);
 		dosref.seek(rememberpos);
 	}

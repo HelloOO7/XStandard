@@ -1,19 +1,16 @@
 package ctrmap.stdlib.arm.elf.rpmconv.rel;
 
-import ctrmap.stdlib.fs.accessors.DiskFile;
-import ctrmap.stdlib.io.util.IOUtils;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.fornwall.jelf.ElfFile;
-import net.fornwall.jelf.ElfSection;
-import net.fornwall.jelf.ElfSymbol;
-import net.fornwall.jelf.ElfSymbolTableSection;
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
 import ctrmap.stdlib.arm.elf.SectionType;
+import ctrmap.stdlib.arm.elf.format.ELF;
+import ctrmap.stdlib.arm.elf.format.sections.ELFRelocationSectionBase;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSection;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSymbolSection;
 import ctrmap.stdlib.formats.rpm.RPM;
 import ctrmap.stdlib.formats.rpm.RPMRelocation;
 import ctrmap.stdlib.formats.rpm.RPMRelocationSource;
@@ -31,26 +28,26 @@ import ctrmap.stdlib.math.MathEx;
 public class ETRel2RPMConverter implements IElf2RpmConverter {
 
 	@Override
-	public RPM getRPM(ElfFile elf, File f, ExternalSymbolDB esdb) throws IOException {
+	public RPM getRPM(ELF elf, ExternalSymbolDB esdb) throws IOException {
 		RPM rpm = new RPM();
 		rpm.baseAddress = 0;
 
+		DataIOStream io = elf.getSourceFile().getDataIOStream();
+
 		List<RelElfSection> sections = new ArrayList<>();
 
-		DataIOStream io = new DiskFile(f).getDataIOStream();
+		Map<ELFSection, ELFRelocationSectionBase<? extends ELFRelocationSectionBase.RelocationEntry>> relSections = new HashMap<>();
 
-		Map<String, ElfSection> relSections = new HashMap<>();
+		ELFSymbolSection symbs = elf.sectionsByClass(ELFSymbolSection.class).get(0);
 
-		for (int i = 0; i < elf.num_sh; i++) {
-			ElfSection s = elf.getSection(i);
-
-			SectionType compatibleType = SectionType.getSectionTypeFromElf(s.header.getName());
+		for (ELFSection sec : elf.sections()) {
+			SectionType compatibleType = SectionType.getSectionTypeFromElf(sec.header);
 
 			if (compatibleType != null) {
-				sections.add(new RelElfSection(elf, i, io));
-			} else if (isRelocationSection(s)) {
-				String relSecName = s.header.getName().substring(".rel".length());
-				relSections.put(relSecName, s);
+				sections.add(new RelElfSection(elf, sec, symbs, io));
+			} else if (sec instanceof ELFRelocationSectionBase) {
+				ELFRelocationSectionBase rel = (ELFRelocationSectionBase) sec;
+				relSections.put(elf.getSectionByIndex(rel.getRelocatedSegmentNo()), rel);
 			}
 		}
 
@@ -61,19 +58,13 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 			offs = MathEx.padInteger(offs, Integer.BYTES);
 		}
 
-		ElfSymbolTableSection symbs = elf.getSymbolTableSection();
+		for (Map.Entry<ELFSection, ELFRelocationSectionBase<? extends ELFRelocationSectionBase.RelocationEntry>> re : relSections.entrySet()) {
+			ELFRelocationSectionBase<? extends ELFRelocationSectionBase.RelocationEntry> relocation = re.getValue();
+			RelElfSection sec = findSectionById(sections, relocation.getRelocatedSegmentNo());
 
-		for (Map.Entry<String, ElfSection> re : relSections.entrySet()) {
-			SectionType t = SectionType.getSectionTypeFromElf(re.getKey());
-			RelElfSection sec = findSectionByType(sections, t);
 			if (sec != null) {
-				ElfSection relocation = re.getValue();
-				int relocationCount = (int) (relocation.header.size / relocation.header.entry_size);
-
-				for (int i = 0; i < relocationCount; i++) {
-					io.seek((int) (relocation.header.section_offset + relocation.header.entry_size * i));
-
-					int relocOffs = io.readInt();
+				for (ELFRelocationSectionBase.RelocationEntry e : relocation.entries) {
+					int relocOffs = e.offset;
 					int rpmRelocOffs = relocOffs + sec.targetOffset;
 					int elfRelocOffs = relocOffs + sec.sourceOffset;
 
@@ -89,37 +80,37 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							io.seek(elfRelocOffs);
 							int addend = io.readInt();
 							rel.targetType = RPMRelocation.RPMRelTargetType.OFFSET;
-							ElfSymbol es = symbs.symbols[relocTypeArg];
-							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, es, addend);
+							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
+							RPMSymbol s = findRPMByMatchElfAddr(sections, es, addend);
 							if (s == null) {
-								System.out.println("notfound symbol " + es + " addend " + addend + " shndx " + Long.toHexString(es.st_shndx) + " at " + Integer.toHexString(relocOffs));
+								System.out.println("notfound symbol " + es + " addend " + addend + " shndx " + Long.toHexString(es.sectionIndex) + " at " + Integer.toHexString(relocOffs));
 
 								s = new RPMSymbol();
 								s.name = null;
 								s.type = RPMSymbolType.VALUE;
-								if (findSectionById(sections, es.st_shndx) == null) {
-									System.out.println("FATAL: NOTFOUND SECTION " + es.st_shndx + " for sym " + es.getName());
+								if (findSectionById(sections, es.sectionIndex) == null) {
+									System.out.println("FATAL: NOTFOUND SECTION " + es.sectionIndex + " for sym " + es.name);
 
-									for (int se = 0; se < elf.num_sh; se++) {
-										ElfSection sect = elf.getSection(se);
-										System.out.println("section " + se + ": " + sect.header.getName());
+									for (ELFSection se : elf.sections()) {
+										System.out.println("section " + se + ": " + se.header.name);
 									}
 								}
-								s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, findSectionById(sections, es.st_shndx).targetOffset + (int) es.st_value + addend);
+
+								s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.LOCAL, findSectionById(sections, es.sectionIndex).targetOffset + (int) es.value + addend);
 								System.out.println("notfound fixup addr " + Integer.toHexString(s.address.getAddr()));
 								rpm.symbols.add(s);
 							} else {
-								System.out.println("found symbol " + Long.toHexString(es.st_value) + " of shndx " + es.st_shndx + " at " + Integer.toHexString(s.address.getAddr()));
+								System.out.println("found symbol " + Long.toHexString(es.value) + " of shndx " + es.sectionIndex + " at " + Integer.toHexString(s.address.getAddr()));
 							}
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						}
 						case ARMELFRelType.R_ARM_THM_CALL: {
 							rel.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
-							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, symbs.symbols[relocTypeArg], 0, true);
+							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
+							RPMSymbol s = findRPMByMatchElfAddr(sections, es, 0, true);
 							if (s == null) {
-								ElfSymbol es = symbs.symbols[relocTypeArg];
-								System.out.println("Could not find function symbol " + es.getName() + " of shndx " + es.st_shndx);
+								System.out.println("Could not find function symbol " + es.name + " of shndx " + es.sectionIndex);
 							} else {
 								System.out.println("got func symbol " + s.name + " type " + s.type + " add type " + s.address.getAddrType());
 							}
@@ -128,9 +119,10 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 						}
 						case ARMELFRelType.R_ARM_CALL:
 							rel.targetType = RPMRelocation.RPMRelTargetType.ARM_BRANCH_LINK;
-							RPMSymbol s = findRPMByMatchElfAddr(sections, elf, symbs.symbols[relocTypeArg], 0, true);
+							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
+							RPMSymbol s = findRPMByMatchElfAddr(sections, es, 0, true);
 							if (s == null) {
-								System.out.println("Could not find function symbol " + symbs.symbols[relocTypeArg]);
+								System.out.println("Could not find function symbol " + es.name);
 							}
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
@@ -157,35 +149,26 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 		return rpm;
 	}
 
-	private static RPMSymbol findRPMByMatchElfAddr(List<RelElfSection> sections, ElfFile elf, ElfSymbol sym, int addend) {
-		return findRPMByMatchElfAddr(sections, elf, sym, addend, false);
+	private static RPMSymbol findRPMByMatchElfAddr(List<RelElfSection> sections, ELFSymbolSection.ELFSymbol sym, int addend) {
+		return findRPMByMatchElfAddr(sections, sym, addend, false);
 	}
 
-	private static RPMSymbol findRPMByMatchElfAddr(List<RelElfSection> sections, ElfFile elf, ElfSymbol sym, int addend, boolean needsFunc) {
+	private static RPMSymbol findRPMByMatchElfAddr(List<RelElfSection> sections, ELFSymbolSection.ELFSymbol sym, int addend, boolean needsFunc) {
 		for (RelElfSection s : sections) {
 			for (Elf2RPMSymbolAdapter a : s.rpmSymbols) {
-				if (a.origin == sym && a.origin.getType() != ElfSymbol.STT_SECTION) {
+				if (a.origin == sym && a.origin.getSymType() != ELFSymbolSection.ELFSymbolType.SECTION) {
 					return a;
 				}
 			}
 		}
-		int addr = (int) (sym.st_value + addend);
+		int addr = (int) (sym.value + addend);
 		for (RelElfSection s : sections) {
 			for (Elf2RPMSymbolAdapter a : s.rpmSymbols) {
-				if (a.origin.st_shndx == sym.st_shndx && a.origin.st_value == addr) {
+				if (a.origin.sectionIndex == sym.sectionIndex && a.origin.value == addr) {
 					if (!needsFunc || a.type.isFunction()) {
 						return a;
 					}
 				}
-			}
-		}
-		return null;
-	}
-
-	private static RelElfSection findSectionByType(List<RelElfSection> l, SectionType t) {
-		for (RelElfSection s : l) {
-			if (s.type == t) {
-				return s;
 			}
 		}
 		return null;
@@ -198,9 +181,5 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 			}
 		}
 		return null;
-	}
-
-	private static boolean isRelocationSection(ElfSection s) {
-		return s.header.getName() != null && s.header.getName().startsWith(".rel");
 	}
 }

@@ -24,7 +24,7 @@ public class HermiteInterpolation {
 	 *
 	 * @param p0 The first value.
 	 * @param m0 Tangent of the first value.
-	 * @param p1 The seconds value.
+	 * @param p1 The second value.
 	 * @param m1 Tangent of the second value.
 	 * @param t Interpolation weight.
 	 * @return P0(M0) to P1(M1) interpolated using Hermite interpolation with weight t.

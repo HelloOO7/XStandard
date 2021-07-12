@@ -23,6 +23,7 @@ public class FileStream extends RandomAccessFile implements IOStream {
 		try {
 			return new FileStream(file);
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			throw new RuntimeException("Could not find file " + file + "; FileStream can not be created!");
 		}
 	}

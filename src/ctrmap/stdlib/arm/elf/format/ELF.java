@@ -108,6 +108,10 @@ public class ELF {
 			ex.printStackTrace();
 		}
 	}
+	
+	public FSFile getSourceFile(){
+		return source;
+	}
 
 	public Iterable<ELFSection> sections(){
 		return sections;
@@ -123,6 +127,16 @@ public class ELF {
 	
 	public int getSectionIndex(ELFSection sec){
 		return header.sectionHeaders.indexOf(sec.header);
+	}
+	
+	public ELFSection getSectionByIndex(int index){
+		ELFSectionHeader hdr = header.sectionHeaders.get(index);
+		for (ELFSection sec : sections){
+			if (sec.header == hdr){
+				return sec;
+			}
+		}
+		return null;
 	}
 	
 	public int getSectionCount(){

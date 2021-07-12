@@ -3,11 +3,11 @@ package ctrmap.stdlib.arm.elf.rpmconv.rel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import net.fornwall.jelf.ElfFile;
-import net.fornwall.jelf.ElfSection;
-import net.fornwall.jelf.ElfSymbol;
 import ctrmap.stdlib.arm.elf.rpmconv.ExternalSymbolDB;
 import ctrmap.stdlib.arm.elf.SectionType;
+import ctrmap.stdlib.arm.elf.format.ELF;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSection;
+import ctrmap.stdlib.arm.elf.format.sections.ELFSymbolSection;
 import ctrmap.stdlib.formats.rpm.RPM;
 import ctrmap.stdlib.formats.rpm.RPMSymbolAddress;
 import ctrmap.stdlib.formats.rpm.RPMSymbolType;
@@ -21,8 +21,9 @@ public class RelElfSection {
 	public final int id;
 
 	public final SectionType type;
-	private ElfFile elf;
-	private ElfSection sec;
+	
+	private ELFSection sec;
+	private ELFSymbolSection sym;
 
 	public final List<Elf2RPMSymbolAdapter> rpmSymbols = new ArrayList<>();
 
@@ -32,13 +33,13 @@ public class RelElfSection {
 
 	private DataIOStream buf;
 
-	public RelElfSection(ElfFile elf, int sectionId, DataIOStream io) throws IOException {
-		id = sectionId;
-		sec = elf.getSection(id);
-		type = SectionType.getSectionTypeFromElf(sec.header.getName());
-		this.elf = elf;
-		sourceOffset = (int) sec.header.section_offset;
-		length = (int) sec.header.size;
+	public RelElfSection(ELF elf, ELFSection sec, ELFSymbolSection symbols, DataIOStream io) throws IOException {
+		id = elf.getSectionIndex(sec);
+		sym = symbols;
+		type = SectionType.getSectionTypeFromElf(sec.header);
+		this.sec = sec;
+		sourceOffset = sec.header.offset;
+		length = sec.header.size;
 		byte[] b = new byte[length];
 		if (type != SectionType.BSS) {
 			io.seek(sourceOffset);
@@ -57,13 +58,13 @@ public class RelElfSection {
 	}
 
 	private void createRPMSymbols(RPM rpm, ExternalSymbolDB esdb) {
-		for (ElfSymbol smb : elf.getSymbolTableSection().symbols) {
-			if (smb.st_shndx == id) {
-				if ((smb.getName() == null || !smb.getName().startsWith("$")) && acceptsSymType(smb.getType())) {
+		for (ELFSymbolSection.ELFSymbol smb : sym.symbols) {
+			if (smb.sectionIndex == id) {
+				if ((smb.name == null || !smb.name.startsWith("$")) && acceptsSymType(smb.getSymType())) {
 					Elf2RPMSymbolAdapter s = new Elf2RPMSymbolAdapter(smb);
-					s.name = smb.getName();
-					s.type = getRpmSymType(smb.getType());
-					s.size = (int) smb.st_size;
+					s.name = smb.name;
+					s.type = getRpmSymType(smb.getSymType());
+					s.size = smb.size;
 
 					if (s.name != null && esdb.isFuncExternal(s.name)) {
 						System.out.println("extern func " + s.name + " (cur symtype: " + s.type + ")");
@@ -79,7 +80,7 @@ public class RelElfSection {
 						//	System.out.println("NONEXTERN FUNC IN EXTERN SEGMENT " + smb.getName());
 							s.address = new RPMSymbolAddress(rpm, RPMSymbolAddress.RPMAddrType.GLOBAL, -1); //null address
 						} else {
-							int sval = (int) smb.st_value + targetOffset;
+							int sval = smb.value + targetOffset;
 							if ((sval & 1) != 0 && s.type == RPMSymbolType.FUNCTION_ARM) {
 								s.type = RPMSymbolType.FUNCTION_THM;
 								sval--;
@@ -93,23 +94,23 @@ public class RelElfSection {
 		}
 	}
 
-	private static boolean acceptsSymType(int symType) {
+	private static boolean acceptsSymType(ELFSymbolSection.ELFSymbolType symType) {
 		switch (symType) {
-			case ElfSymbol.STT_FUNC:
-			case ElfSymbol.STT_NOTYPE:
+			case FUNC:
+			case NOTYPE:
 //			case ElfSymbol.STT_SECTION:
 				return true;
 		}
 		return false;
 	}
 
-	private static RPMSymbolType getRpmSymType(int symType) {
+	private static RPMSymbolType getRpmSymType(ELFSymbolSection.ELFSymbolType symType) {
 		switch (symType) {
-			case ElfSymbol.STT_FUNC:
+			case FUNC:
 				return RPMSymbolType.FUNCTION_ARM;
-			case ElfSymbol.STT_NOTYPE:
+			case NOTYPE:
 				return RPMSymbolType.VALUE;
-			case ElfSymbol.STT_SECTION:
+			case SECTION:
 				return RPMSymbolType.SECTION;
 		}
 		return null;

@@ -31,6 +31,12 @@ public class StringIO {
 		return sb.toString();
 	}
 
+	public static String readByteLengthString(DataInput in) throws IOException {
+		byte[] alloc = new byte[in.readByte()];
+		in.readFully(alloc);
+		return new String(alloc);
+	}
+	
 	public static String readStringUTF16(DataInput in) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		char read;
@@ -112,9 +118,18 @@ public class StringIO {
 		dos.write(0);
 	}
 	
+	public static void writeByteLengthString(DataOutput dos, String str) throws IOException {
+		if (str == null){
+			dos.write(0);
+			return;
+		}
+		dos.write(str.length());
+		writeStringUnterminated(dos, str);
+	}
+	
 	public static void writeStringUTF16(DataOutput dos, String str) throws IOException {
 		writeStringUnterminatedUTF16(dos, str);
-		dos.write(0);
+		dos.writeShort(0);
 	}
 
 	public static void writePaddedString(ByteBuffer dos, String str, int len) {

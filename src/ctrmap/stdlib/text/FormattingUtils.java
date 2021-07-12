@@ -25,6 +25,13 @@ public class FormattingUtils {
 		return ("0000" + hexstring).substring(hexstring.length()).toUpperCase().replaceAll("..", "$0 ");
 	}
 
+	public static String getStrWithFirstUppercase(String str){
+		if (!str.isEmpty()){
+			return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+		}
+		return str;
+	}
+	
 	/**
 	 * Formats a date with the YYYY-MM-DD HH:MM format.
 	 * @return A String with the formatted current RTC date.

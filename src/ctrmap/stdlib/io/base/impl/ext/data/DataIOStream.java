@@ -95,9 +95,13 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	public int readAddress() throws IOException {
 		return currentBase + readInt();
 	}
-	
+
 	public String readStringWithAddress() throws IOException {
 		return StringIO.readStringWithAddress(this);
+	}
+
+	public String readByteLengthString() throws IOException {
+		return StringIO.readByteLengthString(this);
 	}
 
 	@Override
@@ -131,7 +135,11 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	public void writeAddress(int addr) throws IOException {
-		interpreter.writeInt(io, addr + currentBase);
+		if (addr == 0) {
+			writeInt(addr);
+		} else {
+			writeInt(addr + currentBase);
+		}
 	}
 
 	@Override

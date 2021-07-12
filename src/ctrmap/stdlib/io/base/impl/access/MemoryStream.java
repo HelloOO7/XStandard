@@ -44,7 +44,7 @@ public class MemoryStream implements IOStream {
 
 	@Override
 	public int read() throws IOException {
-		if (position < buffer.length) {
+		if (position < limit) {
 			return buffer[position++] & 0xFF;
 		}
 		throw new EOFException("Tried to read at position " + Integer.toHexString(position) + ", but buffer is only " + Integer.toHexString(buffer.length) + " bytes!");
@@ -59,7 +59,7 @@ public class MemoryStream implements IOStream {
 
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
-		if (position + len <= buffer.length) {
+		if (position + len <= limit) {
 			System.arraycopy(buffer, position, b, off, len);
 			position += len;
 			return len;
@@ -95,6 +95,9 @@ public class MemoryStream implements IOStream {
 
 	@Override
 	public void seek(int position) throws IOException {
+		if (position < 0){
+			throw new EOFException("Negative seek offset ! ! " + Integer.toHexString(position));
+		}
 		this.position = position;
 	}
 
