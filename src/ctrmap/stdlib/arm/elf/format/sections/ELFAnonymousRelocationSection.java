@@ -40,6 +40,11 @@ public class ELFAnonymousRelocationSection extends ELFRelocationSectionBase<ELFA
 		public int addend;
 		
 		@Override
+		public int getAddend(){
+			return addend;
+		}
+		
+		@Override
 		public AnonymousRelocationEntry clone(){
 			AnonymousRelocationEntry e = new AnonymousRelocationEntry();
 			e.offset = offset;

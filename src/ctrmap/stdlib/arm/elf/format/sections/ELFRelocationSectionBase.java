@@ -74,6 +74,10 @@ public abstract class ELFRelocationSectionBase<R extends ELFRelocationSectionBas
 			return ELFARMRelocationType.values()[info & 0xFF];
 		}
 		
+		public int getAddend(){
+			return 0;
+		}
+		
 		public int getRelSymbol(){
 			return info >>> 8;
 		}

@@ -48,6 +48,8 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 			} else if (sec instanceof ELFRelocationSectionBase) {
 				ELFRelocationSectionBase rel = (ELFRelocationSectionBase) sec;
 				relSections.put(elf.getSectionByIndex(rel.getRelocatedSegmentNo()), rel);
+			} else {
+				System.out.println("Skipping section " + sec.header.name + " (idx " + elf.getSectionIndex(sec) + ")");
 			}
 		}
 
@@ -68,17 +70,14 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 					int rpmRelocOffs = relocOffs + sec.targetOffset;
 					int elfRelocOffs = relocOffs + sec.sourceOffset;
 
-					int armRelocType = io.read();
-					int relocTypeArg = io.readUnsignedInt24();
-
 					RPMRelocation rel = new RPMRelocation();
 					rel.target = new RPMRelocationTarget(rpmRelocOffs);
 					rel.sourceType = RPMRelocation.RPMRelSourceType.SYMBOL_INTERNAL;
 
-					switch (armRelocType) {
-						case ARMELFRelType.R_ARM_ABS32: {
+					switch (e.getRelType()) {
+						case R_ARM_ABS32: {
 							io.seek(elfRelocOffs);
-							int addend = io.readInt();
+							int addend = io.readInt() + e.getAddend();
 							rel.targetType = RPMRelocation.RPMRelTargetType.OFFSET;
 							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
 							RPMSymbol s = findRPMByMatchElfAddr(sections, es, addend);
@@ -105,7 +104,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						}
-						case ARMELFRelType.R_ARM_THM_CALL: {
+						case R_ARM_THM_PC22: {
 							rel.targetType = RPMRelocation.RPMRelTargetType.THUMB_BRANCH_LINK;
 							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
 							RPMSymbol s = findRPMByMatchElfAddr(sections, es, 0, true);
@@ -117,7 +116,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						}
-						case ARMELFRelType.R_ARM_CALL:
+						case R_ARM_CALL:
 							rel.targetType = RPMRelocation.RPMRelTargetType.ARM_BRANCH_LINK;
 							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
 							RPMSymbol s = findRPMByMatchElfAddr(sections, es, 0, true);
@@ -127,7 +126,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							rel.source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, s);
 							break;
 						default:
-							System.out.println("UNSUPPORTED ARM RELOCATION TYPE: " + armRelocType);
+							System.out.println("UNSUPPORTED ARM RELOCATION TYPE: " + e.getRelType());
 							break;
 					}
 

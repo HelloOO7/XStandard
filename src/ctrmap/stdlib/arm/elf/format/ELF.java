@@ -3,6 +3,7 @@ package ctrmap.stdlib.arm.elf.format;
 import ctrmap.stdlib.arm.elf.format.sections.ELFAnonymousRelocationSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFFuncArraySection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFGroupSection;
+import ctrmap.stdlib.arm.elf.format.sections.ELFNullSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFProgBitsSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFRelocationSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFSection;
@@ -90,6 +91,9 @@ public class ELF {
 						break;
 					case GROUP:
 						sections.add(new ELFGroupSection(deserializer.baseStream, shdr));
+						break;
+					case NULL:
+						sections.add(new ELFNullSection(shdr));
 						break;
 				}
 			}

@@ -47,6 +47,9 @@ public interface RPMRelocationSource {
 
 		@Override
 		public int getAbsoluteAddress() {
+			if (symb == null){
+				throw new NullPointerException("Null symbol!");
+			}
 			return symb.address.getAddrAbs();
 		}
 
