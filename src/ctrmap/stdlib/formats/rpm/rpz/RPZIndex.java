@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.rpm.rpz;
 
+import ctrmap.stdlib.formats.yaml.YamlNodeName;
 import ctrmap.stdlib.fs.FSFile;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +13,17 @@ public class RPZIndex extends RPZYmlBase {
 	/**
 	 * The RPZ's unique Product ID.
 	 */
+	@YamlNodeName("ProductId")
 	public String productId;
 	/**
 	 * A user-friendly description of the main program contained in the RPZ.
 	 */
+	@YamlNodeName("Description")
 	public String description;
 	/**
 	 * References to all modules in the RPZ.
 	 */
+	@YamlNodeName("Modules")
 	public List<RPZYmlReference> modules;
 
 	/**

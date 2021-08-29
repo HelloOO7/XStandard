@@ -1,15 +1,10 @@
 package ctrmap.stdlib.fs;
 
-import ctrmap.stdlib.fs.accessors.DiskFile;
-import java.io.File;
+import ctrmap.stdlib.fs.accessors.FSFileAdapter;
 
-public class VFSRootFile extends DiskFile {
+public class VFSRootFile extends FSFileAdapter {
 
-	public VFSRootFile(String path) {
-		super(path);
-	}
-	
-	public VFSRootFile(File path) {
-		super(path);
+	public VFSRootFile(FSFile source){
+		super(source);
 	}
 }

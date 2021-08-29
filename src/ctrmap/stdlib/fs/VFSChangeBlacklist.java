@@ -10,8 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A registry of a VFS's OvFS files that haven't been altered since being copied
- * from BaseFS.
+ * A registry of a VFS's OvFS files that haven't been altered since being copied from BaseFS.
  */
 public class VFSChangeBlacklist {
 
@@ -22,8 +21,7 @@ public class VFSChangeBlacklist {
 	private FSFile tempBlacklistLocation;
 
 	/**
-	 * Creates a change blacklist at the given location, using a VFS. If a file
-	 * is already present in the location, a user decision dialog is shown.
+	 * Creates a change blacklist at the given location, using a VFS. If a file is already present in the location, a user decision dialog is shown.
 	 *
 	 * @param location FSFile location of the blacklist.
 	 * @param fs The VFS to target.
@@ -37,12 +35,12 @@ public class VFSChangeBlacklist {
 				int len = in.getLength();
 				if (len > 0) {
 					boolean restore = DialogUtils.showYesNoDialog(
-							"Backup VFS data found",
-							"The last VFS session was not shut down properly.\n"
-							+ "As a result, leftover extracted file system contents are present in the VFS directory.\n"
-							+ "However, the VFS can load fallback blacklist metadata to delete the files\n"
-							+ "on next successful shutdown if they are still eligible for deletion.\n\n"
-							+ "Do you want to restore the last session's blacklist?"
+						"Backup VFS data found",
+						"The last VFS session was not shut down properly.\n"
+						+ "As a result, leftover extracted file system contents are present in the VFS directory.\n"
+						+ "However, the VFS can load fallback blacklist metadata to delete the files\n"
+						+ "on next successful shutdown if they are still eligible for deletion.\n\n"
+						+ "Do you want to restore the last session's blacklist?"
 					);
 					if (restore) {
 						while (in.getPosition() < len) {
@@ -58,12 +56,14 @@ public class VFSChangeBlacklist {
 		}
 	}
 
-	
 	boolean hasPath(String path) {
 		return blacklistedPaths.contains(path);
 	}
 
 	void putBlacklistPath(String path) {
+		if (path == null) {
+			throw new IllegalArgumentException("Path can not be null.");
+		}
 		path = fs.getFS().getWildCardManager().getWildCardedPath(path);
 		if (!blacklistedPaths.contains(path)) {
 			blacklistedPaths.add(path);
@@ -88,7 +88,7 @@ public class VFSChangeBlacklist {
 	private void writeToIO() {
 		try {
 			DataOutStream dos = new DataOutStream(tempBlacklistLocation.getOutputStream());
-			for (String blp : blacklistedPaths) {
+			for (String blp : new ArrayList<>(blacklistedPaths)) {
 				dos.writeString(blp);
 			}
 			dos.close();
@@ -111,9 +111,13 @@ public class VFSChangeBlacklist {
 		System.out.println("JVM shutting down, cleaning up unused OvFS files...");
 		FSFile ovfsRoot = fs.getOvFSRoot();
 
+		doRemoveFiles(ovfsRoot);
+	}
+
+	public void doRemoveFiles(FSFile root) {
 		for (String blPath : blacklistedPaths) {
 			System.out.println("Removing file " + blPath);
-			FSFile victim = ovfsRoot.getMatchingChild(blPath, fs.getFS().getWildCardManager());
+			FSFile victim = root.getMatchingChild(blPath, fs.getFS().getWildCardManager());
 			if (victim != null) {
 				victim.delete();
 			} else {

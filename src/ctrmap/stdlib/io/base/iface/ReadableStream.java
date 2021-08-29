@@ -21,6 +21,12 @@ public interface ReadableStream extends Positioned, Closeable {
 			throw new EOFException("Can not seek back in a stream. (Current position " + Integer.toHexString(cpos) + ", seek " + Integer.toHexString(pos) + ")");
 		}
 	}
+	
+	public default byte[] readBytes(int amount) throws IOException {
+		byte[] arr = new byte[amount];
+		read(arr);
+		return arr;
+	}
 
 	public default int read(byte[] b) throws IOException {
 		return read(b, 0, b.length);

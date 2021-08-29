@@ -1,7 +1,9 @@
 package ctrmap.stdlib.io.serialization;
 
 import ctrmap.stdlib.io.base.iface.IOStream;
-import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
+import ctrmap.stdlib.io.serialization.annotations.ArraySize;
+import ctrmap.stdlib.io.serialization.annotations.DefinedArraySize;
+import ctrmap.stdlib.io.serialization.annotations.LengthPos;
 import ctrmap.stdlib.io.serialization.annotations.Size;
 
 import java.lang.annotation.Annotation;
@@ -9,25 +11,21 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class BinarySerialization {
 
-	public DataIOStream baseStream;
+	public SerializationIOStream baseStream;
 
 	protected final ReferenceType refType;
 
 	protected final DecimalType decimalType;
 
 	public int fileVersion;
-	
-	protected BinarySerialization(IOStream baseStream, ReferenceType refType, DecimalType decimalType){
-		if (baseStream instanceof DataIOStream){
-			this.baseStream = (DataIOStream)baseStream;
-		}
-		else {
-			this.baseStream = new DataIOStream(baseStream);
-		}
+
+	protected BinarySerialization(IOStream baseStream, ReferenceType refType, DecimalType decimalType) {
+		this.baseStream = new SerializationIOStream(baseStream);
 		this.refType = refType;
 		this.decimalType = decimalType;
 	}
@@ -66,6 +64,28 @@ public class BinarySerialization {
 			}
 		}
 		return size;
+	}
+
+	protected static boolean getIsClassNeedsSize(Class cls, AnnotatedElement... ant) {
+		boolean obj_NeedsSize = false;
+		boolean allowArray = !(hasAnnotation(DefinedArraySize.class, ant) || hasAnnotation(ArraySize.class, ant));
+		if (Collection.class.isAssignableFrom(cls) && allowArray) {
+			obj_NeedsSize = true;
+		} else if (cls == String.class && hasAnnotation(LengthPos.class, ant) && !hasAnnotation(Size.class, ant)) {
+			obj_NeedsSize = true;
+		} else if (cls.isArray() && allowArray) {
+			obj_NeedsSize = true;
+		}
+		return obj_NeedsSize;
+	}
+
+	protected static LengthPos.LengthPosType getLengthPos(AnnotatedElement... ant) {
+		LengthPos.LengthPosType lp = LengthPos.LengthPosType.BEFORE_PTR;
+
+		if (hasAnnotation(LengthPos.class, ant)) {
+			lp = getAnnotation(LengthPos.class, ant).value();
+		}
+		return lp;
 	}
 
 	protected static boolean hasAnnotation(Class<? extends Annotation> annot, AnnotatedElement... elems) {

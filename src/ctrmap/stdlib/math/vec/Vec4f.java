@@ -68,10 +68,14 @@ public class Vec4f extends Vector4f {
 	}
 	
 	public float[] get(float[] arr){
-		arr[0] = x;
-		arr[1] = y;
-		arr[2] = z;
-		arr[3] = w;
+		return get(arr, 0);
+	}
+	
+	public float[] get(float[] arr, int off){
+		arr[off + 0] = x;
+		arr[off + 1] = y;
+		arr[off + 2] = z;
+		arr[off + 3] = w;
 		return arr;
 	}
 

@@ -3,7 +3,7 @@ package ctrmap.stdlib.util;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -42,7 +42,7 @@ public class ReflectionHash {
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException 
 	 */
-	private static int hashObj(Object o, List<Object> cache) throws IllegalArgumentException, IllegalAccessException {
+	private static int hashObj(Object o, HashSet<Object> cache) throws IllegalArgumentException, IllegalAccessException {
 		if (o == null) {
 			return 0;
 		}
@@ -123,12 +123,11 @@ public class ReflectionHash {
 	 */
 	public boolean recalculate() {
 		try {
-			pendingHash = hashObj(object, new ArrayList<>());
+			pendingHash = hashObj(object, new HashSet<>());
 
-			if (pendingHash != hash) {
-				changedFlag = true;
-				return true;
-			}
+			changedFlag = pendingHash != hash;
+			
+			return changedFlag;
 		} catch (IllegalArgumentException | IllegalAccessException ex) {
 			Logger.getLogger(ReflectionHash.class.getName()).log(Level.SEVERE, null, ex);
 		}

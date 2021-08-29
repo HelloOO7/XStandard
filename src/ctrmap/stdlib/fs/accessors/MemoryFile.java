@@ -29,6 +29,10 @@ public class MemoryFile extends FSFile {
 		this.name = name;
 	}
 
+	public MemoryFile(String name){
+		this(name, new byte[0]);
+	}
+	
 	/**
 	 * @return False on all MemoryFiles.
 	 */

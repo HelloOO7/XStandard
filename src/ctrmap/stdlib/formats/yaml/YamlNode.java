@@ -90,7 +90,7 @@ public class YamlNode {
 		return parent.addChild();
 	}
 
-	public YamlNode getOrCreateChildKeyByName(String name) {
+	public YamlNode getEnsureChildByName(String name) {
 		YamlNode ch = getChildByName(name);
 		if (ch == null) {
 			ch = addChild();
@@ -131,6 +131,11 @@ public class YamlNode {
 		return ch != null ? ch.getValueInt() : -1;
 	}
 	
+	public long getChildLongValue(String name) {
+		YamlNode ch = getChildByName(name);
+		return ch != null ? ch.getValueLong() : -1;
+	}
+	
 	public String getChildValue(String name) {
 		return getChildByName(name).getValue();
 	}
@@ -164,6 +169,10 @@ public class YamlNode {
 	
 	public void setValueInt(int val) {
 		setValueInt(val, false);
+	}
+	
+	public void setValueLong(long val) {
+		setValue(String.valueOf(val));
 	}
 	
 	public void setValueInt(int val, boolean hex) {
@@ -214,7 +223,7 @@ public class YamlNode {
 		return Float.parseFloat(getValue());
 	}
 	
-	public float getValueLong() {
+	public long getValueLong() {
 		return ParsingUtils.parseBasedLong(getValue());
 	}
 

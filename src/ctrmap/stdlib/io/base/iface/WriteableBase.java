@@ -18,4 +18,10 @@ public interface WriteableBase extends Positioned, Closeable {
             write(0);
         }
     }
+	
+	public default void pad(int align, int fillByte) throws IOException {
+        while (getPosition() % align != 0) {
+            write(fillByte);
+        }
+    }
 }

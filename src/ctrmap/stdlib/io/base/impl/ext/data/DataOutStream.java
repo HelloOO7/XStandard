@@ -31,7 +31,7 @@ public class DataOutStream extends WriteableWrapper implements DataOutputEx {
 	}
 
 	public void order(ByteOrder order) {
-		interpreter = IOCommon.getInterpreterForByteOrder(order);
+		interpreter = IOCommon.createInterpreterForByteOrder(order);
 	}
 
 	@Override

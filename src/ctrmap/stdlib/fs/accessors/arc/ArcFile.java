@@ -3,6 +3,7 @@ package ctrmap.stdlib.fs.accessors.arc;
 import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
+import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import java.util.List;
 
 /**
@@ -33,6 +34,11 @@ public class ArcFile extends FSFileAdapter {
 		throw new UnsupportedOperationException("ArcFiles can not be directories.");
 	}
 
+	@Override
+	public DataIOStream getDataIOStream(){
+		return super.getDataIOStream();
+	}
+	
 	/*@Override
 	public boolean isDirectory() {
 		return true;

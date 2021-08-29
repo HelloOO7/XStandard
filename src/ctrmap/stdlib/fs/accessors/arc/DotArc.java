@@ -57,6 +57,18 @@ public class DotArc {
 			Logger.getLogger(DotArc.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
+	
+	public static void setCompressionDirectiveToFile(FSFile dotArc, String filePath, CompressorBehavior behavior){
+		if (dotArc != null && !dotArc.isDirectory()){
+			DotArc da = new DotArc(dotArc);
+			da.addCompressionDirective(filePath, behavior);
+			da.updateAndWrite();
+		}
+	}
+	
+	public void addCompressionDirective(String path, CompressorBehavior behavior){
+		compressionDirectives.put(path, behavior);
+	}
 
 	public void updateAndWrite() {
 		if (source != null) {

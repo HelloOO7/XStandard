@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +38,7 @@ public class YamlReflectUtil {
 
 	private static void readNodeToFields(YamlNode n, Object obj) throws IllegalAccessException, InstantiationException {
 		for (Field field : getSortedFields(obj.getClass())) {
-			YamlNode valueNode = n.getChildByNameIgnoreCase(field.getName());
+			YamlNode valueNode = n.getChildByNameIgnoreCase(getYamlFieldName(field));
 			field.set(obj, readObject(valueNode, field.getType(), field));
 		}
 	}
@@ -127,7 +128,7 @@ public class YamlReflectUtil {
 
 	private static YamlNode createNodeForField(Field f, Object obj) {
 		try {
-			return serialize(f.getName(), f.get(obj));
+			return serialize(getYamlFieldName(f), f.get(obj));
 		} catch (IllegalArgumentException | IllegalAccessException ex) {
 			Logger.getLogger(YamlReflectUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -151,12 +152,20 @@ public class YamlReflectUtil {
 				int mods = field.getModifiers();
 				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
 					field.setAccessible(true);
-					addValueToNode(n, field.getName(), field.getType(), field, field.get(obj));
+					addValueToNode(n, getYamlFieldName(field), field.getType(), field, field.get(obj));
 				}
 			}
 		} catch (IllegalAccessException ex) {
 			Logger.getLogger(YamlReflectUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+	
+	public static String getYamlFieldName(Field fld) {
+		String name = fld.getName();
+		if (fld.isAnnotationPresent(YamlNodeName.class)){
+			name = fld.getAnnotation(YamlNodeName.class).value();
+		}
+		return name;
 	}
 
 	private static void addValueToNode(YamlNode n, String key, Class type, Field field, Object value) throws IllegalArgumentException, IllegalAccessException {
@@ -183,7 +192,11 @@ public class YamlReflectUtil {
 
 			for (Object o : (Collection) value) {
 				YamlNode elem = new YamlNode(new YamlListElement());
-				addValueToNode(elem, null, (Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0], field, o);
+				Type genType = field.getGenericType();
+				if (!(genType instanceof ParameterizedType)){
+					System.err.println("WARN: Collection field " + field + " has to be parameterized for serialization!");
+				}
+				addValueToNode(elem, null, o.getClass(), field, o);
 				list.addChild(elem);
 			}
 		} else {

@@ -82,7 +82,7 @@ public class ETRel2RPMConverter implements IElf2RpmConverter {
 							ELFSymbolSection.ELFSymbol es = symbs.symbols.get(e.getRelSymbol());
 							RPMSymbol s = findRPMByMatchElfAddr(sections, es, addend);
 							if (s == null) {
-								System.out.println("notfound symbol " + es + " addend " + addend + " shndx " + Long.toHexString(es.sectionIndex) + " at " + Integer.toHexString(relocOffs));
+								System.out.println("notfound symbol " + es.name + " addend " + addend + " shndx " + Long.toHexString(es.sectionIndex) + " at " + Integer.toHexString(relocOffs));
 
 								s = new RPMSymbol();
 								s.name = null;

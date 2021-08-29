@@ -22,7 +22,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	private IDataInterpreter interpreter;
 
 	private Stack<Integer> baseAddresses = new Stack<>();
-	private int currentBase = 0;
+	protected int currentBase = 0;
 
 	private Stack<Integer> checkpoints = new Stack<>();
 
@@ -50,7 +50,20 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 
 	public final void order(ByteOrder order) {
 		this.order = order;
-		interpreter = IOCommon.getInterpreterForByteOrder(order);
+		interpreter = IOCommon.createInterpreterForByteOrder(order);
+	}
+	
+	public final void orderByMarkU16(int markBE, int markLE) throws IOException {
+		order(ByteOrder.BIG_ENDIAN);
+		int bom = readUnsignedShort();
+		if (bom == markBE){
+		}
+		else if (bom == markLE) {
+			order(ByteOrder.LITTLE_ENDIAN);
+		}
+		else {
+			throw new IllegalArgumentException("BOM mismatch. (Expected " + Integer.toHexString(markBE) + " or " + Integer.toHexString(markLE) + ", got " + Integer.toHexString(bom) + ")");
+		}
 	}
 
 	public ByteOrder order() {

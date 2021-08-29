@@ -7,9 +7,6 @@ import javax.swing.SwingWorker;
 
 public class SwingWorkerUtils {
 
-	public static void runOnNewThread(Runnable job){
-		new Thread(job).start();
-	}
 	
 	public static SwingWorker executeJob(Runnable job) {
 		return executeJob(job, false);

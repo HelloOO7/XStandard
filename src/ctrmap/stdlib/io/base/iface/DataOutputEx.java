@@ -58,8 +58,8 @@ public interface DataOutputEx extends DataOutput, WriteableBase {
 		write(bytes);
 	}
 
-	public default void writeShorts(short... shorts) throws IOException {
-		for (short val : shorts) {
+	public default void writeShorts(int... shorts) throws IOException {
+		for (int val : shorts) {
 			writeShort(val);
 		}
 	}

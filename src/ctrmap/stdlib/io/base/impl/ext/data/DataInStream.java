@@ -50,7 +50,7 @@ public class DataInStream extends ReadableWrapper implements DataInputEx {
 	}
 
 	public void order(ByteOrder order) {
-		interpreter = IOCommon.getInterpreterForByteOrder(order);
+		interpreter = IOCommon.createInterpreterForByteOrder(order);
 	}
 
 	@Override

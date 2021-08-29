@@ -105,7 +105,7 @@ public class RPZDemo {
 				if (message != null) {
 					System.err.println(code + ": " + message);
 				} else {
-					System.out.println(code);
+					System.err.println(code);
 				}
 				return true;
 			}

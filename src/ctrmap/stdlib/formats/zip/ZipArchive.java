@@ -121,19 +121,6 @@ public class ZipArchive extends FSFileAdapter {
 		return l;
 	}
 
-	public static void main(String[] args) {
-		ZipArchive arc = new ZipArchive(new DiskFile("C:\\Users\\Čeněk\\eclipse-workspace\\GRParser\\src\\ctrmap\\resources\\scripting\\cm_ide\\sdk\\EV_GEN_V\\PokeScriptSDK5-master.lib"));
-		for (FSFile test : arc.listFilesByParentPath("src")) {
-			if (test.isDirectory()) {
-				for (FSFile f : test.listFiles()){
-					if (f.getName().equals("Battle.nd")){
-						System.out.println(new String(f.getBytes()));
-					}
-				}
-			}
-		}
-	}
-
 	public static String stripLastSlash(String str) {
 		String nameWithoutEndSlash = str;
 		if (nameWithoutEndSlash.endsWith("/")) {

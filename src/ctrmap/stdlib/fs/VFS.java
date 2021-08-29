@@ -29,6 +29,10 @@ public class VFS {
 	public VFS(FSManager fs) {
 		this.fs = fs;
 	}
+	
+	public VFSChangeBlacklist getChangeBlacklist(){
+		return blacklist;
+	}
 
 	/**
 	 * Initializes the VFS with the given layer roots.

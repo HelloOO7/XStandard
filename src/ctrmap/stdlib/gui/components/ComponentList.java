@@ -6,12 +6,13 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
-public class ComponentList<T extends JComponent> extends JPanel implements MouseListener {
+public class ComponentList<T extends JComponent> extends JPanel implements MouseListener, Iterable<T> {
 
 	private final Color SELECTION_COLOR = new Color(0x6C, 0xB5, 0xFF);
 
@@ -97,5 +98,10 @@ public class ComponentList<T extends JComponent> extends JPanel implements Mouse
 
 	@Override
 	public void mouseExited(MouseEvent e) {
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		return elements.iterator();
 	}
 }

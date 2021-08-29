@@ -50,7 +50,7 @@ public class BitWriter {
 			default:
 				int bitIndex = 0;
 				int bufRemain = 8 - bufIdx;
-				buf |= (value & BitMath.makeMask(bufRemain)) << bufIdx;
+				buf |= (value & BitMath.makeMask(bufRemain + 1)) << bufIdx;
 				bitIndex = bufRemain;
 				value >>= bufRemain;
 				bufIdx += Math.min(bitCount, bufRemain);
@@ -63,7 +63,7 @@ public class BitWriter {
 					}
 					if (bitIndex < bitCount){
 						bufIdx = (byte)(bitCount - bitIndex);
-						buf = (byte)(value & BitMath.makeMask(bufIdx));
+						buf = (byte)(value & BitMath.makeMask(bufIdx + 1));
 					}
 				}
 				break;

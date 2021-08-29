@@ -26,24 +26,36 @@ public class ARMAssembler {
 		writeDataProcessingInstruction(out, ARMDataTransferOpCode.CMP, 0, registerToCompare, operand2Register, true, 0, ARMCondition.AL);
 	}
 	
+	public static void writeCMPInstruction(DataOutput out, int registerToCompare, int valueToCompareTo, ARMCondition cond) throws IOException{
+		writeDataProcessingInstruction(out, ARMDataTransferOpCode.CMP, 0, registerToCompare, valueToCompareTo, false, 0, cond);
+	}
+	
 	public static void writeTSTInstruction(DataOutput out, int registerToCompare, int bitsToTest) throws IOException{
 		writeDataProcessingInstruction(out, ARMDataTransferOpCode.TST, 0, registerToCompare, bitsToTest, false, 0, ARMCondition.AL);
 	}
 	
 	public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceRegister) throws IOException{
-		writeMOVInstruction(out, targetRegister, sourceRegister, 0);
+		writeMOVInstruction(out, targetRegister, sourceRegister, ARMShiftType.LSL, 0);
 	}
 	
-	public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceRegister, int op2RegShift) throws IOException{
-		writeMOVInstruction(out, targetRegister, sourceRegister, op2RegShift, ARMCondition.AL);
+	public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceRegister, ARMShiftType op2ShiftType, int op2ShiftAmount) throws IOException{
+		writeMOVInstruction(out, targetRegister, sourceRegister, op2ShiftType, op2ShiftAmount, ARMCondition.AL);
 	}
 	
-	public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceRegister, int op2RegShift, ARMCondition condition) throws IOException{
-		writeDataProcessingInstruction(out, ARMDataTransferOpCode.MOV, targetRegister, 0, sourceRegister, true, op2RegShift, condition);
+		public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceRegister, ARMShiftType op2ShiftType, int op2ShiftAmount, ARMCondition condition) throws IOException{
+		writeDataProcessingInstruction(out, ARMDataTransferOpCode.MOV, targetRegister, 0, sourceRegister, true, makeOperand2RegShift(op2ShiftType, op2ShiftAmount), condition);
 	}
 	
 	public static void writeMOVInstruction(DataOutput out, int targetRegister, int sourceValue, ARMCondition condition) throws IOException{
 		writeDataProcessingInstruction(out, ARMDataTransferOpCode.MOV, targetRegister, 0, sourceValue, false, 0, condition);
+	}
+	
+	public static void writeADDInstruction(DataOutput out, int targetRegister, int op1reg, int op2reg, ARMShiftType shiftType, int shiftAmount) throws IOException {
+		writeDataProcessingInstruction(out, ARMDataTransferOpCode.ADD, targetRegister, op1reg, op2reg, true, makeOperand2RegShift(shiftType, shiftAmount), ARMCondition.AL);
+	}
+	
+	public static int makeOperand2RegShift(ARMShiftType shiftType, int shiftAmount){
+		return (shiftType.ordinal() << 1) | (shiftAmount << 3);
 	}
 	
 	private static void writeDataProcessingInstruction(DataOutput out, ARMDataTransferOpCode opCode, int targetRegister, int operand1Register, int operand2, boolean isOp2Register, int op2RegShift, ARMCondition condition) throws IOException{
@@ -116,11 +128,15 @@ public class ARMAssembler {
 	}
 	
 	public static void writeBranchInstruction(DataIOStream out, int branchTarget, boolean link) throws IOException{
+		writeBranchInstruction(out, branchTarget, link, ARMCondition.AL);
+	}
+	
+	public static void writeBranchInstruction(DataIOStream out, int branchTarget, boolean link, ARMCondition cond) throws IOException{
 		int currentOffset = out.getPosition() + 8;
 		int diff = branchTarget - currentOffset;
 		int value = (diff >> 2);
 		out.writeInt24(value);
-		out.write(CONDITION_ALWAYS << 4 | 0b101 << 1 | (link ? 1 : 0));
+		out.write(cond.bits << 4 | 0b101 << 1 | (link ? 1 : 0));
 	}
 	
 	public static void setImmValue(DataIOStream io, int targetValue) throws IOException{
@@ -136,6 +152,10 @@ public class ARMAssembler {
 	
 	public static int getInstructionOperand2(DataInput in) throws IOException {
 		return decodeBarrelShiftedInt(in.readInt() & 0xFFF);
+	}
+	
+	public static int getDecEncBarrelShiftDiff(int value) {
+		return ARMAssembler.decodeBarrelShiftedInt(ARMAssembler.encodeBarrelShiftedInt(value)) - value;
 	}
 	
 	public static int decodeBarrelShiftedInt(int bs){
@@ -184,10 +204,18 @@ public class ARMAssembler {
 		return calc | (armShift << 8);
 	}
 	
+	public static enum ARMShiftType {
+		LSL,
+		LSR,
+		ASR,
+		ROR
+	}
+	
 	public static enum ARMDataTransferOpCode{
 		MOV(0b1101, false),
 		CMP(0b1010, true),
-		TST(0b1000, true);
+		TST(0b1000, true),
+		ADD(0b0100, false);
 		
 		public final int opCode;
 		public final boolean isTargetCondCode;
@@ -201,7 +229,9 @@ public class ARMAssembler {
 	public static enum ARMCondition {
 		EQ(0b0000),
 		NE(0b0001),
-		AL(0b1110);
+		AL(0b1110),
+		GE(0b1010),
+		GT(0b1100);
 		
 		public final int bits;
 		

@@ -3,6 +3,7 @@
 // 
 package ctrmap.stdlib.gui.components.combobox;
 
+import ctrmap.stdlib.gui.components.listeners.AbstractToggleableListener;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import ctrmap.stdlib.util.ArraysEx;
 import javax.swing.text.BadLocationException;
@@ -12,10 +13,12 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import ctrmap.stdlib.gui.components.listeners.DocumentAdapterEx;
+import ctrmap.stdlib.util.ListenableList;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.JTextField;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -35,9 +38,21 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 	private ACMode mode = ACMode.CONTAINS;
 	private boolean allowListeners = true;
 	private boolean allowAC = false;
-	private boolean acAlphaSort = true;
+	private boolean acEnableComparator = true;
 	private boolean allowProgramTextChanges = false;
 	private boolean acPopUpOnType = true;
+	private boolean useEqualsAnyway = false;
+
+	private boolean allowPopupMenuListener = true;
+
+	private Comparator<T> comparator = new Comparator<T>() {
+		@Override
+		public int compare(T o1, T o2) {
+			String str1 = String.valueOf(o1);
+			String str2 = String.valueOf(o2);
+			return str1.compareToIgnoreCase(str2);
+		}
+	};
 
 	public ComboBoxExInternal() {
 		super();
@@ -59,10 +74,10 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 				if (candidates.size() == 1) {
 					((ComboPopup) mInstance.getUI().getAccessibleChild(mInstance, 0)).hide();
 				}
-
 				if (itemLib.contains(item) || item == null) {
-					lastGoodSelectedItem = item;
-					listeners.iterator();
+					if (item != null) {
+						lastGoodSelectedItem = item;
+					}
 
 					for (ComboBoxListener l : listeners) {
 						l.itemSelected(item);
@@ -77,11 +92,30 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 								break;
 							}
 						}
+					} else {
+						setSelectedItem(candidates.get(0));
 					}
-					setSelectedItem(candidates.get(0));
 				} else if (item != lastGoodSelectedItem) {
 					setSelectedItem(lastGoodSelectedItem);
 				}
+			}
+		});
+
+		addPopupMenuListener(new PopupMenuListener() {
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				if (allowPopupMenuListener && allowAC) {
+					makeValuesByQuery(null, false);
+				}
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+
 			}
 		});
 
@@ -100,8 +134,10 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 							if (mInstance.getModel().getSize() == 0) {
 								popup.hide();
 							} else {
+								allowPopupMenuListener = false;
 								popup.hide();
 								popup.show();
+								allowPopupMenuListener = true;
 							}
 						}
 					} catch (BadLocationException ex) {
@@ -125,8 +161,8 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		listeners.add(l);
 	}
 
-	private String getUniqueStrInstance(String str) {
-		if (str == null){
+	private static String getUniqueStrInstance(String str) {
+		if (str == null) {
 			return str;
 		}
 		return new String(str);
@@ -136,15 +172,64 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		loadValues(ArraysEx.asList(values));
 	}
 
+	public void loadValuesIndexed(T... values) {
+		loadValuesIndexed(ArraysEx.asList(values));
+	}
+
+	public void loadValuesListenable(ListenableList<T> values) {
+		loadValues(values);
+
+		values.addListener((ListenableList.ElementChangeEvent evt) -> {
+			int selidx = getSelectedIndexEx();
+			switch (evt.type) {
+				case MODIFY:
+					itemLib.set(evt.index, (T) evt.element);
+					break;
+				case ADD:
+					if (evt.element instanceof String) {
+						itemLib.add(evt.index, (T) getUniqueStrInstance((String) evt.element));
+					} else {
+						itemLib.add(evt.index, (T) evt.element);
+					}
+					break;
+				case REMOVE:
+					itemLib.remove(evt.index);
+					break;
+			}
+
+			makeValuesByQuery(null, true);
+
+			if (selidx == evt.index) {
+				setSelectedIndexEx(selidx);
+			}
+		});
+	}
+
+	public void loadValuesIndexed(List<T> values) {
+		loadValues(values, true);
+	}
+
 	public void loadValues(List<T> values) {
+		loadValues(values, false);
+	}
+
+	public void loadValues(List<T> values, boolean indexed) {
 		itemLib.clear();
 		if (!values.isEmpty()) {
 			boolean isStr = values.get(0) instanceof String;
 			if (!isStr) {
 				itemLib.addAll(values);
 			} else {
-				for (T str : values) {
-					itemLib.add((T) getUniqueStrInstance((String) str));
+				if (indexed) {
+					int index = 0;
+					for (T str : values) {
+						itemLib.add((T) (index + " - " + str));
+						index++;
+					}
+				} else {
+					for (T str : values) {
+						itemLib.add((T) getUniqueStrInstance((String) str));
+					}
 				}
 			}
 		}
@@ -157,7 +242,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 			item = (T) getUniqueStrInstance((String) item);
 		}
 		itemLib.add(item);
-		makeValuesByQuery(getSelectedItem(), false);
+		makeValuesByQuery(getSelectedItem(), true);
 	}
 
 	@Override
@@ -166,7 +251,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 			item = (T) getUniqueStrInstance((String) item);
 		}
 		itemLib.add(index, item);
-		makeValuesByQuery(getSelectedItem(), false);
+		makeValuesByQuery(getSelectedItem(), true);
 	}
 
 	@Override
@@ -174,6 +259,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		if (index >= 0 && index < itemLib.size()) {
 			candidates.remove(itemLib.get(index));
 			itemLib.remove(index);
+			makeValuesByQuery(getSelectedItem(), true);
 		}
 	}
 
@@ -188,15 +274,29 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 	public void setAllowAC(boolean val) {
 		allowAC = val;
-		setEditable(val);
+		if (!isEditable()) {
+			setEditable(val);
+		}
 	}
 
 	public void setACAlphabeticSort(boolean val) {
-		acAlphaSort = val;
+		acEnableComparator = val;
+	}
+
+	public void setACComparator(Comparator<T> comparator) {
+		this.comparator = comparator;
+	}
+
+	public void setUseEqualsAnyway(boolean val) {
+		useEqualsAnyway = val;
+	}
+
+	public boolean getUseEqualsAnyway() {
+		return useEqualsAnyway;
 	}
 
 	public boolean getACAlphabeticSort() {
-		return acAlphaSort;
+		return acEnableComparator;
 	}
 
 	public void setACPopUpOnType(boolean val) {
@@ -209,8 +309,14 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 			Object item = getSelectedItem();
 
 			for (int i = 0; i < candidates.size(); ++i) {
-				if (candidates.get(i) == item) {
-					return i;
+				if (useEqualsAnyway) {
+					if (candidates.get(i).equals(item)) {
+						return i;
+					}
+				} else {
+					if (candidates.get(i) == item) {
+						return i;
+					}
 				}
 			}
 		}
@@ -241,17 +347,47 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 	public void setSelectedItem(Object item) {
 		//Fuck you, Oracle. I want to use == not equals. You don't like that, take this shitty code.
 		selectedItemReminder = null;
+		boolean editable = isEditable;
 		isEditable = true;
-		super.setSelectedItem(item);
-		isEditable = false;
+		try {
+			super.setSelectedItem(item);
+		} catch (Exception ex) {
+			isEditable = editable;
+			ex.printStackTrace();
+			throw ex;
+		}
+		isEditable = editable;
+	}
+
+	@Override
+	public Object getSelectedItem() {
+		Object item = super.getSelectedItem();
+		if (item == null && allowAC) {
+			return lastGoodSelectedItem;
+		}
+		return item;
 	}
 
 	public int getSelectedIndexEx() {
 		if (itemLib != null) {
-			Object item = getSelectedItem();
-			for (int i = 0; i < itemLib.size(); ++i) {
-				if (itemLib.get(i) == item) {
-					return i;
+			if (!useEqualsAnyway) {
+				Object item = getSelectedItem();
+
+				for (int i = 0; i < itemLib.size(); i++) {
+					if (itemLib.get(i) == item) {
+						return i;
+					}
+				}
+			} else {
+				Object item = getSelectedItem();
+				if (item == null) {
+					item = lastGoodSelectedItem;
+				}
+
+				for (int i = 0; i < itemLib.size(); i++) {
+					if (itemLib.get(i).equals(item)) {
+						return i;
+					}
 				}
 			}
 		}
@@ -264,12 +400,12 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 	private void makeValuesByQuery(Object q, boolean forceFull) {
 		String query = null;
-		if (q != null){
+		if (q != null) {
 			query = String.valueOf(q);
 		}
-		candidates = new ArrayList<>();
+		candidates.clear();
 		if (!allowAC || forceFull || query == null || query.isEmpty()) {
-			candidates = itemLib;
+			candidates.addAll(itemLib);
 		} else {
 			if (query.equals(this.lastQuery)) {
 				return;
@@ -282,7 +418,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 				}
 			}
 			if (itemsContainsQuery) {
-				candidates = itemLib;
+				candidates.addAll(itemLib);
 			} else {
 				if (mode == ACMode.INDEX_SKIP_MATCH) {
 					candidates.addAll(itemLib);
@@ -305,20 +441,18 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 						}
 					}
 				}
-				if (acAlphaSort) {
-					candidates.sort((o1, o2) -> {
-						String str1 = String.valueOf(o1);
-						String str2 = String.valueOf(o2);
-						return str1.compareToIgnoreCase(str2);
-					});
+				if (acEnableComparator) {
+					candidates.sort(comparator);
 				}
 			}
 		}
 		allowListeners = false;
+		Object last = model.getSelectedItem();
 		model.removeAllElements();
 		for (T t : candidates) {
 			model.addElement(t);
 		}
+		model.setSelectedItem(last);
 		allowListeners = true;
 	}
 
@@ -340,14 +474,14 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 		private boolean disallowFireContentsChanged = false;
 
-		@Override
+		/*@Override
 		public void addElement(T item) {
+			Object last = getSelectedItem();
+			System.err.println("ADDELEM LASTITEM " + last);
 			super.addElement(item);
-			if (getSize() == 1) {
-				super.setSelectedItem(item);
-			}
-		}
-
+			setSelectedItem(last);
+		}*/
+		
 		@Override
 		public void setSelectedItem(Object item) {
 			if (allowListeners) {
@@ -389,8 +523,20 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		}
 	}
 
-	public interface ComboBoxListener {
+	public static interface ComboBoxListener {
 
 		public void itemSelected(Object selectedItem);
+	}
+
+	public static abstract class ToggleableComboBoxListener extends AbstractToggleableListener implements ComboBoxListener {
+
+		public abstract void itemSelectedImpl(Object item);
+
+		@Override
+		public void itemSelected(Object item) {
+			if (getAllowEvents()) {
+				itemSelectedImpl(item);
+			}
+		}
 	}
 }

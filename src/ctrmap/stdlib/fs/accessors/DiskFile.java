@@ -32,6 +32,7 @@ public class DiskFile extends FSFile {
 
 	/**
 	 * Creates a DiskFile from a path in the file-system.
+	 *
 	 * @param path Relative or absolute path of the file.
 	 */
 	public DiskFile(String path) {
@@ -40,6 +41,7 @@ public class DiskFile extends FSFile {
 
 	/**
 	 * Creates a DiskFile from a java.io.File object.
+	 *
 	 * @param f A File.
 	 */
 	public DiskFile(File f) {
@@ -71,8 +73,13 @@ public class DiskFile extends FSFile {
 
 	@Override
 	public WriteableStream getOutputStream() {
+		return new OutputStreamWriteable(getNativeOutputStream());
+	}
+
+	@Override
+	public BufferedOutputStream getNativeOutputStream() {
 		try {
-			return new OutputStreamWriteable(new BufferedOutputStream(new FileOutputStream(file)));
+			return new BufferedOutputStream(new FileOutputStream(file));
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(DiskFile.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -101,6 +108,11 @@ public class DiskFile extends FSFile {
 		return file.isDirectory();
 	}
 
+	@Override
+	public boolean isFile() {
+		return file.isFile();
+	}
+
 	public File getFile() {
 		return file;
 	}
@@ -115,7 +127,7 @@ public class DiskFile extends FSFile {
 		return file.getPath().replace('\\', '/');
 	}*/
 	@Override
-	public FSFile getParent() {
+	public DiskFile getParent() {
 		File parent = file.getParentFile();
 		if (parent != null) {
 			return new DiskFile(file.getParentFile());
@@ -130,12 +142,12 @@ public class DiskFile extends FSFile {
 	}
 
 	@Override
-	public FSFile getChild(String forName) {
-		if (exists() && !isDirectory()) {
-			return null;
-		}
-		if (forName == null || forName.isEmpty()){
+	public DiskFile getChild(String forName) {
+		if (forName == null || forName.isEmpty()) {
 			return this;
+		}
+		if (isFile()) {
+			return null;
 		}
 		return new DiskFile(file.getPath() + "/" + forName);
 	}
@@ -147,8 +159,8 @@ public class DiskFile extends FSFile {
 
 	@Override
 	public void delete() {
-		if (isDirectory()){
-			for (FSFile child : listFiles()){
+		if (isDirectory()) {
+			for (FSFile child : listFiles()) {
 				child.delete();
 			}
 		}
@@ -179,8 +191,8 @@ public class DiskFile extends FSFile {
 	public int getPermissions() {
 		int att = 0;
 		att |= file.canRead() ? FSF_ATT_READ : 0;
-		att |= file.canWrite()? FSF_ATT_WRITE : 0;
-		att |= file.canExecute()? FSF_ATT_EXECUTE : 0;
+		att |= file.canWrite() ? FSF_ATT_WRITE : 0;
+		att |= file.canExecute() ? FSF_ATT_EXECUTE : 0;
 		return att;
 	}
 }

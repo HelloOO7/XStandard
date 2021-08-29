@@ -5,6 +5,7 @@ import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.InputStreamReadable;
+import ctrmap.stdlib.text.StringEx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -74,7 +75,10 @@ public class ResourceFile extends FSFile{
 
 	@Override
 	public FSFile getChild(String forName) {
-		String[] elems = forName.split("/");
+		if (forName == null || forName.isEmpty()) {
+			return this;
+		}
+		String[] elems = StringEx.splitOnecharFast(forName, '/');
 		ResourceFile cur = this;
 		for (int i = 0; i < elems.length; i++){
 			if (cur == null){

@@ -253,13 +253,4 @@ public class ELF {
 		}
 		return null;
 	}
-
-	public static void main(String[] args) {
-		ELF elf = new ELF(new DiskFile("D:\\Emugames\\3DS\\3dstools\\oras_ex2\\RomFS\\elf_dump\\sango.elf"));
-		/*elf.write(new DiskFile("D:\\_REWorkspace\\pokescript_genv\\_CUTSCENE_IDB\\IntroVideoSkip\\introskip.2.elf"));*/
-		YamlNode node = YamlReflectUtil.serialize("test", elf);
-		Yaml yml = new Yaml();
-		yml.root.addChild(node);
-		yml.writeToFile(new DiskFile("D:\\Emugames\\3DS\\3dstools\\oras_ex2\\RomFS\\DllZkUtil.elf.yml"));
-	}
 }

@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.rpm.rpz;
 
+import ctrmap.stdlib.formats.yaml.YamlNodeName;
 import ctrmap.stdlib.fs.FSFile;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,28 +14,39 @@ public class RPZModuleInfo extends RPZYmlBase {
 	/**
 	 * The module is a dependency of the main module or one of its dependencies.
 	 */
+	@YamlNodeName("IsDependencyModule")
 	public boolean isDependencyModule;
+	/**
+	 * The module should be stripped of symbol names during installation.
+	 */
+	@YamlNodeName("StripSymbolNames")
+	public boolean stripSymbolNames;
 	/**
 	 * The module's unique Product ID.
 	 */
+	@YamlNodeName("ProductId")
 	public String productId;
 	/**
 	 * The name of the describes RPM, inside the 'code' directory.
 	 */
+	@YamlNodeName("RPMName")
 	public String rpmName;
 	/**
 	 * The targets that this module supports.
 	 */
+	@YamlNodeName("Targets")
 	public List<RPZTarget> targets;
 
 	/**
 	 * The dependencies required to install the module.
 	 */
+	@YamlNodeName("Dependencies")
 	public List<RPZDependency> dependencies;
 
 	/**
 	 * Reference to the RPMContentInfo of the module.
 	 */
+	@YamlNodeName("ContentInfo")
 	public RPZYmlReference contentInfo;
 
 	/**
@@ -81,6 +93,7 @@ public class RPZModuleInfo extends RPZYmlBase {
 		/**
 		 * Name of the target.
 		 */
+		@YamlNodeName("TargetName")
 		public String targetName;
 	}
 
@@ -92,21 +105,25 @@ public class RPZModuleInfo extends RPZYmlBase {
 		/**
 		 * Unique Product ID of the dependency.
 		 */
+		@YamlNodeName("ProductId")
 		public String productId;
 		/**
 		 * Required version of the dependency. See versionOperator.
 		 */
+		@YamlNodeName("Version")
 		public int version;
 		/**
 		 * Orders how the product'sinstalled version on the target must be
 		 * related to the 'version' field's value.
 		 */
+		@YamlNodeName("VersionOperator")
 		public VersionCmpOp versionOperator;
 		/**
 		 * Indicates that the RPZ contains the required dependency bundled with
 		 * the main program. The dependency will be searched for among the RPZ's
 		 * module infos using the Product ID.
 		 */
+		@YamlNodeName("HasBundledDepModule")
 		public boolean hasBundledDepModule;
 
 		public static enum VersionCmpOp {

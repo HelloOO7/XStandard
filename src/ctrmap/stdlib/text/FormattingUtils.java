@@ -2,6 +2,7 @@
 package ctrmap.stdlib.text;
 
 import java.text.DecimalFormat;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -10,18 +11,18 @@ import java.util.Date;
  */
 public class FormattingUtils {
 	
-	public static String getFormattedHexString32(int number) {
-		String hexstring = Integer.toHexString(Integer.reverseBytes(number));
+	public static String getFormattedHexString32(long number) {
+		String hexstring = Long.toHexString(Long.reverseBytes(number));
 		return ("00000000" + hexstring).substring(hexstring.length()).toUpperCase().replaceAll("..", "$0 ");
 	}
 
-	public static String getFormattedHexString32LE(int number) {
-		String hexstring = Integer.toHexString(number);
+	public static String getFormattedHexString32LE(long number) {
+		String hexstring = Long.toHexString(number);
 		return ("00000000" + hexstring).substring(hexstring.length()).toUpperCase().replaceAll("..", "$0 ");
 	}
 
-	public static String getFormattedHexStringShort(int number) {
-		String hexstring = Integer.toHexString(number);
+	public static String getFormattedHexStringShort(long number) {
+		String hexstring = Long.toHexString(number);
 		return ("0000" + hexstring).substring(hexstring.length()).toUpperCase().replaceAll("..", "$0 ");
 	}
 
@@ -32,12 +33,27 @@ public class FormattingUtils {
 		return str;
 	}
 	
+	public static String getFormatMillisToHMS(long millis){
+		long hours = millis / (60 * 60 * 1000);
+		long minutes = (millis / (60 * 1000)) % 60;
+		long seconds = (millis / 1000) % 60;
+		return hours + ":" + getIntWithLeadingZeros(2, (int)minutes) + ":" + getIntWithLeadingZeros(2, (int)seconds);
+	}
+	
 	/**
 	 * Formats a date with the YYYY-MM-DD HH:MM format.
 	 * @return A String with the formatted current RTC date.
 	 */
 	public static String getCommonFormattedDate(){
 		return new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
+	}
+	
+	/**
+	 * Formats a date with the YYYY_MM_DD HH-MM-SS format suitable for file names.
+	 * @return A String with the formatted current RTC date.
+	 */
+	public static String getCommonFormattedDateForFileName(){
+		return new SimpleDateFormat("yyyy_MM_dd HH-mm-ss").format(new Date());
 	}
 	
 	/**
@@ -123,6 +139,11 @@ public class FormattingUtils {
 		return sb.toString();
 	}
 	
+	public static String getStrWithoutDiacritics(String str) {
+		str = Normalizer.normalize(str, Normalizer.Form.NFKD);
+		return str.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+	}
+	
 	/**
 	 * Converts a 'camelCase' String to 'PascalCase'.
 	 * @param str A camelCase String.
@@ -141,7 +162,8 @@ public class FormattingUtils {
 	 * @return THE_INPUT_STRING_WITHOUT_SPACES_AND_IN_UPPERCASE.
 	 */
 	public static String getEnumlyString(String str){
-		return getStrWithoutNonAlphanumeric(str.trim()).toUpperCase();
+		str = getStrWithoutDiacritics(str.trim());
+		return getStrWithoutNonAlphanumeric(str).toUpperCase();
 	}
 
 	/**

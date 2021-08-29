@@ -1,5 +1,7 @@
 package ctrmap.stdlib.io.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -22,6 +24,10 @@ public class IndentedPrintStream extends PrintStream {
 	 */
 	public IndentedPrintStream(OutputStream out) {
 		super(out);
+	}
+	
+	public IndentedPrintStream(File f) throws FileNotFoundException {
+		super(f);
 	}
 
 	/**

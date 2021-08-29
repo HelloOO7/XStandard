@@ -27,19 +27,34 @@ public class FileStream extends RandomAccessFile implements IOStream {
 			throw new RuntimeException("Could not find file " + file + "; FileStream can not be created!");
 		}
 	}
+	
+	@Override
+	public synchronized int read() throws IOException {
+		return super.read();
+	}
+	
+	@Override
+	public synchronized int read(byte[] b, int off, int len) throws IOException {
+		return super.read(b, off, len);
+	}
+	
+	@Override
+	public synchronized int skipBytes(int amount) throws IOException {
+		return super.skipBytes(amount);
+	}
 
 	@Override
-	public int getPosition() throws IOException {
+	public synchronized int getPosition() throws IOException {
 		return (int) getFilePointer();
 	}
 
 	@Override
-	public void seek(int position) throws IOException {
+	public synchronized void seek(int position) throws IOException {
 		super.seek(position);
 	}
 
 	@Override
-	public int getLength() {
+	public synchronized int getLength() {
 		//Using file.length() is about a ms slower
 		try {
 			return (int) length();

@@ -29,5 +29,10 @@ public interface WriteableStream extends WriteableBase {
 		public void write(byte[] b, int off, int len) throws IOException {
 			stm.write(b, off, len);
 		}
+		
+		@Override
+		public void close() throws IOException {
+			stm.close();
+		}
 	}
 }

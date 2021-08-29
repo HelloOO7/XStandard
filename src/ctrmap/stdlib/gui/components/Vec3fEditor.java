@@ -13,27 +13,44 @@ public class Vec3fEditor extends javax.swing.JPanel {
 
 	private Vec3f vec = new Vec3f();
 
+	private boolean allowChanges = false;
+
 	public Vec3fEditor() {
 		initComponents();
-		
+
 		ComponentUtils.setNFValueClass(Float.class, x, y, z);
-		
+
 		x.getDocument().addDocumentListener(new DocumentAdapterEx() {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
-				vec.x = ComponentUtils.getFloatFromDocument(x);
+				if (allowChanges) {
+					float val = ComponentUtils.getFloatFromDocument(x);
+					if (Math.abs(vec.x - val) >= 0.001f) {
+						vec.x = val;
+					}
+				}
 			}
 		});
 		y.getDocument().addDocumentListener(new DocumentAdapterEx() {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
-				vec.y = ComponentUtils.getFloatFromDocument(y);
+				if (allowChanges) {
+					float val = ComponentUtils.getFloatFromDocument(x);
+					if (Math.abs(vec.y - val) >= 0.001f) {
+						vec.y = val;
+					}
+				}
 			}
 		});
 		z.getDocument().addDocumentListener(new DocumentAdapterEx() {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
-				vec.z = ComponentUtils.getFloatFromDocument(z);
+				if (allowChanges) {
+					float val = ComponentUtils.getFloatFromDocument(x);
+					if (Math.abs(vec.z - val) >= 0.001f) {
+						vec.z = val;
+					}
+				}
 			}
 		});
 	}
@@ -44,9 +61,15 @@ public class Vec3fEditor extends javax.swing.JPanel {
 		} else {
 			this.vec = vec;
 		}
+		refresh();
+	}
+
+	public void refresh() {
+		allowChanges = false;
 		x.setValue(vec.x);
 		y.setValue(vec.y);
 		z.setValue(vec.z);
+		allowChanges = true;
 	}
 
 	/**
@@ -66,14 +89,14 @@ public class Vec3fEditor extends javax.swing.JPanel {
         xLabel.setForeground(new java.awt.Color(255, 0, 0));
         xLabel.setText("X");
 
-        x.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
+        x.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
 
-        y.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
+        y.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
 
         yLabel.setForeground(new java.awt.Color(0, 153, 0));
         yLabel.setText("Y");
 
-        z.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
+        z.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
 
         zLabel.setForeground(new java.awt.Color(0, 0, 255));
         zLabel.setText("Z");

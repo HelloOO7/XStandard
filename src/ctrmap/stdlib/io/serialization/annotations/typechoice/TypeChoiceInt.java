@@ -9,6 +9,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(TypeChoicesInt.class)
 @Target({ElementType.FIELD, ElementType.TYPE})
+@Inherited
 public @interface TypeChoiceInt {
     public int key();
     public Class value() default NullType.class;

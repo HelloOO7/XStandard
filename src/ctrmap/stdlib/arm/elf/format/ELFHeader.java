@@ -37,6 +37,7 @@ public class ELFHeader implements ICustomSerialization {
 	public ELFOSABI abi = ELFOSABI.NONE;
 	public byte abiVersion;
 
+	@Inline
 	@ArraySize(7)
 	private byte[] padding;
 

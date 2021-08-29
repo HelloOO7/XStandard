@@ -41,6 +41,10 @@ public class LoadingDialog extends javax.swing.JDialog implements ProgressMonito
 	public void setProgressSubTitle(String value) {
 		bar.setString(value);
 	}
+	
+	public void setProgressBarIsFake(boolean value){
+		bar.setIndeterminate(value);
+	}
 
 	/**
 	 * This method is called from within the constructor to initialize the form.

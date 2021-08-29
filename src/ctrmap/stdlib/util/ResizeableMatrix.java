@@ -110,6 +110,16 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		originX = 0;
 		originY = 0;
 	}
+	
+	public Point indexOf(T elem){
+		for (int x = 0; x < list.size(); x++){
+			int index = list.get(x).indexOf(elem);
+			if (index != -1){
+				return new Point(x + originX, index + originY);
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Gets the width of the matrix.
@@ -221,7 +231,7 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 		for (int i = 0; i < list.size(); i++) {
 			ArrayList<T> l = list.get(i);
-			for (int j = l.size(); j >= 0; j--) {
+			for (int j = l.size() - 1; j >= 0; j--) {
 				if (j >= newHeight) {
 					l.remove(j);
 				}

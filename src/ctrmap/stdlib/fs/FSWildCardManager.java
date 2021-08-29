@@ -136,6 +136,9 @@ public class FSWildCardManager {
 	 */
 	public FSFile getFileFromRefPath(FSFile parent, String refPath, ArcFileAccessor afa) {
 		FSFile currentParent = parent;
+		if (refPath == null){
+			return parent;
+		}
 		for (int i = 0; i < refPath.length(); i++) {
 			String thing = getTextUntilSlash(refPath, i);
 			i += thing.length();

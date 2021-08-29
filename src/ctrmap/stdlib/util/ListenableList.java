@@ -14,6 +14,14 @@ public class ListenableList<T> extends ArrayList<T> {
 
 	@ReflectionHashIgnore
 	private List<ElementChangeListener> listeners = new ArrayList<>();
+	
+	public ListenableList(){
+		
+	}
+	
+	public ListenableList(Collection<? extends T> c){
+		super(c);
+	}
 
 	/**
 	 * Binds an ElementChangeListener to this array.
@@ -71,6 +79,11 @@ public class ListenableList<T> extends ArrayList<T> {
 		fireAddEvent(o);
 		return r;
 	}
+	
+	public void setModify(int idx, T o) {
+		super.set(idx, o);
+		fireModifyEvent(o);
+	}
 
 	@Override
 	public T remove(int index) {
@@ -102,12 +115,19 @@ public class ListenableList<T> extends ArrayList<T> {
 
 	@Override
 	public void clear() {
-		for (int i = 0; i < size(); i++) {
+		for (int i = size() - 1; i >= 0; i--) {
 			fireRemoveEvent(get(i), i);
 		}
 		super.clear();
 	}
 
+	public T getOrDefault(int index, T defaultValue){
+		if (index >= 0 && index < size()){
+			return get(index);
+		}
+		return defaultValue;
+	}
+	
 	@Override
 	public boolean retainAll(Collection<?> c) {
 		throw new UnsupportedOperationException("Not supported.");
@@ -131,7 +151,7 @@ public class ListenableList<T> extends ArrayList<T> {
 	 *
 	 * @param entity An element in this array whose content has been changed externally.
 	 */
-	public void fireModifyEvent(T entity) {
+	public void fireModifyEvent(Object entity) {
 		fireChangeEvent(entity, ElementChangeType.MODIFY, indexOf(entity));
 	}
 
@@ -140,19 +160,19 @@ public class ListenableList<T> extends ArrayList<T> {
 	}
 
 	private void fireChangeEvent(ElementChangeEvent evt) {
-		for (ElementChangeListener l : listeners) {
+		for (ElementChangeListener l : new ArrayList<>(listeners)) {
 			l.onEntityChange(evt);
 		}
 	}
 
 	public static class ElementChangeEvent {
 
-		public final Object entity;
+		public final Object element;
 		public final int index;
 		public final ElementChangeType type;
 
 		public ElementChangeEvent(Object entity, ElementChangeType type, int idx) {
-			this.entity = entity;
+			this.element = entity;
 			this.type = type;
 			this.index = idx;
 		}

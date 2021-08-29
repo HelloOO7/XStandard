@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
-public abstract class FSFile {
+public abstract class FSFile implements Comparable<FSFile> {
 
 	/**
 	 * Indicates that the file can be read from.
@@ -334,6 +334,11 @@ public abstract class FSFile {
 		}
 		return false;
 	}
+	
+	@Override
+	public int compareTo(FSFile fsf) {
+		return getPath().compareTo(fsf.getPath());
+	}
 
 	/**
 	 * Gets this file's path, stripped of a parent file's.
@@ -387,6 +392,9 @@ public abstract class FSFile {
 	 * @return The child file, or null if it could not be matched.
 	 */
 	public FSFile getMatchingChild(String childPath, FSWildCardManager mng) {
+		if (childPath == null || childPath.isEmpty()){
+			return null;
+		}
 		int slashIdx = childPath.indexOf("/");
 		String immChildName = childPath.substring(0, slashIdx != -1 ? slashIdx : childPath.length());
 		String followChildPath = childPath.substring(slashIdx + 1);

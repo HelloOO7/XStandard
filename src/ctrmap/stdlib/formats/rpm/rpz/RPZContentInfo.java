@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.rpm.rpz;
 
+import ctrmap.stdlib.formats.yaml.YamlNodeName;
 import ctrmap.stdlib.fs.FSFile;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
  */
 public class RPZContentInfo extends RPZYmlBase {
 
+	@YamlNodeName("Content")
 	public List<RPZContentReference> content;
 
 	public RPZContentInfo(FSFile fsf) {
@@ -27,11 +29,13 @@ public class RPZContentInfo extends RPZYmlBase {
 		/**
 		 * Path to the file/directory, relative to the 'content' folder.
 		 */
+		@YamlNodeName("SourcePath")
 		public String sourcePath;
 		/**
 		 * Path in the installer's DestContentDirectory to which the content
 		 * should be copied.
 		 */
+		@YamlNodeName("DestinationPath")
 		public String destinationPath;
 	}
 }

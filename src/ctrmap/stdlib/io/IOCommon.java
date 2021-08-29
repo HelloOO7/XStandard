@@ -21,15 +21,12 @@ public class IOCommon {
 	 */
     public static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
 
-    private static final IDataInterpreter DATA_INTERPRETER_LE = new DataInterpreterLE();
-    private static final IDataInterpreter DATA_INTERPRETER_BE = new DataInterpreterBE();
-
 	/**
 	 * Gets the DataInterpreter corresponding to NSIO's default byte order.
 	 * @return 
 	 */
     public static IDataInterpreter getDefaultDataInterpreter(){
-        return getInterpreterForByteOrder(DEFAULT_BYTE_ORDER);
+        return createInterpreterForByteOrder(DEFAULT_BYTE_ORDER);
     }
 
 	/**
@@ -37,12 +34,12 @@ public class IOCommon {
 	 * @param order A byte order value.
 	 * @return DataInterpreter for 'order'.
 	 */
-    public static IDataInterpreter getInterpreterForByteOrder(ByteOrder order){
+    public static IDataInterpreter createInterpreterForByteOrder(ByteOrder order){
         if (order == ByteOrder.BIG_ENDIAN){
-            return DATA_INTERPRETER_BE;
+            return new DataInterpreterBE();
         }
         else {
-            return DATA_INTERPRETER_LE;
+            return new DataInterpreterLE();
         }
     }
 

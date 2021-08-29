@@ -68,6 +68,6 @@ public class BitMath {
 	 * @return An integer with bitCount bits set to 1.
 	 */
 	public static int makeMask(int bitCount) {
-		return (1 << (bitCount + 1)) - 1;
+		return (1 << (bitCount)) - 1;
 	}
 }

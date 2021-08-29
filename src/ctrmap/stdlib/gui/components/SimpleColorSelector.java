@@ -21,15 +21,19 @@ public class SimpleColorSelector extends javax.swing.JPanel {
 	
 	public void attachColor(RGBA col){
 		this.color = col;
-		colorPreview.setBackground(col.toColor());
+		colorPreview.setBackground(getAlphadColor(col));
 	}
 	
 	public RGBA getColor(){
-		return new RGBA(colorPreview.getBackground());
+		return color;
 	}
 
 	public void setCallback(ColorSelectionCallback cb){
 		callback = cb;
+	}
+	
+	private static Color getAlphadColor(RGBA c) {
+		return new Color(c.r, c.g, c.b, 255);
 	}
 	
 	/**
@@ -71,10 +75,10 @@ public class SimpleColorSelector extends javax.swing.JPanel {
 
     private void btnSetColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSetColorActionPerformed
         if (color != null) {
-            Color c = JColorChooser.showDialog(this, "Pick a Color", colorPreview.getBackground());
+            Color c = JColorChooser.showDialog(null, "Pick a Color", color.toColor());
             if (c != null) {
                 color.set(c);
-				colorPreview.setBackground(c);
+				colorPreview.setBackground(getAlphadColor(color));
 				if (callback != null){
 					callback.colorSelected(color);
 				}

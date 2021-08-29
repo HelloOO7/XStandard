@@ -23,6 +23,22 @@ public class MathEx {
 		return deg * DEGREES_TO_RADIANS;
 	}
 	
+	public static float makeAnglePositiveDeg(float angle){
+		angle %= 360f;
+		if (angle < 0){
+			angle += 360f;
+		}
+		return angle;
+	}
+	
+	public static float angleDiffNormalizedRad(float angle1, float angle2){
+		float diff = Math.abs(angle2 - angle1);
+		if (diff > PI){
+			return TWO_PI - diff;
+		}
+		return diff;
+	}
+	
 	/**
 	 * Returns an angle in a triangle calculated using the law of cosines.
 	 *

@@ -66,7 +66,11 @@ public class CMFileDialog {
 	}
 
 	public static List<File> openMultiFileDialog() {
-		return openFileDialog(null, false, false, true, null, null, new ExtensionFilter[0]);
+		return openMultiFileDialog(new ExtensionFilter[0]);
+	}
+	
+	public static List<File> openMultiFileDialog(ExtensionFilter... filters) {
+		return openFileDialog(null, false, false, true, null, null, filters);
 	}
 
 	public static File openFileDialog(String title) {

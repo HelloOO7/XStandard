@@ -1,5 +1,7 @@
 package ctrmap.stdlib.gui.components.combobox;
 
+import ctrmap.stdlib.util.ListenableList;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.JComboBox;
 
@@ -21,6 +23,10 @@ public class ACComboBox<T> extends javax.swing.JPanel {
 		return cb.getACAlphabeticSort();
 	}
 	
+	public void setACComparator(Comparator<T> comp) {
+		cb.setACComparator(comp);
+	}
+	
 	public int getSelectedIndex() {
         return cb.getSelectedIndexEx();
     }
@@ -28,6 +34,10 @@ public class ACComboBox<T> extends javax.swing.JPanel {
     public void setSelectedIndex(int index) {
         cb.setSelectedIndexEx(index);
     }
+	
+	public void setUseEqualsAnyway(boolean value) {
+		cb.setUseEqualsAnyway(value);
+	}
 	
 	public void removeAllItems(){
 		cb.removeAllItems();
@@ -57,12 +67,26 @@ public class ACComboBox<T> extends javax.swing.JPanel {
 		cb.loadValues(values);
 	}
 	
+	public void loadValuesIndexed(T... values){
+		cb.loadValuesIndexed(values);
+	}
+	
 	public void loadValues(List<T> values){
 		cb.loadValues(values);
 	}
 	
+	public void loadValuesListenable(ListenableList<T> values){
+		cb.loadValuesListenable(values);
+	}
+	
 	public void addListener(ComboBoxExInternal.ComboBoxListener listener){
 		cb.addListener(listener);
+	}
+	
+	@Override
+	public void setEnabled(boolean val) {
+		super.setEnabled(val);
+		cb.setEnabled(val);
 	}
 
 	/**

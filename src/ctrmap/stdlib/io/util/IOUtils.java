@@ -46,6 +46,21 @@ public class IOUtils {
 	public static int byteArrayToIntegerLE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
+	
+	public static int byteArrayToInteger24LE(byte[] b, int offs) {
+		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16);
+	}
+	
+	public static long byteArrayToLongLE(byte[] b, int offs) {
+		return (((long)b[offs + 7] << 56) +
+                ((long)(b[offs + 6] & 255) << 48) +
+                ((long)(b[offs + 5] & 255) << 40) +
+                ((long)(b[offs + 4] & 255) << 32) +
+                ((long)(b[offs + 3] & 255) << 24) +
+                ((b[offs + 2] & 255) << 16) +
+                ((b[offs + 1] & 255) <<  8) +
+                ((b[offs + 0] & 255) <<  0));
+	}
 
 	public static byte[] getTrimmedArray(byte[] in) {
 		for (int i = in.length - 1; i > 0; i--) {

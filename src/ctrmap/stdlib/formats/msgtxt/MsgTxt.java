@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.msgtxt;
 
+import ctrmap.stdlib.fs.FSFile;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,6 +30,10 @@ public class MsgTxt {
 		}
 	}
 	
+	public MsgTxt(FSFile fsf) {
+		loadFromInputStream(fsf.getNativeInputStream());
+	}
+	
 	public MsgTxt(InputStream strm) {
 		loadFromInputStream(strm);
 	}
@@ -42,6 +47,7 @@ public class MsgTxt {
 				entries.put(line.substring(0, doubledot), line.substring(doubledot + 1).replace("\\n", "\n"));
 			}
 		}
+		s.close();
 	}
 	
 	public Map<String, String> getMap(){

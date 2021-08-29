@@ -78,6 +78,9 @@ public class VFSFile extends FSFile {
 		if (ovFile.exists() && !ovFile.isDirectory()) {
 			return ovFile;
 		}
+		if (baseFile == null){
+			return ovFile;
+		}
 		return baseFile;
 	}
 
@@ -118,7 +121,7 @@ public class VFSFile extends FSFile {
 
 	@Override
 	public boolean exists() {
-		return ovFile.exists() || baseFile.exists();
+		return ovFile.exists() || (baseFile != null && baseFile.exists());
 	}
 
 	@Override

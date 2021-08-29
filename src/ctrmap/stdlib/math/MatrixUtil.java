@@ -46,9 +46,9 @@ public class MatrixUtil {
 		mtx.scale(x, y, z);
 		return mtx;
 	}
-	
-	public static void decompose3x3(float[] src, float[][] dst){
-		for (int i = 0; i < 9; i++){
+
+	public static void decompose3x3(float[] src, float[][] dst) {
+		for (int i = 0; i < 9; i++) {
 			dst[i / 3][i % 3] = src[i];
 		}
 	}
@@ -78,17 +78,82 @@ public class MatrixUtil {
 	public static Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s) {
 		return rotationFromMatrix(mtx, s, new Vec3f());
 	}
+
+	private static float[] mtx4x4 = new float[16];
+	private static float[] mtx3x3flip = new float[9];
 	
-	public static Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s, Vec3f r) {
-		float[] mtx4x4 = mtx.getMatrix();
-		return rotationFromMatrixImpl(new float[]{
-			mtx4x4[0] / s.x, mtx4x4[4] / s.y, mtx4x4[8] / s.z,
-			mtx4x4[1] / s.x, mtx4x4[5] / s.y, mtx4x4[9] / s.z,
-			mtx4x4[2] / s.x, mtx4x4[6] / s.y, mtx4x4[10] / s.z,
-		}, r);
+	private static synchronized void fill3x3(Vec3f scale) {
+		float invX = 1f / scale.x;
+		float invY = 1f / scale.y;
+		float invZ = 1f / scale.z;
+		mtx3x3flip[0] = mtx4x4[0] * invX;
+		mtx3x3flip[1] = mtx4x4[4] * invY;
+		mtx3x3flip[2] = mtx4x4[8] * invZ;
+		mtx3x3flip[3] = mtx4x4[1] * invX;
+		mtx3x3flip[4] = mtx4x4[5] * invY;
+		mtx3x3flip[5] = mtx4x4[9] * invZ;
+		mtx3x3flip[6] = mtx4x4[2] * invX;
+		mtx3x3flip[7] = mtx4x4[6] * invY;
+		mtx3x3flip[8] = mtx4x4[10] * invZ;
+	}
+	
+	public static synchronized Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s, Vec3f r) {
+		mtx.get(mtx4x4);
+		fill3x3(s);
+		return rotationFromMatrixImplZYX(mtx3x3flip, r);
+	}
+	
+	public static synchronized Vec3f rotationFromMatrixYXZ(Matrix4 mtx, Vec3f s, Vec3f r) {
+		mtx.get(mtx4x4);
+		fill3x3(s);
+		return rotationFromMatrixImplYXZ(mtx3x3flip, r);
+	}
+	
+	public static void main(String[] args) {
+		Matrix4 m = new Matrix4();
+		m.rotateYXZ(1f, 0.89f, 0.2f);
+		System.out.println(m.getRotationToYXZ(new Vec3f()));
+	}
+	
+	/*
+	https://www.geometrictools.com/Documentation/EulerAngles.pdf
+	*/
+
+	private static Vec3f rotationFromMatrixImplYXZ(float[] mtx, Vec3f r) {
+		//M00 M01 M02	mtx[0] mtx[1] mtx[2]
+		//M10 M11 M12	mtx[3] mtx[4] mtx[5]
+		//M20 M22 M23	mtx[6] mtx[7] mtx[8]
+		
+		double x;
+		double y;
+		double z;
+		
+		if (mtx[5] < 1f) {
+			if (mtx[5] > -1f) {
+				x = Math.asin(-mtx[5]);
+				y = Math.atan2(mtx[2], mtx[7]);
+				z = Math.atan2(mtx[3], mtx[4]);
+			}
+			else {
+				x = MathEx.HALF_PI;
+				y = -Math.atan2(mtx[1], mtx[0]);
+				z = 0.0;
+			}
+		}
+		else {
+			x = MathEx.HALF_PI_NEG;
+			y = Math.atan2(-mtx[1], mtx[0]);
+			z = 0.0;
+		}
+		
+		r.x = (float)x;
+		r.y = (float)y;
+		r.z = (float)z;
+		
+		return r;
 	}
 
-	private static Vec3f rotationFromMatrixImpl(float[] mtx, Vec3f r) {
+	private static Vec3f rotationFromMatrixImplZYX(float[] mtx, Vec3f r) {
 		//M11 M12 M13	mtx[0] mtx[1] mtx[2]
 		//M21 M22 M23	mtx[3] mtx[4] mtx[5]
 		//M31 M32 M33	mtx[6] mtx[7] mtx[8]
@@ -100,12 +165,12 @@ public class MatrixUtil {
 			double y1 = -Math.asin(mtx[6]);
 			double y2 = Math.PI - y1;
 			double x1 = Math.atan2(mtx[7] / Math.cos(y1), mtx[8] / Math.cos(y1));
-			double x2 = Math.atan2(mtx[7] / Math.cos(y2), mtx[8] / Math.cos(y2));
+			//double x2 = Math.atan2(mtx[7] / Math.cos(y2), mtx[8] / Math.cos(y2));
 			double z1 = Math.atan2(mtx[3] / Math.cos(y1), mtx[0] / Math.cos(y1));
-			double z2 = Math.atan2(mtx[3] / Math.cos(y2), mtx[0] / Math.cos(y2));
-			r.x = (float)x1;
-			r.y = (float)y1;
-			r.z = (float)z1;
+			//double z2 = Math.atan2(mtx[3] / Math.cos(y2), mtx[0] / Math.cos(y2));
+			r.x = (float) x1;
+			r.y = (float) y1;
+			r.z = (float) z1;
 		} else {
 			z = 0;
 			if (mtx[6] == -1) {
@@ -115,9 +180,9 @@ public class MatrixUtil {
 				y = -Math.PI / 2.0;
 				x = Math.atan2(-mtx[1], -mtx[2]);
 			}
-			r.x = (float)x;
-			r.y = (float)y;
-			r.z = (float)z;
+			r.x = (float) x;
+			r.y = (float) y;
+			r.z = (float) z;
 		}
 		return r;
 	}

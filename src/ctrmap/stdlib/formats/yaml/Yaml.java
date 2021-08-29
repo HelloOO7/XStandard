@@ -122,7 +122,7 @@ public class Yaml {
 	}
 
 	public YamlNode getEnsureRootNodeKeyNode(String key) {
-		return root.getOrCreateChildKeyByName(key);
+		return root.getEnsureChildByName(key);
 	}
 
 	public YamlNode getRootNodeKeyNode(String key) {

@@ -131,7 +131,7 @@ public class FSUtil {
 	 * @param target The file or directory to copy to.
 	 */
 	public static void copy(FSFile source, FSFile target) {
-		if (source.isDirectory() && target.isDirectory()) {
+		if (source.isDirectory() && (target.isDirectory() || !target.exists())) {
 			copyDirectory(source, target);
 			return;
 		}

@@ -59,14 +59,14 @@
     <Component class="javax.swing.JFormattedTextField" name="x">
       <Properties>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="#0.00" subtype="-1" type="0"/>
+          <Format format="#0.000" subtype="-1" type="0"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="y">
       <Properties>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="#0.00" subtype="-1" type="0"/>
+          <Format format="#0.000" subtype="-1" type="0"/>
         </Property>
       </Properties>
     </Component>
@@ -81,7 +81,7 @@
     <Component class="javax.swing.JFormattedTextField" name="z">
       <Properties>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="#0.00" subtype="-1" type="0"/>
+          <Format format="#0.000" subtype="-1" type="0"/>
         </Property>
       </Properties>
     </Component>

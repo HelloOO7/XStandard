@@ -53,7 +53,7 @@ public class BinaryDeserializer extends BinarySerialization {
 	public void loadStreamOntoMemory() {
 		if (!(baseStream.getBaseStream() instanceof MemoryStream)) {
 			try {
-				DataIOStream newStream = new DataIOStream(baseStream.toByteArray());
+				SerializationIOStream newStream = new SerializationIOStream(baseStream.toByteArray());
 				baseStream.close();
 				baseStream = newStream;
 			} catch (IOException ex) {
@@ -102,7 +102,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	public void deserializeToObject(Object obj) {
 		try {
-			readObjectFields(obj, obj.getClass(), baseStream.getPosition());
+			readObjectFields(obj, obj.getClass(), baseStream.getPositionUnbased());
 		} catch (IOException | InstantiationException | IllegalAccessException ex) {
 			Logger.getLogger(BinaryDeserializer.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -128,6 +128,8 @@ public class BinaryDeserializer extends BinarySerialization {
 	}
 
 	private void readObjectFields(Object obj, Class cls, int objStartAddress) throws InstantiationException, IllegalAccessException, IOException {
+		baseStream.resetSeekTrace();
+		
 		List<Field> objSizeFields = new ArrayList<>();
 		List<String> localDefinitions = new ArrayList<>();
 
@@ -158,14 +160,25 @@ public class BinaryDeserializer extends BinarySerialization {
 		if (obj instanceof ICustomSerialization) {
 			((ICustomSerialization) obj).deserialize(this);
 		}
-
-		int expectedObjSize = baseStream.getPosition() - objStartAddress;
+		
+		int expectedObjSizePos = baseStream.getPositionUnbased() - objStartAddress;
+		int expectedObjSizeAll = baseStream.getMaxSeekSinceTrace() - objStartAddress;
+		
 		for (Field objSizeFld : objSizeFields) {
 			Object fldValue = objSizeFld.get(obj);
 			if (fldValue instanceof Number) {
 				int objSize = ((Number) fldValue).intValue();
+				
+				int expectedObjSize;
+				if (objSizeFld.getAnnotation(ObjSize.class).inclChildren()) {
+					expectedObjSize = expectedObjSizeAll;
+				}
+				else {
+					expectedObjSize = expectedObjSizePos;
+				}
+				
 				if (objSize != expectedObjSize) {
-					throw new RuntimeException(String.format("Object size does 0x%08X not match actual object size (0x%08X)! Object start: 0x%08X, Current stream position: 0x%08X.", objSize, expectedObjSize, objStartAddress, baseStream.getPosition()));
+					throw new RuntimeException(String.format("Object size does 0x%08X not match actual object size (0x%08X)! Object start: 0x%08X, Current stream position: 0x%08X, max seektrace: 0x%08X", objSize, expectedObjSize, objStartAddress, baseStream.getPositionUnbased(), baseStream.getMaxSeekSinceTrace()));
 				}
 			} else {
 				throw new RuntimeException("ObjSize field is not a numeric primitive!");
@@ -181,8 +194,8 @@ public class BinaryDeserializer extends BinarySerialization {
 		return definitions.get(name);
 	}
 
-	private void updatePointerBase() throws IOException {
-		pointerBaseStack.push(baseStream.getPosition());
+	private void updatePointerBase(int addend) throws IOException {
+		pointerBaseStack.push(baseStream.getPosition() + addend);
 	}
 
 	private void resetPointerBase() {
@@ -215,7 +228,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		cls = getUnboxedClass(cls);
 
 		if (cls.isAnnotationPresent(PointerBase.class)) {
-			updatePointerBase();
+			updatePointerBase(((PointerBase)cls.getAnnotation(PointerBase.class)).addend());
 		}
 
 		Object value = null;
@@ -311,7 +324,8 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		int defaultSize = constants.length <= 0x100 ? 1 : constants.length <= 0x10000 ? 2 : 4;
 
-		int ordinal = readSizedInt(field, getIntSize(defaultSize, field, cls));
+		int size = getIntSize(defaultSize, field, cls);
+		int ordinal = readSizedInt(field, size);
 
 		if (ISerializableEnum.class.isAssignableFrom(cls)) {
 			for (Object ev : constants) {
@@ -331,7 +345,26 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private Object readArray(Class cls, Field field) throws InstantiationException, IllegalAccessException, IOException {
 		debugPrint("array " + field + " at " + Integer.toHexString(baseStream.getPosition()));
-		int size = readArrayLength(field);
+		LengthPos.LengthPosType lengthPos = LengthPos.LengthPosType.BEFORE_PTR;
+		
+		int size;
+		int ptr;
+		
+		if (hasAnnotation(LengthPos.class, field)) {
+			lengthPos = getAnnotation(LengthPos.class, field).value();
+		}
+
+		if (lengthPos == LengthPos.LengthPosType.BEFORE_PTR) {
+			size = readArrayLength(field);
+			ptr = readPointer(field, false, field);
+		} else {
+			ptr = readPointer(field, false, field);
+			size = readArrayLength(field);
+		}
+		
+		int posAfterPtr = baseStream.getPosition();
+		
+		seekPointer(ptr);
 
 		Class componentType = cls.getComponentType();
 
@@ -340,6 +373,10 @@ public class BinaryDeserializer extends BinarySerialization {
 		for (int i = 0; i < size; i++) {
 			Object value = readValue(componentType, field, true);
 			Array.set(arr, i, value);
+		}
+		
+		if (ptr != -1){
+			baseStream.seek(posAfterPtr);
 		}
 
 		return arr;
@@ -362,7 +399,8 @@ public class BinaryDeserializer extends BinarySerialization {
 		return ptr;
 	}
 
-	private int readPointer(Field field, int posBeforePtr, boolean isListElem, AnnotatedElement... ant) throws IOException {
+	private int readPointer(Field field, boolean isListElem, AnnotatedElement... ant) throws IOException {
+		int posBeforePtr = baseStream.getPosition();
 		if ((field != null || isListElem) && !hasAnnotation(Inline.class, ant) && refType != ReferenceType.NONE) {
 			debugPrint("Object " + field + " is noninline !!");
 			int ptr = 0;
@@ -395,20 +433,9 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 	}
 
-	private static boolean getIsClassNeedsSize(Class cls, AnnotatedElement... ant) {
-		boolean obj_NeedsSize = false;
-		if (Collection.class.isAssignableFrom(cls)) {
-			obj_NeedsSize = true;
-		} else if (cls == String.class && hasAnnotation(LengthPos.class, ant)) {
-			obj_NeedsSize = true;
-		}
-		return obj_NeedsSize;
-	}
-
 	private Object readObject(Class cls, Field field, boolean isListElem) throws InstantiationException, IllegalAccessException, IOException {
 		AnnotatedElement[] ant = new AnnotatedElement[]{field, cls};
 
-		int posBeforePtr = baseStream.getPosition();
 		boolean obj_NeedsSize = getIsClassNeedsSize(cls, ant);
 
 		int posAfterPtr = -1;
@@ -424,23 +451,24 @@ public class BinaryDeserializer extends BinarySerialization {
 
 			if (lengthPos == LengthPos.LengthPosType.BEFORE_PTR) {
 				obj_Size = readArrayLength(field);
-				ptr = readPointer(field, posBeforePtr, isListElem, ant);
+				ptr = readPointer(field, isListElem, ant);
 				posAfterPtr = baseStream.getPosition();
 			} else {
-				ptr = readPointer(field, posBeforePtr, isListElem, ant);
+				ptr = readPointer(field, isListElem, ant);
 				obj_Size = readArrayLength(field);
 				posAfterPtr = baseStream.getPosition();
 			}
 		} else {
-			ptr = readPointer(field, posBeforePtr, isListElem, ant);
+			ptr = readPointer(field, isListElem, ant);
 			posAfterPtr = baseStream.getPosition();
 		}
-		seekPointer(ptr);
+
 		if (ptr == 0) {
 			return null;
 		}
+		seekPointer(ptr);
 
-		int posBeforeObj = baseStream.getPosition();
+		int posBeforeObj = baseStream.getPositionUnbased();
 
 		if (hasAnnotation(TypeChoicesStr.class, ant) || hasAnnotation(TypeChoicesInt.class, ant)) {
 			boolean found = false;
@@ -525,6 +553,10 @@ public class BinaryDeserializer extends BinarySerialization {
 			Type componentType = typeParameterStack.resolveType(((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 
 			debugPrint("Resolved list component type to " + componentType);
+
+			if (obj_Size == -1) {
+				obj_Size = readArrayLength(field);
+			}
 
 			for (int i = 0; i < obj_Size; i++) {
 				debugPrint("Reading list element " + i + " of " + obj_Size);

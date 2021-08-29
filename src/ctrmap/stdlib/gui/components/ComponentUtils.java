@@ -1,6 +1,7 @@
 
 package ctrmap.stdlib.gui.components;
 
+import ctrmap.stdlib.gui.components.combobox.ACComboBox;
 import ctrmap.stdlib.math.vec.Vec3f;
 import java.awt.Component;
 import java.awt.Container;
@@ -12,6 +13,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -52,6 +54,10 @@ public class ComponentUtils {
 			((NumberFormatter) fields[i].getFormatter()).setValueClass(clazz);
 		}
 	}
+	
+	public static void setSelectedIndexSafe(JComboBox box, int index) {
+		box.setSelectedIndex(Math.min(index, box.getItemCount() - 1));
+	}
 
 	public static void clearComponents(Component... components) {
 		for (Component c : components) {
@@ -68,6 +74,10 @@ public class ComponentUtils {
 				((JCheckBox) c).setSelected(false);
 			} else if (c instanceof JRadioButton) {
 				((JRadioButton) c).setSelected(false);
+			} else if (c instanceof ACComboBox) {
+				((ACComboBox) c).setSelectedIndex(-1);
+			} else if (c instanceof JSpinner) {
+				((JSpinner) c).setValue(0);
 			}
 		}
 	}
