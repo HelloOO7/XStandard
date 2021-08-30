@@ -210,6 +210,10 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		return super.getPosition();
 	}
 
+	public int getOffsetBase() {
+		return currentBase;
+	}
+	
 	@Override
 	public int getLength() {
 		return super.getLength() + currentBase;
