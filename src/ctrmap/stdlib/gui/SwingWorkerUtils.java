@@ -1,5 +1,6 @@
 package ctrmap.stdlib.gui;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,6 +11,26 @@ public class SwingWorkerUtils {
 	
 	public static SwingWorker executeJob(Runnable job) {
 		return executeJob(job, false);
+	}
+	
+	public static <T> SwingWorker<T, T> executeJobCallable(Callable<T> job) {
+		SwingWorker<T, T> worker = new SwingWorker<T, T>() {
+			@Override
+			protected T doInBackground() throws Exception {
+				return job.call();
+			}
+
+			@Override
+			protected void done() {
+				try {
+					get();
+				} catch (InterruptedException | ExecutionException ex) {
+					DialogUtils.showExceptionTraceDialog(ex);
+				}
+			}
+		};
+		worker.execute();
+		return worker;
 	}
 
 	public static SwingWorker executeJob(Runnable job, boolean join) {

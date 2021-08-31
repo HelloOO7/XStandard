@@ -336,6 +336,7 @@ public class BinaryDeserializer extends BinarySerialization {
 			return null;
 		} else {
 			if (ordinal < 0 || ordinal >= constants.length) {
+				System.err.println("Deserializer error: Could not resolve enum constant " + ordinal + " for field " + field);
 				return null;
 			}
 

@@ -2,10 +2,17 @@ package ctrmap.stdlib.gui;
 
 import ctrmap.stdlib.util.ProgressMonitor;
 import java.awt.Dimension;
+import javax.swing.SwingUtilities;
 
 public class LoadingDialog extends javax.swing.JDialog implements ProgressMonitor{
 
 	public LoadingDialog(java.awt.Frame parent, boolean modal) {
+		super(parent, modal);
+		initComponents();
+		setLocationRelativeTo(parent);
+	}
+	
+	public LoadingDialog(java.awt.Dialog parent, boolean modal) {
 		super(parent, modal);
 		initComponents();
 		setLocationRelativeTo(parent);
@@ -16,12 +23,23 @@ public class LoadingDialog extends javax.swing.JDialog implements ProgressMonito
 		setProgressTitle(title);
 	}
 	
+	public LoadingDialog(java.awt.Dialog parent, boolean modal, String title) {
+		this(parent, modal);
+		setProgressTitle(title);
+	}
+	
 	public void showDialog(){
 		setVisible(true);
 	}
 	
 	public void close(){
 		setVisible(false);
+	}
+	
+	public void closeNonAWT(){
+		SwingUtilities.invokeLater((() -> {
+			setVisible(false);
+		}));
 	}
 	
 	@Override
