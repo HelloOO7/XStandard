@@ -1,15 +1,23 @@
 package ctrmap.stdlib.math.vec;
 
+import ctrmap.stdlib.io.serialization.BinaryDeserializer;
+import ctrmap.stdlib.io.serialization.BinarySerializer;
+import ctrmap.stdlib.io.serialization.ICustomSerialization;
+import ctrmap.stdlib.io.serialization.annotations.Ignore;
 import java.awt.Color;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class RGBA {
+public class RGBA implements ICustomSerialization {
 
+	@Ignore
 	public short r;
+	@Ignore
 	public short g;
+	@Ignore
 	public short b;
+	@Ignore
 	public short a;
 
 	public static final RGBA BLACK = new RGBA(0, 0, 0, 255);
@@ -119,6 +127,26 @@ public class RGBA {
 		a = rgba.a;
 		return this;
 	}
+	
+	public RGBA set(Vec4f vec4) {
+		return set(vec4.x, vec4.y, vec4.z, vec4.w);
+	}
+	
+	public RGBA set(Vec3f vec) {
+		return set(vec, 1.0f);
+	}
+	
+	public RGBA set(Vec3f vec, float alpha) {
+		return set(vec.x, vec.y, vec.z, alpha);
+	}
+	
+	public RGBA set(float r, float g, float b, float a) {
+		this.r = (short) (r * 255f);
+		this.g = (short) (g * 255f);
+		this.b = (short) (b * 255f);
+		this.a = (short) (a * 255f);
+		return this;
+	}
 
 	public RGBA mul(RGBA other) {
 		r = mulComp(r, other.r);
@@ -223,5 +251,23 @@ public class RGBA {
 		hash = 47 * hash + this.b;
 		hash = 47 * hash + this.a;
 		return hash;
+	}
+
+	@Override
+	public void deserialize(BinaryDeserializer deserializer) throws IOException {
+		r = (short)deserializer.baseStream.readUnsignedByte();
+		g = (short)deserializer.baseStream.readUnsignedByte();
+		b = (short)deserializer.baseStream.readUnsignedByte();
+		a = (short)deserializer.baseStream.readUnsignedByte();
+	}
+
+	@Override
+	public boolean preSerialize(BinarySerializer serializer) throws IOException {
+		return false;
+	}
+
+	@Override
+	public void postSerialize(BinarySerializer serializer) throws IOException {
+		write(serializer.baseStream);
 	}
 }

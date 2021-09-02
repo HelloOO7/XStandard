@@ -6,7 +6,7 @@ import javax.sound.sampled.FloatControl;
 public class AudioClip {
 
 	public static final float VOLUME_RANGE = 100f;
-	
+
 	public AudioInfo info;
 	public Clip clip;
 
@@ -33,6 +33,19 @@ public class AudioClip {
 
 	private float volumeCoef = 100f;
 	private float volume = 100f;
+
+	public float getFrame() {
+		return (clip.getMicrosecondPosition() / 1000000f) * 30f;
+	}
+
+	public float getFrameCount() {
+		return (clip.getMicrosecondLength() / 1000000f) * 30f;
+	}
+	
+	public void setFrame(float frame) {
+		clip.setMicrosecondPosition((long)((frame / 30f) * 1000000f));
+		clip.start();
+	}
 
 	public float getVolume() {
 		return volume;

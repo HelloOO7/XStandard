@@ -113,7 +113,7 @@ public class BinarySerialization {
 					Field fld = (Field) e;
 					if (fld.isAnnotationPresent(annot)) {
 						return fld.getAnnotation(annot);
-					} else {
+					} else if (fld.getType().isAnnotationPresent(annot)) {
 						return fld.getType().getAnnotation(annot);
 					}
 				} else {
