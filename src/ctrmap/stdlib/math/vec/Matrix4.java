@@ -1,6 +1,7 @@
 
 package ctrmap.stdlib.math.vec;
 
+import ctrmap.stdlib.math.BlenLibMath;
 import ctrmap.stdlib.math.MathEx;
 import ctrmap.stdlib.math.MatrixUtil;
 import java.io.DataInput;
@@ -150,11 +151,11 @@ public class Matrix4 extends Matrix4f{
 	}
 	
 	public Vec3f getRotation(){
-		return MatrixUtil.rotationFromMatrix(this, getScale());
+		return getRotationTo(new Vec3f());
 	}
 	
 	public Vec3f getRotationTo(Vec3f vec){
-		return MatrixUtil.rotationFromMatrix(this, getScale(), vec);
+		return BlenLibMath.getRotation(this, vec);
 	}
 	
 	public Vec3f getRotationToYXZ(Vec3f vec) {
@@ -162,7 +163,7 @@ public class Matrix4 extends Matrix4f{
 	}
 	
 	public Vec3f getRotation(Vec3f scale){
-		return MatrixUtil.rotationFromMatrix(this, scale);
+		return getRotation();
 	}
 	
 	public Matrix4 multiplyRight(Matrix4 multiplier){

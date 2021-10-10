@@ -105,8 +105,9 @@ public class ListenableList<T> extends ArrayList<T> {
 	@Override
 	public boolean removeAll(Collection<?> c) {
 		for (Object elem : c) {
-			if (contains(elem)) {
-				fireRemoveEvent(elem, indexOf(elem));
+			int index = indexOf(elem);
+			if (index != -1) {
+				fireRemoveEvent(elem, index);
 			}
 		}
 		boolean rsl = super.removeAll(c);

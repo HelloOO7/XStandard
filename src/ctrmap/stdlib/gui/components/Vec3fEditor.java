@@ -35,7 +35,7 @@ public class Vec3fEditor extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				if (allowChanges) {
-					float val = ComponentUtils.getFloatFromDocument(x);
+					float val = ComponentUtils.getFloatFromDocument(y);
 					if (Math.abs(vec.y - val) >= 0.001f) {
 						vec.y = val;
 					}
@@ -46,7 +46,7 @@ public class Vec3fEditor extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				if (allowChanges) {
-					float val = ComponentUtils.getFloatFromDocument(x);
+					float val = ComponentUtils.getFloatFromDocument(z);
 					if (Math.abs(vec.z - val) >= 0.001f) {
 						vec.z = val;
 					}

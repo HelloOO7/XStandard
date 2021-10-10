@@ -137,7 +137,8 @@ public class YamlNode {
 	}
 	
 	public String getChildValue(String name) {
-		return getChildByName(name).getValue();
+		YamlNode ch = getChildByName(name);
+		return ch != null ? ch.getValue() : null;
 	}
 	
 	public boolean getChildBoolValue(String name) {

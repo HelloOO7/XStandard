@@ -31,7 +31,7 @@ public class RPMSymbolAddress {
 	}
 	
 	public int getAddr(){
-		return bits & 0x7FFFFFFF;
+		return (bits & 0x7FFFFFFF) << 1 >> 1;
 	}
 	
 	public RPMAddrType getAddrType(){

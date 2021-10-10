@@ -16,12 +16,17 @@ import ctrmap.stdlib.gui.components.listeners.DocumentAdapterEx;
 import ctrmap.stdlib.util.ListenableList;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.Serializable;
 import javax.swing.JTextField;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Vector;
+import javax.swing.AbstractListModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
+import javax.swing.MutableComboBoxModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.PopupMenuEvent;
@@ -29,7 +34,7 @@ import javax.swing.event.PopupMenuListener;
 
 public class ComboBoxExInternal<T> extends JComboBox<T> {
 
-	private DefaultComboBoxModel<T> model = new ComboBoxModelEx<>();
+	private ComboBoxModelEx<T> model = new ComboBoxModelEx<>();
 	private List<T> itemLib = new ArrayList<>();
 
 	private List<ComboBoxListener> listeners = new ArrayList<>();
@@ -327,8 +332,9 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 	public void setSelectedIndex(int index) {
 		if (index < 0 || index >= candidates.size()) {
 			setSelectedItem(null);
+		} else {
+			setSelectedItem(candidates.get(index));
 		}
-		setSelectedItem(candidates.get(index));
 	}
 
 	public int getItemCountEx() {
@@ -337,6 +343,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 	public void setSelectedIndexEx(int index) {
 		if (index == -1) {
+			lastGoodSelectedItem = null;
 			setSelectedItem(null);
 		} else {
 			setSelectedItem(itemLib.get(index));
@@ -345,8 +352,14 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 	@Override
 	public void setSelectedItem(Object item) {
+		Object objectToSelect = item;
+
+		getEditor().setItem(item);
+
+		dataModel.setSelectedItem(objectToSelect);
+		fireActionEvent();
 		//Fuck you, Oracle. I want to use == not equals. You don't like that, take this shitty code.
-		selectedItemReminder = null;
+		/*selectedItemReminder = null;
 		boolean editable = isEditable;
 		isEditable = true;
 		try {
@@ -356,7 +369,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 			ex.printStackTrace();
 			throw ex;
 		}
-		isEditable = editable;
+		isEditable = editable;*/
 	}
 
 	@Override
@@ -449,9 +462,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		allowListeners = false;
 		Object last = model.getSelectedItem();
 		model.removeAllElements();
-		for (T t : candidates) {
-			model.addElement(t);
-		}
+		model.addElements(candidates);
 		model.setSelectedItem(last);
 		allowListeners = true;
 	}
@@ -470,34 +481,109 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		INDEX_SKIP_MATCH;
 	}
 
-	private class ComboBoxModelEx<T> extends DefaultComboBoxModel<T> {
+	public class ComboBoxModelEx<E> extends AbstractListModel<E> implements MutableComboBoxModel<E>, Serializable {
 
-		private boolean disallowFireContentsChanged = false;
+		protected List<E> objects;
+		protected Object selectedObject;
 
-		/*@Override
-		public void addElement(T item) {
-			Object last = getSelectedItem();
-			System.err.println("ADDELEM LASTITEM " + last);
-			super.addElement(item);
-			setSelectedItem(last);
-		}*/
-		
-		@Override
-		public void setSelectedItem(Object item) {
-			if (allowListeners) {
-				//I think I'm slowly starting to get why Futaba Sakura's codename is Oracle, 'cause she's just as excruciatingly annoying as the company
+		public ComboBoxModelEx() {
+			objects = new ArrayList<E>();
+		}
 
-				disallowFireContentsChanged = true;
-				super.setSelectedItem(null);
-				disallowFireContentsChanged = false;
-				super.setSelectedItem(item);
+		private void setSelectedItem(Object anObject, boolean fireEvents) {
+			if (selectedObject != anObject) {
+				selectedObject = anObject;
+				if (fireEvents) {
+					fireContentsChanged(this, -1, -1);
+				}
 			}
 		}
 
 		@Override
-		protected void fireContentsChanged(Object source, int index0, int index1) {
-			if (!disallowFireContentsChanged) {
-				super.fireContentsChanged(source, index0, index1);
+		public void setSelectedItem(Object item) {
+			if (allowListeners) {
+				setSelectedItem(item, true);
+			}
+		}
+
+		@Override
+		public Object getSelectedItem() {
+			return selectedObject;
+		}
+
+		@Override
+		public int getSize() {
+			return objects.size();
+		}
+
+		@Override
+		public E getElementAt(int index) {
+			if (index >= 0 && index < objects.size()) {
+				return objects.get(index);
+			} else {
+				return null;
+			}
+		}
+
+		// implements javax.swing.MutableComboBoxModel
+		@Override
+		public void addElement(E anObject) {
+			objects.add(anObject);
+			fireIntervalAdded(this, objects.size() - 1, objects.size() - 1);
+			if (objects.size() == 1 && selectedObject == null && anObject != null) {
+				setSelectedItem(anObject);
+			}
+		}
+
+		public void addElements(Collection<E> collection) {
+			if (!collection.isEmpty()) {
+				boolean empty = objects.isEmpty();
+				objects.addAll(collection);
+				fireIntervalAdded(this, objects.size() - collection.size(), objects.size() - 1);
+				if (empty && selectedObject == null) {
+					setSelectedItem(objects.get(0));
+				}
+			}
+		}
+
+		@Override
+		public void insertElementAt(E anObject, int index) {
+			objects.add(index, anObject);
+			fireIntervalAdded(this, index, index);
+		}
+
+		@Override
+		public void removeElementAt(int index) {
+			if (getElementAt(index) == selectedObject) {
+				if (index == 0) {
+					setSelectedItem(getSize() == 1 ? null : getElementAt(index + 1));
+				} else {
+					setSelectedItem(getElementAt(index - 1));
+				}
+			}
+
+			objects.remove(index);
+
+			fireIntervalRemoved(this, index, index);
+		}
+
+		@Override
+		public void removeElement(Object anObject) {
+			int index = objects.indexOf(anObject);
+			if (index != -1) {
+				removeElementAt(index);
+			}
+		}
+
+		public void removeAllElements() {
+			if (objects.size() > 0) {
+				int firstIndex = 0;
+				int lastIndex = objects.size() - 1;
+				objects.clear();
+				selectedObject = null;
+				fireIntervalRemoved(this, firstIndex, lastIndex);
+			} else {
+				selectedObject = null;
 			}
 		}
 	}

@@ -69,10 +69,14 @@ public class MatrixUtil {
 	public static Matrix4 multiplyRight(Matrix4 base, Matrix4 multiplier) {
 		return base.multiplyRight(multiplier);
 	}
+	
+	public static Vec3f getQuatEuler(Quaternion q, Vec3f dest) {
+		return q.getRotationMatrix().getRotationTo(dest);
+		//unfortunately, q.toEuler is often broken, as are most JOGL functions anyway :( So we use the matrix method.
+	}
 
 	public static Vec3f getQuatEuler(Quaternion q) {
-		return q.getRotationMatrix().getRotation();
-		//unfortunately, q.toEuler is often broken, as are most JOGL functions anyway :( So we use the matrix method.
+		return getQuatEuler(q, new Vec3f());
 	}
 
 	public static Vec3f rotationFromMatrix(Matrix4 mtx, Vec3f s) {
@@ -107,12 +111,6 @@ public class MatrixUtil {
 		mtx.get(mtx4x4);
 		fill3x3(s);
 		return rotationFromMatrixImplYXZ(mtx3x3flip, r);
-	}
-	
-	public static void main(String[] args) {
-		Matrix4 m = new Matrix4();
-		m.rotateYXZ(1f, 0.89f, 0.2f);
-		System.out.println(m.getRotationToYXZ(new Vec3f()));
 	}
 	
 	/*

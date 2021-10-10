@@ -52,13 +52,25 @@ public class DialogUtils {
 	public static boolean showYesNoDialog(Component parent, String title, String message){
 		return JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
 	}
+	
+	public static boolean showYesNoWarningDialog(Component parent, String title, String message){
+		return JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
+	}
 
 	public static int showSaveConfirmationDialog(Component parent, String changeSubject) {
-		return JOptionPane.showConfirmDialog(parent, changeSubject + " has been modified. Do you want to keep the changes?", "Save changes", JOptionPane.YES_NO_CANCEL_OPTION);
+		return showSaveConfirmationDialog(parent, changeSubject, false);
+	}
+	
+	public static int showSaveConfirmationDialog(Component parent, String changeSubject, boolean plural) {
+		return JOptionPane.showConfirmDialog(parent, changeSubject + " " + (plural ? "have" : "has") + " been modified. Do you want to keep the changes?", "Save changes", JOptionPane.YES_NO_CANCEL_OPTION);
 	}
 
 	public static int showSaveConfirmationDialog(String changeSubject) {
-		return showSaveConfirmationDialog(null, changeSubject);
+		return showSaveConfirmationDialog(changeSubject, false);
+	}
+	
+	public static int showSaveConfirmationDialog(String changeSubject, boolean plural) {
+		return showSaveConfirmationDialog(null, changeSubject, true);
 	}
 
 	public static void showExceptionTraceDialog(Exception ex) {

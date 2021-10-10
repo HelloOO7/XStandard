@@ -19,14 +19,27 @@ public class DataInterpreterLE implements IDataInterpreter {
 	@Override
 	public long readLong(ReadableStream stm) throws IOException {
 		readTemp(stm, Long.BYTES);
-		return (((long)b[7] << 56) +
-                ((long)(b[6] & 255) << 48) +
-                ((long)(b[5] & 255) << 40) +
-                ((long)(b[4] & 255) << 32) +
-                ((long)(b[3] & 255) << 24) +
-                ((b[2] & 255) << 16) +
-                ((b[1] & 255) <<  8) +
-                ((b[0] & 255) <<  0));
+		return (((long) b[7] << 56)
+			+ ((long) (b[6] & 255) << 48)
+			+ ((long) (b[5] & 255) << 40)
+			+ ((long) (b[4] & 255) << 32)
+			+ ((long) (b[3] & 255) << 24)
+			+ ((b[2] & 255) << 16)
+			+ ((b[1] & 255) << 8)
+			+ ((b[0] & 255) << 0));
+	}
+
+	@Override
+	public int readSized(ReadableStream strm, int bytes) throws IOException {
+		if (bytes == 1) {
+			return strm.read();
+		}
+		readTemp(strm, bytes);
+		int val = 0;
+		for (int i = 0; i < bytes; i++) {
+			val |= (b[i] & 0xFF) << (i << 3);
+		}
+		return val;
 	}
 
 	@Override

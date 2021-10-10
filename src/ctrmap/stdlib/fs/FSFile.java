@@ -9,8 +9,10 @@ import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataOutStream;
+import ctrmap.stdlib.text.StringEx;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Objects;
 
 public abstract class FSFile implements Comparable<FSFile> {
@@ -27,6 +29,22 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * Indicates that the file can be executed.
 	 */
 	public static final int FSF_ATT_EXECUTE = 4;
+	
+	public void tree(PrintStream out) {
+		out.println(getName());
+		printChildren(out, 0, listFiles());
+	}
+	
+	private static void printChildren(PrintStream out, int indent, List<? extends FSFile> children) {
+		StringBuilder id = new StringBuilder();
+		for (int i = 0; i < indent; i++) {
+			id.append(" ");
+		}
+		for (FSFile child : children) {
+			out.println(id + "└─ " + child.getName());
+			printChildren(out, indent + 4, child.listFiles());
+		}
+	}
 
 	/**
 	 * Gets a child file in this directory,
@@ -35,6 +53,19 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return
 	 */
 	public abstract FSFile getChild(String forName);
+	
+	public FSFile getAnyChild(String... names) {
+		if (names.length == 0) {
+			return null;
+		}
+		for (String name : names) {
+			FSFile ch = getChild(name);
+			if (ch != null && ch.exists()) {
+				return ch;
+			}
+		}
+		return getChild(names[0]);
+	}
 
 	/**
 	 * Gets the parent directory of this file.
@@ -80,6 +111,10 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return True if the file exists, false if otherwise.
 	 */
 	public abstract boolean exists();
+	
+	public static boolean exists(FSFile file) {
+		return file != null && file.exists();
+	}
 
 	/**
 	 * Gets the file's name.
@@ -358,9 +393,12 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return 'path' relative to 'relPath'.
 	 */
 	public static String getPathRelativeTo(String path, String relPath) {
+		if (path.equals(relPath)) {
+			return "";
+		}
 		relPath += "/";
 		if (path.startsWith(relPath)) {
-			String str = path.replace(relPath, "");
+			String str = StringEx.deleteAllString(path, relPath);
 			return str;
 		}
 		return path;

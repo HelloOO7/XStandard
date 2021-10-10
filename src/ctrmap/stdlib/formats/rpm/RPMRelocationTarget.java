@@ -8,65 +8,66 @@ import java.util.List;
 import java.util.Objects;
 
 public class RPMRelocationTarget {
+
 	public static final String MODULE_BASE = "base";
-	
+
 	public String module = MODULE_BASE;
 	public int address;
-	
+
 	RPMRelocationTarget(RPMReader in) throws IOException {
 		address = in.readInt();
 		boolean hasModule = ((address >> 31) & 1) != 0;
 		address &= 0x7FFFFFFF;
-		
-		if (hasModule){
+
+		if (hasModule) {
 			module = in.readStringWithAddress();
 		}
 	}
-	
-	public RPMRelocationTarget(int address){
+
+	public RPMRelocationTarget(int address) {
 		this.address = address;
 	}
-	
-	public RPMRelocationTarget(int address, String module){
+
+	public RPMRelocationTarget(int address, String module) {
 		this(address);
 		this.module = module;
 	}
-	
-	public RPMRelocationTarget(RPMRelocationTarget tgt){
+
+	public RPMRelocationTarget(RPMRelocationTarget tgt) {
 		address = tgt.address;
 		module = tgt.module;
 	}
-	
-	public void addStrings(List<String> l){
-		ArraysEx.addIfNotNullOrContains(l, module);
+
+	public void addStrings(List<String> l) {
+		if (!isInternal()) {
+			ArraysEx.addIfNotNullOrContains(l, module);
+		}
 	}
-	
-	public int getAddrHWordAligned(){
+
+	public int getAddrHWordAligned() {
 		return address - address % 2;
 	}
-	
-	public int getSize(){
-		if (isInternal()){
+
+	public int getSize() {
+		if (isInternal()) {
 			return 4;
-		}
-		else {
+		} else {
 			return 6;
 		}
 	}
-	
-	public boolean isInternal(){
+
+	public boolean isInternal() {
 		return Objects.equals(module, MODULE_BASE);
 	}
-	
-	public boolean isExternal(){
+
+	public boolean isExternal() {
 		return !isInternal();
 	}
-	
+
 	public void write(DataIOStream out, StringTable strtbl) throws IOException {
-		if (isInternal()){
+		if (isInternal()) {
 			out.writeInt(address);
-		}
-		else {
+		} else {
 			out.writeInt(address | (1 << 31));
 			strtbl.putStringOffset(module);
 		}

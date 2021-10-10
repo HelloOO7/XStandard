@@ -30,6 +30,14 @@ public class IOUtils {
 		}
 		return bytes;
 	}
+	
+	public static int bytesToInt(byte[] b, int offs, int count) {
+		int value = 0;
+		for (int i = 0, j = offs; i < count; i++, j++) {
+			value |= ((b[j] & 0xFF) << (i << 3));
+		}
+		return value;
+	}
 
 	public static int byteArrayToIntegerBE(byte[] b) {
 		return byteArrayToIntegerBE(b, 0);
@@ -47,6 +55,10 @@ public class IOUtils {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
 	
+	public static int byteArrayToInteger16LE(byte[] b, int offs) {
+		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8);
+	}
+	
 	public static int byteArrayToInteger24LE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16);
 	}
@@ -62,6 +74,17 @@ public class IOUtils {
                 ((b[offs + 0] & 255) <<  0));
 	}
 
+	public static long byteArrayToLongBE(byte[] b, int offs) {
+		return (((long)b[offs] << 56) +
+                ((long)(b[offs + 1] & 255) << 48) +
+                ((long)(b[offs + 2] & 255) << 40) +
+                ((long)(b[offs + 3] & 255) << 32) +
+                ((long)(b[offs + 4] & 255) << 24) +
+                ((b[offs + 5] & 255) << 16) +
+                ((b[offs + 6] & 255) <<  8) +
+                ((b[offs + 7] & 255) <<  0));
+	}
+	
 	public static byte[] getTrimmedArray(byte[] in) {
 		for (int i = in.length - 1; i > 0; i--) {
 			if (in[i] != 0) {

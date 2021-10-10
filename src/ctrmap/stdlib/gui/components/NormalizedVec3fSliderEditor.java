@@ -1,6 +1,9 @@
 package ctrmap.stdlib.gui.components;
 
 import ctrmap.stdlib.math.vec.Vec3f;
+import ctrmap.stdlib.util.ArraysEx;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -14,6 +17,8 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 	private boolean allowsNegatives = false;
 	
 	private final JSlider[] SLIDERS = new JSlider[3];
+	
+	private List<VectorEditorListener> listeners = new ArrayList<>();
 
 	public NormalizedVec3fSliderEditor() {
 		initComponents();
@@ -29,6 +34,7 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 					float val = getFpFromSlider(x);
 					if (Math.abs(vec.x - val) >= 0.001f) {
 						vec.x = val;
+						callListeners();
 					}
 				}
 			}
@@ -41,6 +47,7 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 					float val = getFpFromSlider(y);
 					if (Math.abs(vec.y - val) >= 0.001f) {
 						vec.y = val;
+						callListeners();
 					}
 				}
 			}
@@ -53,10 +60,15 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 					float val = getFpFromSlider(z);
 					if (Math.abs(vec.z - val) >= 0.001f) {
 						vec.z = val;
+						callListeners();
 					}
 				}
 			}
 		});
+	}
+	
+	public void addListener(VectorEditorListener l) {
+		ArraysEx.addIfNotNullOrContains(listeners, l);
 	}
 
 	public void loadVec(Vec3f vec) {
@@ -66,6 +78,12 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 			this.vec = vec;
 		}
 		refresh();
+	}
+	
+	private void callListeners() {
+		for (VectorEditorListener l : listeners) {
+			l.onChanged();
+		}
 	}
 
 	public void refresh() {

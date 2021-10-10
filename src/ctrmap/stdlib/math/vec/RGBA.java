@@ -177,14 +177,14 @@ public class RGBA implements ICustomSerialization {
 	}
 
 	public byte[] toByteArray() {
-		return toByteArray(new byte[4]);
+		return toByteArray(new byte[4], 0);
 	}
 
-	public byte[] toByteArray(byte[] bytes) {
-		bytes[0] = (byte) r;
-		bytes[1] = (byte) g;
-		bytes[2] = (byte) b;
-		bytes[3] = (byte) a;
+	public byte[] toByteArray(byte[] bytes, int offset) {
+		bytes[offset + 0] = (byte) r;
+		bytes[offset + 1] = (byte) g;
+		bytes[offset + 2] = (byte) b;
+		bytes[offset + 3] = (byte) a;
 		return bytes;
 	}
 

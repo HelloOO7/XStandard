@@ -1,7 +1,5 @@
 package ctrmap.stdlib.text;
 
-import java.util.Arrays;
-
 /**
  * Methods for String manipulation, because the String class is final.
  */
@@ -68,6 +66,23 @@ public class StringEx {
 		return num;
 	}
 
+	public static int numberOfChar(String str, char c, char ignorer) {
+		int num = 0;
+		boolean ign = false;
+		for (int i = 0; i < str.length(); i++) {
+			char cur = str.charAt(i);
+			if (!ign) {
+				if (cur == c) {
+					num++;
+				}
+			}
+			if (cur == ignorer) {
+				ign = !ign;
+			}
+		}
+		return num;
+	}
+
 	public static int[] indicesOfChar(String str, char c) {
 		int num = numberOfChar(str, c);
 
@@ -87,9 +102,30 @@ public class StringEx {
 		return dest;
 	}
 
+	public static int[] indicesOfChar(String str, char c, int[] dest, int destOffset, char ignorer) {
+		boolean ign = false;
+		for (int i = 0, j = destOffset; i < str.length(); i++) {
+			char cur = str.charAt(i);
+			if (!ign) {
+				if (cur == c) {
+					dest[j++] = i;
+				}
+			}
+			if (cur == ignorer) {
+				ign = !ign;
+			}
+		}
+
+		return dest;
+	}
+
 	public static String[] splitOnecharFast(String str, char character) {
-		int[] indices = new int[numberOfChar(str, character) + 2];
-		indicesOfChar(str, character, indices, 1);
+		return splitOnecharFast(str, character, (char) 0);
+	}
+
+	public static String[] splitOnecharFast(String str, char character, char ignorer) {
+		int[] indices = new int[numberOfChar(str, character, ignorer) + 2];
+		indicesOfChar(str, character, indices, 1, ignorer);
 		indices[0] = -1;
 		indices[indices.length - 1] = str.length();
 		int sizeAdjust = 1;
@@ -98,16 +134,20 @@ public class StringEx {
 		}
 		String[] result = new String[indices.length - sizeAdjust];
 		for (int i = 0; i < indices.length - sizeAdjust; i++) {
-			result[i] = str.substring(indices[i] + 1, indices[i + 1]);
+			result[i] = StringEx.deleteAllChars(str.substring(indices[i] + 1, indices[i + 1]), ignorer);
 		}
 		return result;
 	}
-	
+
 	public static String[] splitOnecharFastNoBlank(String str, char character) {
-		String[] split = splitOnecharFast(str, character);
-		
+		return splitOnecharFastNoBlank(str, character, (char) 0);
+	}
+
+	public static String[] splitOnecharFastNoBlank(String str, char character, char ignorer) {
+		String[] split = splitOnecharFast(str, character, ignorer);
+
 		int emptyCount = 0;
-		
+
 		for (int i = 0; i < split.length; i++) {
 			String trim = split[i].trim();
 			split[i] = trim;
@@ -115,15 +155,15 @@ public class StringEx {
 				emptyCount++;
 			}
 		}
-		
+
 		String[] result = new String[split.length - emptyCount];
-		
+
 		for (int i = 0, j = 0; i < split.length; i++) {
 			if (!split[i].isEmpty()) {
 				result[j++] = split[i];
 			}
 		}
-		
+
 		return result;
 	}
 

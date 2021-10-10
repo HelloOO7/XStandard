@@ -16,7 +16,7 @@ public class ExtensionFilter {
 	}
 	
 	public static ExtensionFilter findByFileName(File f, ExtensionFilter... filters){
-		if (filters == null){
+		if (filters == null || f == null){
 			return null;
 		}
 		String ext = FSUtil.getFileExtensionWithDot(f.getName());
@@ -26,6 +26,20 @@ public class ExtensionFilter {
 			}
 		}
 		return null;
+	}
+	
+	public String getDisplayText() {
+		StringBuilder sb = new StringBuilder(formatName);
+		sb.append(" ");
+		sb.append("(");
+		for (int i = 0; i < filters.length; i++) {
+			if (i != 0) {
+				sb.append(", ");
+			}
+			sb.append(filters[i]);
+		}
+		sb.append(")");
+		return sb.toString();
 	}
 
 	public String getPrimaryExtension() {

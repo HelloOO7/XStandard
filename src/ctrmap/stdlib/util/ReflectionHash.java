@@ -19,8 +19,11 @@ public class ReflectionHash {
 	 */
 	private static final boolean REFLHASH_DEBUG = false;
 	
-	private int hash = 0;
-	private int pendingHash = 0;
+	private static final long FNV_64_INIT = 0xcbf29ce484222325L;
+	private static final long FNV_64_PRIME = 0x100000001b3L;
+	
+	private long hash = 0;
+	private long pendingHash = 0;
 	private Object object;
 	private boolean changedFlag = false;
 
@@ -33,6 +36,10 @@ public class ReflectionHash {
 		object = o;
 		reset();
 	}
+	
+	private static long fnv64Update(long hash, long value) {
+		return (hash ^ value) * FNV_64_PRIME;
+	}
 
 	/**
 	 * Internal method used to calculate a full field hash of an object.
@@ -42,30 +49,31 @@ public class ReflectionHash {
 	 * @throws IllegalArgumentException
 	 * @throws IllegalAccessException 
 	 */
-	private static int hashObj(Object o, HashSet<Object> cache) throws IllegalArgumentException, IllegalAccessException {
+	private static long hashObj(Object o, HashSet<Integer> cache) throws IllegalArgumentException, IllegalAccessException {
 		if (o == null) {
 			return 0;
 		}
+		
+		long hash = FNV_64_INIT;
+		
 		Class cls = o.getClass();
-		boolean isPrimitiveOrEnum = cls.isPrimitive() || cls.isEnum() || o instanceof Number;
+		boolean isPrimitiveOrEnum = cls.isPrimitive() || cls.isEnum() || o instanceof Number || o instanceof Boolean || o instanceof String;
 		if (!isPrimitiveOrEnum) {
-			if (!cache.contains(o)) {
-				cache.add(o);
+			int identHash = System.identityHashCode(o);
+			if (!cache.contains(identHash)) {
+				cache.add(identHash);
 			} else {
 				return 0;
 			}
 		}
 		if (isPrimitiveOrEnum) {
-			return Objects.hashCode(o);
+			hash = fnv64Update(hash, Objects.hashCode(o));
 		} else if (cls.isArray()) {
 			int len = Array.getLength(o);
-			int hash = 7;
 			for (int i = 0; i < len; i++) {
-				hash = 37 * hash + hashObj(Array.get(o, i), cache);
+				hash = fnv64Update(hash, hashObj(Array.get(o, i), cache));
 			}
-			return hash;
 		} else {
-			int hash = 7;
 			for (Field f : getAllFields(cls)) {
 				int mods = f.getModifiers();
 				if (Modifier.isStatic(mods)) {
@@ -80,24 +88,24 @@ public class ReflectionHash {
 				
 				if (f.getName().equals("modCount")){
 					//HACK
-					//Java AbstractList store the number of modifications in modCount. In theory, the list can remain unchanged even after modifications.
+					//Java AbstractList stores the number of modifications in modCount. In theory, the list can remain unchanged even after modifications.
 					//Disabling transient field serialization is not an option since elementData is transient as well for some stupid reason
 					
 					continue;
 				}
-				if (REFLHASH_DEBUG){
+				if (REFLHASH_DEBUG) {
 					System.out.println("Hashing field " + f);
 				}
 				
 				f.setAccessible(true);
-				hash = 37 * hash + hashObj(f.get(o), cache);
+				hash = fnv64Update(hash, hashObj(f.get(o), cache));
 				
 				if (REFLHASH_DEBUG){
 					System.out.println(" -> " + hash);
 				}
 			}
-			return hash;
 		}
+		return hash;
 	}
 
 	private static List<Field> getAllFields(Class cls) {

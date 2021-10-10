@@ -12,6 +12,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 	private byte[] buffer;
 
 	private int bIdx = 0;
+	private int bIdxMax = 0;
 	private int bStmPos = 0;
 
 	private boolean bInitialized = false;
@@ -45,8 +46,9 @@ public class BufferedIOStream extends IOStreamWrapper {
 	 */
 	private void flushBuffer() throws IOException {
 		if (bWritten) {
-			IOCommon.debugPrint("Flushing " + bIdx + " buf bytes at " + Integer.toHexString(bStmPos));
-			writeBase(bStmPos, buffer, 0, bIdx);
+			int amount = Math.max(bIdx, bIdxMax);
+			IOCommon.debugPrint("Flushing " + amount + " buf bytes at " + Integer.toHexString(bStmPos));
+			writeBase(bStmPos, buffer, 0, amount);
 			bWritten = false;
 		}
 	}
@@ -74,6 +76,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 			IOCommon.debugPrint("Refilling buffer from pos " + Integer.toHexString(getPositionBase()));
 			readBase(buffer, 0, buffer.length);
 			bIdx = 0;
+			bIdxMax = 0;
 		}
 	}
 
@@ -112,6 +115,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 				System.arraycopy(buffer, 0, b, off + availForReadBuf, leftToRead);
 				bStmPos += buffer.length;
 				bIdx = leftToRead;
+				bIdxMax = bIdx;
 				return readTotal;
 			} else {
 				//Otherwise, read the data straight from the stream and impl-seek to the resulting position (which will force-refill the buffer)
@@ -165,11 +169,13 @@ public class BufferedIOStream extends IOStreamWrapper {
 		}
 		if (bInitialized && position < bStmPos + buffer.length && position > bStmPos) {
 			IOCommon.debugPrint("Seeking bufferless to " + Integer.toHexString(position));
+			bIdxMax = Math.max(bIdx, bIdxMax);
 			bIdx = position - bStmPos;
 		} else {
 			flushBuffer();
 			bStmPos = position;
 			bIdx = 0;
+			bIdxMax = 0;
 			seekBase(position);
 			IOCommon.debugPrint("Seeking buffered to " + Integer.toHexString(position));
 			bInitialized = true;

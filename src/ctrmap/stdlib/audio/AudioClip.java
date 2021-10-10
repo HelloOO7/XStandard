@@ -44,7 +44,6 @@ public class AudioClip {
 	
 	public void setFrame(float frame) {
 		clip.setMicrosecondPosition((long)((frame / 30f) * 1000000f));
-		clip.start();
 	}
 
 	public float getVolume() {

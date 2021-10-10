@@ -134,8 +134,11 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 	}
 
 	public void setValue(int val) {
-		this.spinner.setValue(val);
-		updateCBBySpinner();
+		if (val == (int) this.spinner.getValue()) {
+			comboBox.setSelectedIndex(val);
+		} else {
+			this.spinner.setValue(val);
+		}
 	}
 
 	public void setMaximumRowCount(int val) {

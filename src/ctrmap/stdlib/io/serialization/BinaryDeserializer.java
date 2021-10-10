@@ -25,6 +25,7 @@ import ctrmap.stdlib.io.serialization.annotations.MagicStr;
 import ctrmap.stdlib.io.serialization.annotations.MagicStrLE;
 import ctrmap.stdlib.io.serialization.annotations.ObjSize;
 import ctrmap.stdlib.io.serialization.annotations.PointerBase;
+import ctrmap.stdlib.io.serialization.annotations.PointerInv;
 import ctrmap.stdlib.io.serialization.annotations.PointerSize;
 import ctrmap.stdlib.io.serialization.annotations.Size;
 import ctrmap.stdlib.io.serialization.annotations.Version;
@@ -414,6 +415,9 @@ public class BinaryDeserializer extends BinarySerialization {
 
 			if (ptr == 0) {
 				return 0;
+			}
+			if (hasAnnotation(PointerInv.class, ant)) {
+				ptr = -ptr;
 			}
 
 			if (refType == ReferenceType.SELF_RELATIVE_POINTER) {

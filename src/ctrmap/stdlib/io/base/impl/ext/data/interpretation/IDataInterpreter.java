@@ -11,6 +11,7 @@ public interface IDataInterpreter {
 	public int readInt24(ReadableStream stm) throws IOException;
 	public short readShort(ReadableStream stm) throws IOException;
 	public byte readByte(ReadableStream stm) throws IOException;
+	public int readSized(ReadableStream strm, int bytes) throws IOException;
 	
 	public void writeLong(WriteableStream stm, long value) throws IOException;
 	public void writeInt(WriteableStream stm, int value) throws IOException;

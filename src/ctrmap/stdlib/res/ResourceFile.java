@@ -1,6 +1,7 @@
 package ctrmap.stdlib.res;
 
 import ctrmap.stdlib.fs.FSFile;
+import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
@@ -75,29 +76,7 @@ public class ResourceFile extends FSFile{
 
 	@Override
 	public FSFile getChild(String forName) {
-		if (forName == null || forName.isEmpty()) {
-			return this;
-		}
-		String[] elems = StringEx.splitOnecharFast(forName, '/');
-		ResourceFile cur = this;
-		for (int i = 0; i < elems.length; i++){
-			if (cur == null){
-				break;
-			}
-			List<ResourceTable.ResourceInfo> lf = cur.info.listFiles();
-			boolean found = false;
-			for (ResourceTable.ResourceInfo resInfo : lf){
-				if (resInfo.resourceName.equals(elems[i])){
-					cur = new ResourceFile(resInfo);
-					found = true;
-					break;
-				}
-			}
-			if (!found){
-				return null;
-			}
-		}
-		return cur;
+		return FSUtil.getChildByListing(this, forName);
 	}
 
 	@Override

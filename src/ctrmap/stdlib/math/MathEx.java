@@ -8,6 +8,7 @@ import ctrmap.stdlib.math.vec.Vec3f;
 public class MathEx {
 
 	public static final float PI = (float) Math.PI;
+	public static final float PI_NEG = -PI;
 	public static final float HALF_PI = PI / 2f;
 	public static final float QUARTER_PI = PI / 4f;
 	public static final float HALF_PI_NEG = -HALF_PI;
@@ -146,6 +147,16 @@ public class MathEx {
 			sum += sources[i];
 		}
 		return sum / sources.length;
+	}
+	
+	public static float clamp(float min, float max, float value) {
+		if (value > max) {
+			return max;
+		}
+		if (value < min) {
+			return min;
+		}
+		return value;
 	}
 
 	/**

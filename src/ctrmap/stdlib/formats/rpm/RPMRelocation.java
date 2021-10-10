@@ -34,6 +34,7 @@ public class RPMRelocation {
 				break;
 			case SYMBOL_INTERNAL:
 				RPMRelocationSource.RPMRelSrcInternalSymbol is = (RPMRelocationSource.RPMRelSrcInternalSymbol) rel.source;
+				System.out.println("Transferring internal relocation from symbol " + is.symb + " to " + symbolTransferMap.get(is.symb));
 				source = new RPMRelocationSource.RPMRelSrcInternalSymbol(rpm, symbolTransferMap.get(is.symb));
 				break;
 		}

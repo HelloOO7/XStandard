@@ -105,9 +105,9 @@ public class FSWildCardManager {
 	private static FSFile getFirstExistingFile(FSFile parent, String defaultOption, String... otherOptions) {
 		FSFile f = parent.getChild(defaultOption);
 		for (String opt : otherOptions) {
-			if (!f.exists()) {
+			if (f == null || !f.exists()) {
 				FSFile f2 = parent.getChild(opt);
-				if (f2.exists()) {
+				if (f2 != null && f2.exists()) {
 					f = f2;
 				}
 			} else {

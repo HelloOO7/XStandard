@@ -1,8 +1,6 @@
 package ctrmap.stdlib.gui.components;
 
 import ctrmap.stdlib.gui.components.listeners.DocumentAdapterEx;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -21,7 +19,7 @@ public class SliderAndTextField extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				textFieldIsBusy = true;
-				float val = ComponentUtils.getFloatFromDocument(textField);
+				float val = ComponentUtils.getIntFromDocument(textField);
 				int valClamped = Math.min(slider.getMaximum(), Math.max(slider.getMinimum(), Math.round(val)));
 				slider.setValue(valClamped);
 				textFieldIsBusy = false;

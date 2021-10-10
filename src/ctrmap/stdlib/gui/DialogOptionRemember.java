@@ -7,6 +7,7 @@ import java.util.prefs.Preferences;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JSpinner;
 
 public class DialogOptionRemember {
@@ -14,6 +15,7 @@ public class DialogOptionRemember {
 	private static final Preferences PREFS_RBTN = CMStdLibPrefs.node("RadioButtonRemember");
 	private static final Preferences PREFS_CHECKBOX = CMStdLibPrefs.node("CheckBoxRemember");
 	private static final Preferences PREFS_SPINNER = CMStdLibPrefs.node("SpinnerRemember");
+	private static final Preferences PREFS_COMBOBOX = CMStdLibPrefs.node("ComboBoxRemember");
 
 	public static void setRememberedSpinnerInt(JSpinner spinner, String key) {
 		if (key != null) {
@@ -38,6 +40,21 @@ public class DialogOptionRemember {
 	public static void putRememberedCheckbox(JCheckBox cb) {
 		if (cb.getText() != null) {
 			PREFS_CHECKBOX.putBoolean(cb.getText(), cb.isSelected());
+		}
+	}
+	
+	public static void putRememberedComboBox(String key, JComboBox cb) {
+		Object selItem = cb.getSelectedItem();
+		if (selItem != null && selItem instanceof String) {
+			String str = (String) selItem;
+			PREFS_COMBOBOX.put(key, str);
+		}
+	}
+	
+	public static void selectRememberedComboBox(String key, JComboBox cb) {
+		String selItem = PREFS_COMBOBOX.get(key, null);
+		if (selItem != null) {
+			cb.setSelectedItem(selItem);
 		}
 	}
 

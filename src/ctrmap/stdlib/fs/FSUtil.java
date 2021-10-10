@@ -7,6 +7,7 @@ import ctrmap.stdlib.io.base.iface.WriteableStream;
 import ctrmap.stdlib.io.base.impl.access.MemoryStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataInStream;
 import ctrmap.stdlib.io.util.StringIO;
+import ctrmap.stdlib.text.StringEx;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,8 +33,7 @@ public class FSUtil {
 	 *
 	 * @param fsf A readable FSFile.
 	 * @param magic The magic to check for.
-	 * @return True if the first magic.length() bytes are equal to 'magic' in
-	 * ASCII.
+	 * @return True if the first magic.length() bytes are equal to 'magic' in ASCII.
 	 */
 	public static boolean checkFileMagic(FSFile fsf, String magic) {
 		if (!fsf.isFile() || !fsf.canRead()) {
@@ -49,6 +50,32 @@ public class FSUtil {
 		return false;
 	}
 
+	public static FSFile getChildByListing(FSFile parent, String forName) {
+		if (forName == null) {
+			return parent;
+		}
+		forName = cleanPathFromRootSlash(forName);
+		if (forName.isEmpty()) {
+			return parent;
+		}
+		String[] elems = StringEx.splitOnecharFastNoBlank(forName, '/');
+
+		FSFile p = parent;
+		Outer:
+		for (int i = 0; i < elems.length; i++) {
+			if (p != null) {
+				for (FSFile ch : p.listFiles()) {
+					if (Objects.equals(ch.getName(), elems[i])) {
+						p = ch;
+						continue Outer;
+					}
+				}
+			}
+			return null;
+		}
+		return p;
+	}
+
 	/**
 	 * Removes a leading '/' from a file path, if present.
 	 *
@@ -63,8 +90,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Fully copies a FSFile directory and its contents from one location to
-	 * another.
+	 * Fully copies a FSFile directory and its contents from one location to another.
 	 *
 	 * @param source The directory to copy from.
 	 * @param target The directory to copy to.
@@ -90,8 +116,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Copies a disk File from one location to another, replacing any existing
-	 * file at the location.
+	 * Copies a disk File from one location to another, replacing any existing file at the location.
 	 *
 	 * @param source The file to copy.
 	 * @param target The path to copy to.
@@ -105,8 +130,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Moves a disk File from one location to another, replacing any existing
-	 * file at the location.
+	 * Moves a disk File from one location to another, replacing any existing file at the location.
 	 *
 	 * @param source The file to move.
 	 * @param target The path to move to.
@@ -120,12 +144,9 @@ public class FSUtil {
 	}
 
 	/**
-	 * Copies an FSFile to any writable FSFile. The FSFile can be either a
-	 * directory or a file.
+	 * Copies an FSFile to any writable FSFile. The FSFile can be either a directory or a file.
 	 *
-	 * The method will use a faster, native routine if both files are on the
-	 * disk. The method will clone the backing array of the first file into the
-	 * other if they are both MemoryFiles.
+	 * The method will use a faster, native routine if both files are on the disk. The method will clone the backing array of the first file into the other if they are both MemoryFiles.
 	 *
 	 * @param source The file or directory to copy from.
 	 * @param target The file or directory to copy to.
@@ -154,13 +175,9 @@ public class FSUtil {
 	}
 
 	/**
-	 * Moves an FSFile to any writable FSFile. The FSFile can be either a
-	 * directory or a file.
+	 * Moves an FSFile to any writable FSFile. The FSFile can be either a directory or a file.
 	 *
-	 * The method will use a faster, native routine if both files are on the
-	 * disk. The method will clone the backing array of the first file into the
-	 * other if they are both MemoryFiles. Otherwise, a copy operation is
-	 * performed, followed by the source file being deleted.
+	 * The method will use a faster, native routine if both files are on the disk. The method will clone the backing array of the first file into the other if they are both MemoryFiles. Otherwise, a copy operation is performed, followed by the source file being deleted.
 	 *
 	 * @param source The file or directory to move.
 	 * @param target The file or directory to move to.
@@ -220,8 +237,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Compares the contents of two FSFiles using the default buffer size of
-	 * 8MB.
+	 * Compares the contents of two FSFiles using the default buffer size of 8MB.
 	 *
 	 * @param f1 The LHS of the comparison.
 	 * @param f2 The RHS of the comparison.
@@ -237,8 +253,7 @@ public class FSUtil {
 	 *
 	 * @param f1 The LHS of the comparison.
 	 * @param f2 The RHS of the comparison.
-	 * @param bufferThreshold The file size threshold below which the files
-	 * should be compared in memory instead of their streams.
+	 * @param bufferThreshold The file size threshold below which the files should be compared in memory instead of their streams.
 	 * @return True if the files are equal, byte-by-byte.
 	 */
 	public static boolean fileCmp(FSFile f1, FSFile f2, int bufferThreshold) {
@@ -289,8 +304,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Writes an array of bytes into a disk File. Note that the non-native
-	 * operation usually turns out to be faster.
+	 * Writes an array of bytes into a disk File. Note that the non-native operation usually turns out to be faster.
 	 *
 	 * @param f File to write into.
 	 * @param bytes The data to write.
@@ -344,8 +358,7 @@ public class FSUtil {
 	/**
 	 * Fully reads an FSFile into a byte array.
 	 *
-	 * Disk files will be read using a native method. Memory files will directly
-	 * return their backing array.
+	 * Disk files will be read using a native method. Memory files will directly return their backing array.
 	 *
 	 * @param f The FSFile to read.
 	 * @return A byte array of the file data, or null if the operation failed.
@@ -371,10 +384,7 @@ public class FSUtil {
 	}
 
 	/**
-	 * Safely reads an InputStream to bytes, using a default 32kB buffer. Unlike
-	 * the "fast and dangerous" method, this operation does not require knowing
-	 * the allocation size beforehand, but comes at the disadvantage of being
-	 * slightly slower because of that.
+	 * Safely reads an InputStream to bytes, using a default 32kB buffer. Unlike the "fast and dangerous" method, this operation does not require knowing the allocation size beforehand, but comes at the disadvantage of being slightly slower because of that.
 	 *
 	 * @param strm Stream to read from.
 	 * @return Array of all remaining bytes in the stream.
@@ -395,13 +405,10 @@ public class FSUtil {
 	}
 
 	/**
-	 * Reads an InputStream to a byte array in the fastest way possible. May
-	 * result in undefined behavior if the stream's available() method does not
-	 * produce accurate results (as it is permitted not to do so).
+	 * Reads an InputStream to a byte array in the fastest way possible. May result in undefined behavior if the stream's available() method does not produce accurate results (as it is permitted not to do so).
 	 *
 	 * @param strm An InputStream with an eligible available() method.
-	 * @return A byte array containing all the remaining data in the input
-	 * stream.
+	 * @return A byte array containing all the remaining data in the input stream.
 	 */
 	public static byte[] readStreamToBytesFastAndDangerous(InputStream strm) {
 		try {
@@ -416,14 +423,10 @@ public class FSUtil {
 	}
 
 	/**
-	 * Reads a ReadableStream to a byte array in the fastest way possible. May
-	 * result in undefined behavior if the stream's getLength() method does not
-	 * produce accurate results (implementations reliant on
-	 * InputStream.available()).
+	 * Reads a ReadableStream to a byte array in the fastest way possible. May result in undefined behavior if the stream's getLength() method does not produce accurate results (implementations reliant on InputStream.available()).
 	 *
 	 * @param strm An ReadableStream with an eligible getLength() method.
-	 * @return A byte array containing all the remaining data in the input
-	 * stream.
+	 * @return A byte array containing all the remaining data in the input stream.
 	 */
 	public static byte[] readStreamToBytesFastAndDangerous(ReadableStream strm) {
 		try {
@@ -500,8 +503,7 @@ public class FSUtil {
 	 * Gets the file name in a pathname, AKA its last element.
 	 *
 	 * @param path A path.
-	 * @return The last element of the path, possibly the entire path for root
-	 * paths.
+	 * @return The last element of the path, possibly the entire path for root paths.
 	 */
 	public static String getFileName(String path) {
 		int start = path.replace('\\', '/').lastIndexOf("/") + 1;
@@ -512,8 +514,7 @@ public class FSUtil {
 	 * Gets the file extension of a file name, without the dot.
 	 *
 	 * @param fileName A file name.
-	 * @return The extension of the file name, or an empty string if there is
-	 * none.
+	 * @return The extension of the file name, or an empty string if there is none.
 	 */
 	public static String getFileExtension(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);
@@ -524,8 +525,7 @@ public class FSUtil {
 	 * Gets the file extension of a file name, including the dot.
 	 *
 	 * @param fileName A file name.
-	 * @return The extension of the file name, or an empty string if there is
-	 * none.
+	 * @return The extension of the file name, or an empty string if there is none.
 	 */
 	public static String getFileExtensionWithDot(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);
@@ -534,11 +534,9 @@ public class FSUtil {
 
 	/**
 	 * Gets the file name from a path, with the file extension removed.
-	 * 
-	 * For example:
-	 *  - C:/Work/Stuff.txt -> Stuff
-	 *  - Sonic.exe -> Sonic
-	 * 
+	 *
+	 * For example: - C:/Work/Stuff.txt -> Stuff - Sonic.exe -> Sonic
+	 *
 	 * @param fileName A file name or path.
 	 * @return The input without the file extension.
 	 */

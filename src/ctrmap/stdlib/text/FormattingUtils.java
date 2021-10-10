@@ -4,6 +4,7 @@ package ctrmap.stdlib.text;
 import java.text.DecimalFormat;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -115,17 +116,28 @@ public class FormattingUtils {
 		return f.format(size / (double) 1000000) + "MB";
 	}
 	
+	public static String getStrForValidFileName(String str) {
+		return getStrWithoutNonAlphanumeric(str, ' ', '-', '_', '.');
+	}
+	
+	public static String getStrWithoutNonAlphanumeric(String str){
+		return getStrWithoutNonAlphanumeric(str, new char[0]);
+	}
+	
 	/**
 	 * Substitutes all non-alphanumeric characters in a String with underscores.
 	 * @param str A String.
+	 * @param charWhitelist	List of additional character to allow.
 	 * @return The String with each block of non-alphanumeric characters replaced with an underscore.
 	 */
-	public static String getStrWithoutNonAlphanumeric(String str){
+	public static String getStrWithoutNonAlphanumeric(String str, char... charWhitelist){
 		StringBuilder sb = new StringBuilder();
 		boolean appendNextUnderscore = false;
+		charWhitelist = Arrays.copyOf(charWhitelist, charWhitelist.length);
+		Arrays.sort(charWhitelist);
 		for (int i = 0; i < str.length(); i++){
 			char c = str.charAt(i);
-			if (Character.isLetterOrDigit(c)){
+			if (Character.isLetterOrDigit(c) || Arrays.binarySearch(charWhitelist, c) != -1){
 				if (appendNextUnderscore){
 					sb.append('_');
 					appendNextUnderscore = false;

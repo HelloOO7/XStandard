@@ -148,6 +148,17 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 	public Point getOrigin() {
 		return new Point(originX, originY);
 	}
+	
+	public Point getLastNondefaultPoint() {
+		for (int y = getHeight() - 1; y >= 0; y--) {
+			for (int x = getWidth() - 1; x >= 0; x--) {
+				if (get(x, y) != defaultValue) {
+					return new Point(x, y);
+				}
+			}
+		}
+		return new Point(0, 0);
+	}
 
 	/**
 	 * Creates a "cut-out" sub-matrix of this matrix.
@@ -382,5 +393,10 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 				return next;
 			}
 		};
+	}
+	
+	@Override
+	public String toString() {
+		return list.toString();
 	}
 }

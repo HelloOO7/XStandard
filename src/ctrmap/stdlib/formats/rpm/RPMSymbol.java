@@ -11,7 +11,7 @@ import java.util.List;
  * A code symbol, RPM flavour.
  */
 public class RPMSymbol {
-	
+
 	public static final int RPM_SYMATTR_EXPORT = 1;
 
 	public String name;
@@ -58,12 +58,12 @@ public class RPMSymbol {
 			}
 		}
 	}
-	
-	public boolean isExportSymbol(){
+
+	public boolean isExportSymbol() {
 		return (attributes & RPM_SYMATTR_EXPORT) != 0;
 	}
-	
-	public void setIsExportSymbol(boolean value){
+
+	public void setIsExportSymbol(boolean value) {
 		attributes = BitMath.setIntegerBit(attributes, 0, value);
 	}
 
@@ -81,5 +81,10 @@ public class RPMSymbol {
 		out.write(type.ordinal() | (attributes << 3));
 		address.write(out);
 		out.writeShort(size);
+	}
+
+	@Override
+	public String toString() {
+		return name + "(" + type + ") @ 0x" + Integer.toHexString(address.getAddrAbs()) + "(" + (address.getAddrType()) + ")" + " [" + Integer.toHexString(size) + "]";
 	}
 }

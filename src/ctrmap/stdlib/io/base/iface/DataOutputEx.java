@@ -82,6 +82,12 @@ public interface DataOutputEx extends DataOutput, WriteableBase {
 		}
 	}
 	
+	public default void writeUnsignedBytes(int... ubytes) throws IOException {
+		for (int val : ubytes) {
+			write(val);
+		}
+	}
+	
 	public default void writeShorts(List<Short> list) throws IOException {
 		for (short val : list) {
 			writeShort(val);

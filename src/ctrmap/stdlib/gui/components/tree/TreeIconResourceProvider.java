@@ -1,23 +1,19 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package ctrmap.stdlib.gui.components.tree;
 
+import java.awt.Image;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.ImageIcon;
 
-/**
- *
- */
 public class TreeIconResourceProvider {
 	private Map<Integer, ImageIcon> iconMap = new HashMap<>();
 	
-	public void registerResourceIcon(int resID, byte[] data){
-		registerResourceIcon(resID, new ImageIcon(data));
+	public void registerResourceIcon(int resID, byte[] data, int size){
+		ImageIcon icon = new ImageIcon(data);
+		if (size != -1) {
+			icon = new ImageIcon(icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH));
+		}
+		registerResourceIcon(resID, icon);
 	}
 	
 	public void registerResourceIcon(int resID, ImageIcon icn){

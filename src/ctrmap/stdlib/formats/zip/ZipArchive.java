@@ -110,6 +110,9 @@ public class ZipArchive extends FSFileAdapter {
 	}
 
 	public List<FSFile> listFilesByParentPath(String parentPath) {
+		if (parentPath == null) {
+			return new ArrayList<>();
+		}
 		parentPath = stripLastSlash(parentPath);
 		List<FSFile> l = new ArrayList<>();
 		for (ZipEntry e : entries) {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ctrmap.stdlib.arm.ThumbAssembler;
+import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.gui.file.ExtensionFilter;
 import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
@@ -57,6 +58,10 @@ public class RPM {
 
 	public RPM(FSFile fsf) {
 		this(fsf.getBytes());
+	}
+
+	public DataIOStream getCodeStream() {
+		return code;
 	}
 
 	/**
@@ -213,9 +218,14 @@ public class RPM {
 
 			for (RPMSymbol sym : symbols) {
 				if (sym.address.isNull()) {
-					RPMSymbol newSym = source.getSymbol(sym.name);
-					if (newSym != null) {
-						sym.address = new RPMSymbolAddress(this, newSym.address);
+					if (sym.name != null) {
+						System.out.println("Symbol " + sym + " is null, searching for imports...");
+						RPMSymbol newSym = source.getSymbol(sym.name);
+						if (newSym != null) {
+							sym.address = new RPMSymbolAddress(this, newSym.address);
+							sym.address.setAddr(sym.address.getAddr() + base);
+							System.out.println("Imported symbol " + newSym + " to " + sym);
+						}
 					}
 				}
 			}
@@ -227,6 +237,7 @@ public class RPM {
 				if (newSymbol.name != null) {
 					RPMSymbol existingSymbol = getSymbol(newSymbol.name);
 					if (existingSymbol != null) {
+						System.out.println("Found symbol in merged RPM: " + existingSymbol + ", replacing " + symbol);
 						oldToNewSymbolMap.put(symbol, existingSymbol);
 						continue;
 					}
@@ -289,6 +300,17 @@ public class RPM {
 		return l;
 	}
 
+	public RPMRelocation findExternalRelocationByAddress(String module, int address) {
+		for (RPMRelocation r : relocations) {
+			if (r.target.isExternal()) {
+				if (r.target.module.equals(module) && r.target.address == address) {
+					return r;
+				}
+			}
+		}
+		return null;
+	}
+
 	public void setExternalRelocations(List<RPMRelocation> l) {
 		for (int i = 0; i < relocations.size(); i++) {
 			if (relocations.get(i).target.isExternal()) {
@@ -299,13 +321,22 @@ public class RPM {
 		relocations.addAll(l);
 	}
 
+	public int getExternalRelocationCount() {
+		int count = 0;
+		for (RPMRelocation rel : relocations) {
+			if (rel.target.isExternal()) {
+				count++;
+			}
+		}
+		return count;
+	}
+
 	public void setCode(DataIOStream buf) {
 		code = buf;
 	}
 
 	/**
-	 * Relocates the code buffer to the given base offset and returns the
-	 * compiled binary, then relocates it back.
+	 * Relocates the code buffer to the given base offset and returns the compiled binary, then relocates it back.
 	 *
 	 * @param baseOfs Offset base.
 	 * @return
@@ -353,7 +384,6 @@ public class RPM {
 		size += 4; //META magic
 		size += metaData.getByteSize();
 		metaData.addStrings(strings);
-
 		size = MathEx.padInteger(size, RPM_PADDING);
 		size += 4; //STR0 magic
 		for (String s : strings) {
@@ -434,9 +464,9 @@ public class RPM {
 			ba.write(0xFF);
 
 			ba.writeInts(
-					RPMRevisions.REV_CURRENT, //Format version
-					infoSectionOffset,
-					0
+				RPMRevisions.REV_CURRENT, //Format version
+				infoSectionOffset,
+				0
 			);
 			ba.writeLong(0);
 			ba.writeLong(0);
@@ -502,6 +532,7 @@ public class RPM {
 		} catch (IOException ex) {
 			Logger.getLogger(RPM.class.getName()).log(Level.SEVERE, null, ex);
 		}
+		code.resetBase();
 	}
 
 	/**
@@ -568,7 +599,7 @@ public class RPM {
 
 						out.write(bytes);
 
-						System.out.println("FULL_COPIED to " + Integer.toHexString(pos));
+						System.out.println("FULL_COPIED to " + Integer.toHexString(pos) + " (size 0x" + Integer.toHexString(bytes.length) + " bytes)");
 						for (RPMRelocation copyRel : rpm.relocations) {
 							if (copyRel.target.isInternal() && copyRel.targetType != RPMRelocation.RPMRelTargetType.FULL_COPY) {
 								int copyRelAddr = copyRel.target.getAddrHWordAligned();

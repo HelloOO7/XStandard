@@ -52,16 +52,14 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		this.order = order;
 		interpreter = IOCommon.createInterpreterForByteOrder(order);
 	}
-	
+
 	public final void orderByMarkU16(int markBE, int markLE) throws IOException {
 		order(ByteOrder.BIG_ENDIAN);
 		int bom = readUnsignedShort();
-		if (bom == markBE){
-		}
-		else if (bom == markLE) {
+		if (bom == markBE) {
+		} else if (bom == markLE) {
 			order(ByteOrder.LITTLE_ENDIAN);
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException("BOM mismatch. (Expected " + Integer.toHexString(markBE) + " or " + Integer.toHexString(markLE) + ", got " + Integer.toHexString(bom) + ")");
 		}
 	}
@@ -98,6 +96,10 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	@Override
 	public int readInt() throws IOException {
 		return interpreter.readInt(this);
+	}
+
+	public int readSized(int bytes) throws IOException {
+		return interpreter.readSized(this, bytes);
 	}
 
 	@Override
@@ -213,17 +215,22 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	public int getOffsetBase() {
 		return currentBase;
 	}
-	
+
 	@Override
 	public int getLength() {
 		return super.getLength() + currentBase;
 	}
 
 	public void resetBase() {
-		currentBase = baseAddresses.pop();
+		if (!baseAddresses.isEmpty()) {
+			currentBase = baseAddresses.pop();
+		}
 	}
 
 	public void setBase(int base) {
+		if (base == currentBase) {
+			System.out.println("Warning: New base offset same as last. Sus.");
+		}
 		baseAddresses.push(currentBase);
 		currentBase = base;
 	}
@@ -239,6 +246,12 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	public void resetCheckpoint() throws IOException {
 		if (!checkpoints.empty()) {
 			seekUnbased(checkpoints.pop());
+		}
+	}
+
+	public void seekCheckpoint() throws IOException {
+		if (!checkpoints.isEmpty()) {
+			seekUnbased(checkpoints.peek());
 		}
 	}
 }

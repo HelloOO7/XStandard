@@ -28,6 +28,10 @@ public class InterpolationTimer {
 		this.time = time;
 	}
 	
+	public double getTime() {
+		return time;
+	}
+	
 	public void advanceTime(double time){
 		this.time += time;
 	}

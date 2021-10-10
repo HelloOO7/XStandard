@@ -6,10 +6,12 @@ import ctrmap.stdlib.math.vec.Vec3f;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
+import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
@@ -17,6 +19,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -31,12 +34,16 @@ public class ComponentUtils {
 		f.setExtendedState(Frame.MAXIMIZED_BOTH);
 	}
 	
-	public static void setSystemNativeLookAndFeel(){
+	public static void setLookAndFeel(String className) {
 		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			UIManager.setLookAndFeel(className);
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
 			Logger.getLogger(ComponentUtils.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+	
+	public static void setSystemNativeLookAndFeel(){
+		setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 	}
 
 	public static void setComponentsEnabled(boolean v, Component... components) {
@@ -98,6 +105,24 @@ public class ComponentUtils {
 		z.setValue(vec.z);
 	}
 	
+	public static void addChangeListener(ChangeListener listener, JSpinner... spinners){
+		for (JSpinner cb : spinners){
+			cb.addChangeListener(listener);
+		}
+	}
+	
+	public static void addActionListener(ActionListener listener, JComboBox... boxes){
+		for (JComboBox cb : boxes){
+			cb.addActionListener(listener);
+		}
+	}
+	
+	public static void addActionListener(ActionListener listener, JCheckBox... boxes){
+		for (JCheckBox cb : boxes){
+			cb.addActionListener(listener);
+		}
+	}
+	
 	public static void addDocumentListenerToTFs(DocumentListener listener, JTextField... fields){
 		for (JTextField f : fields){
 			f.getDocument().addDocumentListener(listener);
@@ -105,7 +130,7 @@ public class ComponentUtils {
 	}
 
 	public static float getFloatFromDocument(JFormattedTextField docOwner) {
-		return getFloatFromDocument(docOwner, 0.0F);
+		return getFloatFromDocument(docOwner, ((Number)docOwner.getValue()).floatValue());
 	}
 
 	public static float getFloatFromDocument(JFormattedTextField docOwner, float defaultValue) {
@@ -113,6 +138,23 @@ public class ComponentUtils {
 			String val = getDocTextFromField(docOwner).replace(',', '.');
 			if (val.length() > 0 && !val.equals("-")) {
 				return Float.valueOf(val);
+			} else {
+				return defaultValue;
+			}
+		} catch (NumberFormatException ex) {
+			return defaultValue;
+		}
+	}
+	
+	public static int getIntFromDocument(JFormattedTextField docOwner) {
+		return getIntFromDocument(docOwner, ((Number)docOwner.getValue()).intValue());
+	}
+
+	public static int getIntFromDocument(JFormattedTextField docOwner, int defaultValue) {
+		try {
+			String val = getDocTextFromField(docOwner);
+			if (val.length() > 0 && !val.equals("-")) {
+				return Integer.valueOf(val);
 			} else {
 				return defaultValue;
 			}

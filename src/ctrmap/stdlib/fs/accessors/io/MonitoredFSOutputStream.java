@@ -9,6 +9,8 @@ public class MonitoredFSOutputStream extends WriteableWrapper {
 
 	private VFSFile vfsf;
 
+	private boolean everWritten = false;
+
 	public MonitoredFSOutputStream(VFSFile vfsf) {
 		super(null);
 		if (vfsf.getOvFile().isDirectory()) {
@@ -24,18 +26,33 @@ public class MonitoredFSOutputStream extends WriteableWrapper {
 	}
 
 	@Override
+	public void write(int i) throws IOException {
+		everWritten = true;
+		super.write(i);
+	}
+
+	@Override
+	public void write(byte[] b, int off, int len) throws IOException {
+		everWritten = true;
+		super.write(b, off, len);
+	}
+
+	@Override
 	public void close() throws IOException {
 		out.close();
-		if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
-			System.out.println("File " + vfsf + " is in the blacklist, checking for changes.");
-			if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
-				System.out.println("File " + vfsf + " has changed. Removing from blacklist.");
-				int baseLen = vfsf.getBaseFile().length();
-				int ovLen = vfsf.getOvFile().length();
-				if (baseLen != ovLen){
-					System.out.println("(Length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
+
+		if (everWritten) {
+			if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
+				System.out.println("File " + vfsf + " is in the blacklist, checking for changes.");
+				if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
+					System.out.println("File " + vfsf + " has changed. Removing from blacklist.");
+					int baseLen = vfsf.getBaseFile().length();
+					int ovLen = vfsf.getOvFile().length();
+					if (baseLen != ovLen) {
+						System.out.println("(Length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
+					}
+					vfsf.getVFS().notifyFileChange(vfsf.getPath());
 				}
-				vfsf.getVFS().notifyFileChange(vfsf.getPath());
 			}
 		}
 	}
