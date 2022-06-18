@@ -1,6 +1,3 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
 package ctrmap.stdlib.gui.components.combobox;
 
 import ctrmap.stdlib.gui.components.listeners.AbstractToggleableListener;
@@ -14,6 +11,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import ctrmap.stdlib.gui.components.listeners.DocumentAdapterEx;
 import ctrmap.stdlib.util.ListenableList;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.Serializable;
@@ -24,6 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 import javax.swing.AbstractListModel;
+import javax.swing.Action;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.MutableComboBoxModel;
@@ -133,6 +133,11 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 				SwingUtilities.invokeLater(() -> {
 					try {
 						String text = doc.getText(0, doc.getLength());
+						for (Object obj : itemLib) {
+							if (String.valueOf(obj).equals(text)) {
+								return;
+							}
+						}
 						makeValuesByQuery(text, false);
 						ComboPopup popup = (ComboPopup) ((Object) mInstance.getUI().getAccessibleChild(mInstance, 0));
 						if (popup.isVisible() || acPopUpOnType) {
@@ -352,12 +357,18 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 	@Override
 	public void setSelectedItem(Object item) {
-		Object objectToSelect = item;
+		allowProgramTextChanges = true;
+		editorEx.setItem(item);
+		allowProgramTextChanges = false;
 
-		getEditor().setItem(item);
+		Object nowSelected = getSelectedItem();
 
-		dataModel.setSelectedItem(objectToSelect);
-		fireActionEvent();
+		model.setSelectedItem(item, false);
+		if (item != nowSelected) {
+			selectedItemChanged();
+			fireActionEvent();
+			repaint();
+		}
 		//Fuck you, Oracle. I want to use == not equals. You don't like that, take this shitty code.
 		/*selectedItemReminder = null;
 		boolean editable = isEditable;
@@ -463,7 +474,9 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 		Object last = model.getSelectedItem();
 		model.removeAllElements();
 		model.addElements(candidates);
-		model.setSelectedItem(last);
+		if (!forceFull || candidates.contains(last)) {
+			model.setSelectedItem(last, false);
+		}
 		allowListeners = true;
 	}
 
@@ -501,9 +514,7 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 
 		@Override
 		public void setSelectedItem(Object item) {
-			if (allowListeners) {
-				setSelectedItem(item, true);
-			}
+			setSelectedItem(item, true);
 		}
 
 		@Override

@@ -30,7 +30,7 @@ public class BinarySerialization {
 		this.decimalType = decimalType;
 	}
 
-	protected static List<Field> getSortedFields(Class cls) {
+	public static List<Field> getSortedFields(Class cls) {
 		List<Field> l = new ArrayList<>();
 
 		addFields(cls, l);
@@ -126,7 +126,7 @@ public class BinarySerialization {
 		return null;
 	}
 
-	protected static Class getUnboxedClass(Class clazz) {
+	public static Class getUnboxedClass(Class clazz) {
 		if (clazz == Integer.class) {
 			return Integer.TYPE;
 		} else if (clazz == Float.class) {

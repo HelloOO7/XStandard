@@ -4,7 +4,10 @@ import ctrmap.stdlib.fs.FSFile;
 import ctrmap.stdlib.fs.FSUtil;
 import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.fs.accessors.FSFileAdapter;
+import ctrmap.stdlib.io.base.iface.ReadableStream;
 import ctrmap.stdlib.io.base.iface.WriteableStream;
+import ctrmap.stdlib.io.base.impl.InputStreamReadable;
+import ctrmap.stdlib.io.base.impl.OutputStreamWriteable;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +20,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  *
@@ -55,9 +59,59 @@ public class ZipArchive extends FSFileAdapter {
 		}
 	}
 
-	public static ZipArchive extractZipToFile(FSFile target, FSFile zip) {
+	public static ZipArchive pack(FSFile srcDir, FSFile dest) {
+		try {
+			ZipOutputStream out = new ZipOutputStream(dest.getNativeOutputStream());
+
+			packDir(out, srcDir, null);
+
+			out.close();
+
+			return new ZipArchive(dest);
+		} catch (IOException ex) {
+			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return null;
+	}
+
+	private static String appendPath(String parent, String elem) {
+		if (parent == null || parent.isEmpty()) {
+			return elem;
+		}
+		return parent + "/" + elem;
+	}
+
+	private static void packFile(ZipOutputStream out, FSFile file, String parentPath) throws IOException {
+		//System.out.println("Packing file " + file);
+		ZipEntry entry = new ZipEntry(appendPath(parentPath, file.getName()));
+		out.putNextEntry(entry);
+		ReadableStream in = file.getInputStream();
+		FSUtil.transferStreams(in, new OutputStreamWriteable(out));
+		in.close();
+	}
+
+	private static void packDir(ZipOutputStream out, FSFile dir, String parentPath) throws IOException {
+		//System.out.println("Packing dir " + dir);
+		String path = parentPath == null ? "" : appendPath(parentPath, dir.getName());
+
+		List<? extends FSFile> children = dir.listFiles();
+		if (parentPath != null) {
+			ZipEntry e = new ZipEntry(path + "/");
+			out.putNextEntry(e);
+		}
+		for (FSFile f : children) {
+			if (f.isDirectory()) {
+				packDir(out, f, path);
+			} else {
+				packFile(out, f, path);
+			}
+		}
+	}
+
+	public static void extractZipToFile(FSFile target, FSFile zip) {
 		try {
 			ZipInputStream in = new ZipInputStream(zip.getNativeInputStream());
+			ReadableStream wrapper = new InputStreamReadable(in);
 
 			ZipEntry e;
 			while ((e = in.getNextEntry()) != null) {
@@ -68,11 +122,7 @@ public class ZipArchive extends FSFileAdapter {
 					newFile.getParent().mkdirs();
 					WriteableStream out = newFile.getOutputStream();
 
-					byte[] buffer = new byte[32768];
-					int read;
-					while ((read = in.read(buffer)) != -1) {
-						out.write(buffer, 0, read);
-					}
+					FSUtil.transferStreams(wrapper, out);
 
 					out.close();
 				}
@@ -82,7 +132,6 @@ public class ZipArchive extends FSFileAdapter {
 		} catch (IOException ex) {
 			Logger.getLogger(ZipArchive.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return null;
 	}
 
 	public static boolean isZip(FSFile fsf) {
@@ -136,7 +185,7 @@ public class ZipArchive extends FSFileAdapter {
 		path = stripLastSlash(path);
 		for (ZipEntry e : entries) {
 			String cmpName = stripLastSlash(e.getName());
-			
+
 			if (cmpName.equals(path)) {
 				return e;
 			}

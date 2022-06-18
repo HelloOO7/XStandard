@@ -7,7 +7,7 @@ package ctrmap.stdlib.math;
  */
 public class FAtan {
 
-	static final private int LUT_RESOLUTION = 1000;
+	static final private int LUT_RESOLUTION = 4000;
 	static final private int LUT_SIZE = LUT_RESOLUTION + 1;
 
 	static final private float ATAN2[] = new float[LUT_SIZE];

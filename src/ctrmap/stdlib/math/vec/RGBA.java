@@ -32,10 +32,6 @@ public class RGBA implements ICustomSerialization {
 		this.a = (short) a;
 	}
 
-	public RGBA(int rgb) {
-
-	}
-
 	public RGBA(int rgb, boolean a) {
 		r = (short) (rgb & 0xFF);
 		g = (short) ((rgb >> 8) & 0xFF);
@@ -45,6 +41,10 @@ public class RGBA implements ICustomSerialization {
 		} else {
 			this.a = 0xFF;
 		}
+	}
+
+	public static RGBA fromARGB(int argb) {
+		return new RGBA((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
 	}
 
 	public RGBA(float r, float g, float b, float a) {
@@ -70,10 +70,7 @@ public class RGBA implements ICustomSerialization {
 	}
 
 	public RGBA(DataInput dis) throws IOException {
-		r = (short) dis.readUnsignedByte();
-		g = (short) dis.readUnsignedByte();
-		b = (short) dis.readUnsignedByte();
-		a = (short) dis.readUnsignedByte();
+		set(dis);
 	}
 
 	public RGBA(RGBA left, RGBA right, float weight) {
@@ -112,14 +109,25 @@ public class RGBA implements ICustomSerialization {
 		set(col);
 	}
 
+	public void set(DataInput in) throws IOException {
+		r = (short) in.readUnsignedByte();
+		g = (short) in.readUnsignedByte();
+		b = (short) in.readUnsignedByte();
+		a = (short) in.readUnsignedByte();
+	}
+
 	public RGBA set(Color col) {
-		r = (short)col.getRed();
-		g = (short)col.getGreen();
-		b = (short)col.getBlue();
-		a = (short)col.getAlpha();
+		r = (short) col.getRed();
+		g = (short) col.getGreen();
+		b = (short) col.getBlue();
+		a = (short) col.getAlpha();
 		return this;
 	}
-	
+
+	public void setARGB(int argb) {
+		set((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
+	}
+
 	public RGBA set(RGBA rgba) {
 		r = rgba.r;
 		g = rgba.g;
@@ -127,19 +135,27 @@ public class RGBA implements ICustomSerialization {
 		a = rgba.a;
 		return this;
 	}
-	
+
 	public RGBA set(Vec4f vec4) {
 		return set(vec4.x, vec4.y, vec4.z, vec4.w);
 	}
-	
+
 	public RGBA set(Vec3f vec) {
 		return set(vec, 1.0f);
 	}
-	
+
 	public RGBA set(Vec3f vec, float alpha) {
 		return set(vec.x, vec.y, vec.z, alpha);
 	}
-	
+
+	public RGBA set(int r, int g, int b, int a) {
+		this.r = (short) (r);
+		this.g = (short) (g);
+		this.b = (short) (b);
+		this.a = (short) (a);
+		return this;
+	}
+
 	public RGBA set(float r, float g, float b, float a) {
 		this.r = (short) (r * 255f);
 		this.g = (short) (g * 255f);
@@ -161,10 +177,14 @@ public class RGBA implements ICustomSerialization {
 	}
 
 	public RGBA lerp(RGBA right, float weight) {
-		r = (short) (r + weight * (right.r - r));
-		g = (short) (g + weight * (right.g - g));
-		b = (short) (b + weight * (right.b - b));
-		a = (short) (a + weight * (right.a - a));
+		if (weight == 1f) {
+			set(right);
+		} else if (weight != 0f) {
+			r = (short) (r + weight * (right.r - r));
+			g = (short) (g + weight * (right.g - g));
+			b = (short) (b + weight * (right.b - b));
+			a = (short) (a + weight * (right.a - a));
+		}
 		return this;
 	}
 
@@ -173,7 +193,12 @@ public class RGBA implements ICustomSerialization {
 	}
 
 	public Vec4f toVector4() {
-		return new Vec4f(getR(), getG(), getB(), getA());
+		return toVector4(new Vec4f());
+	}
+	
+	public Vec4f toVector4(Vec4f dest) {
+		dest.set(getR(), getG(), getB(), getA());
+		return dest;
 	}
 
 	public byte[] toByteArray() {
@@ -192,20 +217,22 @@ public class RGBA implements ICustomSerialization {
 		return new float[]{getR(), getG(), getB(), getA()};
 	}
 
+	private static final float _1_255 = 1 / 255f;
+
 	public float getR() {
-		return r / 255f;
+		return r * _1_255;
 	}
 
 	public float getG() {
-		return g / 255f;
+		return g * _1_255;
 	}
 
 	public float getB() {
-		return b / 255f;
+		return b * _1_255;
 	}
 
 	public float getA() {
-		return a / 255f;
+		return a * _1_255;
 	}
 
 	public void write(DataOutput dos) throws IOException {
@@ -214,9 +241,9 @@ public class RGBA implements ICustomSerialization {
 		dos.write(b);
 		dos.write(a);
 	}
-	
+
 	@Override
-	public RGBA clone(){
+	public RGBA clone() {
 		return new RGBA(this);
 	}
 
@@ -255,10 +282,10 @@ public class RGBA implements ICustomSerialization {
 
 	@Override
 	public void deserialize(BinaryDeserializer deserializer) throws IOException {
-		r = (short)deserializer.baseStream.readUnsignedByte();
-		g = (short)deserializer.baseStream.readUnsignedByte();
-		b = (short)deserializer.baseStream.readUnsignedByte();
-		a = (short)deserializer.baseStream.readUnsignedByte();
+		r = (short) deserializer.baseStream.readUnsignedByte();
+		g = (short) deserializer.baseStream.readUnsignedByte();
+		b = (short) deserializer.baseStream.readUnsignedByte();
+		a = (short) deserializer.baseStream.readUnsignedByte();
 	}
 
 	@Override

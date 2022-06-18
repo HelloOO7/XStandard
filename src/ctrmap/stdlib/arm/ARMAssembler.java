@@ -1,7 +1,6 @@
 package ctrmap.stdlib.arm;
 
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
-import ctrmap.stdlib.io.util.IOUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -13,6 +12,7 @@ public class ARMAssembler {
 	public static final int CONDITION_NE = 0b0001;
 	
 	public static final int ARM_STACKPTR_REG_NUM = 13;
+	public static final int ARM_LINK_REG_NUM = 14;
 	public static final int ARM_PRGCNT_REG_NUM = 15;
 	public static final int INS_NOP_MOV_R0_R0 = 0xE1A00000;
 		
@@ -20,6 +20,15 @@ public class ARMAssembler {
 		for (int i = 0; i < count; i++){
 			out.writeInt(INS_NOP_MOV_R0_R0);
 		}
+	}
+	
+	public static void writeBlockDataTransferInstruction(DataOutput out, boolean preIndex, boolean up, boolean loadPSR, boolean writeBack, boolean load, int baseReg, ARMCondition cond, int... registers) throws IOException {
+		int value = cond.bits << 28 | (0b100 << 25) | ((preIndex ? 1 : 0) << 24) | ((up ? 1 : 0) << 23) | ((loadPSR ? 1 : 0) << 22) | ((writeBack ? 1 : 0) << 21) | ((load ? 1 : 0) << 20);
+		value |= baseReg << 16;
+		for (int reg : registers) {
+			value |= (1 << reg);
+		}
+		out.writeInt(value);
 	}
 	
 	public static void writeCMPInstruction(DataOutput out, int registerToCompare, int operand2Register) throws IOException{
@@ -139,6 +148,22 @@ public class ARMAssembler {
 		out.write(cond.bits << 4 | 0b101 << 1 | (link ? 1 : 0));
 	}
 	
+	public static void writeBXInstruction(DataIOStream out, int reg) throws IOException {
+		writeBXInstruction(out, reg, ARMCondition.AL);
+	}
+	
+	public static void writeBXInstruction(DataIOStream out, int reg, ARMCondition cond) throws IOException {
+		out.writeInt((cond.ordinal() << 28) | (0b000100101111111111110001 << 4) | (reg & 0xf));
+	}
+	
+	public static void writeBLXInstruction(DataIOStream out, int branchTarget) throws IOException{
+		int currentOffset = out.getPosition() + 8;
+		int diff = branchTarget - currentOffset;
+		int value = (diff >> 2);
+		out.writeInt24(value);
+		out.write(0b1111 << 4 | 0b101 << 1 | (((diff & 2) != 0) ? 1 : 0)); //Thumb doesn't have to be aligned to 4, so the H bit can add 2 where needed
+	}
+	
 	public static void setImmValue(DataIOStream io, int targetValue) throws IOException{
 		int basePos = io.getPosition();
 		int bsi = encodeBarrelShiftedInt(targetValue);
@@ -154,8 +179,12 @@ public class ARMAssembler {
 		return decodeBarrelShiftedInt(in.readInt() & 0xFFF);
 	}
 	
+	public static int getBarrelShiftAlignedValue(int value) {
+		return decodeBarrelShiftedInt(encodeBarrelShiftedInt(value));
+	}
+	
 	public static int getDecEncBarrelShiftDiff(int value) {
-		return ARMAssembler.decodeBarrelShiftedInt(ARMAssembler.encodeBarrelShiftedInt(value)) - value;
+		return getBarrelShiftAlignedValue(value) - value;
 	}
 	
 	public static int decodeBarrelShiftedInt(int bs){
@@ -200,7 +229,7 @@ public class ARMAssembler {
 		}
 		
 		int calc = (v | c) >> LSB;//Value OR ceiling bits SHR by LSB
-		int armShift = (Integer.SIZE - LSB) / 2;
+		int armShift = (Integer.SIZE - LSB) >> 1;
 		return calc | (armShift << 8);
 	}
 	

@@ -2,6 +2,7 @@ package ctrmap.stdlib.cli;
 
 import ctrmap.stdlib.util.ArraysEx;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ArgumentBuilder {
@@ -20,6 +21,10 @@ public class ArgumentBuilder {
 		for (ArgumentPattern ptn : patterns) {
 			ptn.print();
 		}
+	}
+
+	public boolean hasArgument(String name) {
+		return getContent(name, true) != null;
 	}
 
 	public ArgumentContent getContent(String name) {
@@ -58,7 +63,17 @@ public class ArgumentBuilder {
 		defaultContent = new ArgumentContent();
 		StringBuilder comb = new StringBuilder();
 		for (String a : args) {
-			comb.append(a == null ? "" : a);
+			if (a == null) {
+				comb.append("");
+			} else {
+				if (!a.startsWith("-")) {
+					a = '"' + a + '"';
+				}
+				if (comb.length() != 0) {
+					comb.append(" ");
+				}
+				comb.append(a);
+			}
 		}
 		String str = comb.toString().trim();
 		cnt = new ArrayList<>();
@@ -68,7 +83,7 @@ public class ArgumentBuilder {
 				if (!argStart) {
 					String[] defaultArgs = getSplitAtSpacesWithQuotationMarks(str.substring(0, parserIndex));
 					for (String dflt : defaultArgs) {
-						String t = dflt.trim();
+						String t = trim(dflt);
 						if (t.length() > 0) {
 							defaultContent.contents.add(t);
 						}
@@ -97,12 +112,19 @@ public class ArgumentBuilder {
 		if (!argStart) {
 			String[] defaultArgs = getSplitAtSpacesWithQuotationMarks(str);
 			for (String dflt : defaultArgs) {
-				String t = dflt.trim();
+				String t = trim(dflt);
 				if (t.length() > 0) {
 					defaultContent.contents.add(t);
 				}
 			}
 		}
+	}
+
+	static String trim(String str) {
+		if (str.startsWith("\"") && str.endsWith("\"")) {
+			str = str.substring(1, str.length() - 1);
+		}
+		return str.trim();
 	}
 
 	public static String[] getSplitAtSpacesWithQuotationMarks(String str) {

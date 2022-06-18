@@ -1,5 +1,6 @@
 package ctrmap.stdlib.formats.yaml;
 
+import ctrmap.stdlib.io.serialization.BinarySerialization;
 import ctrmap.stdlib.text.FormattingUtils;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -105,7 +106,7 @@ public class YamlReflectUtil {
 				}
 				return arr;
 			} else if (Collection.class.isAssignableFrom(type)) {
-				if (type == List.class){
+				if (type == List.class) {
 					type = ArrayList.class;
 				}
 				Collection coll = (Collection) type.newInstance();
@@ -146,32 +147,55 @@ public class YamlReflectUtil {
 		return null;
 	}
 
+	public static Yaml serializeObjectAsYml(Object obj) {
+		Yaml yml = new Yaml();
+		addFieldsToNode(yml.root, obj);
+		return yml;
+	}
+
 	public static void addFieldsToNode(YamlNode n, Object obj) {
 		try {
-			for (Field field : getSortedFields(obj.getClass())) {
-				int mods = field.getModifiers();
-				if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
-					field.setAccessible(true);
-					addValueToNode(n, getYamlFieldName(field), field.getType(), field, field.get(obj));
+			if (obj == null) {
+				return;
+			}
+			if (obj.getClass().isArray()) {
+				addArrayElemsAsSubNodes(obj, obj.getClass(), null, n);
+			} else {
+				for (Field field : getSortedFields(obj.getClass())) {
+					int mods = field.getModifiers();
+					if (!Modifier.isStatic(mods) && !Modifier.isTransient(mods)) {
+						field.setAccessible(true);
+						addValueToNode(n, getYamlFieldName(field), field.getType(), field, field.get(obj));
+					}
 				}
 			}
 		} catch (IllegalAccessException ex) {
 			Logger.getLogger(YamlReflectUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	public static String getYamlFieldName(Field fld) {
 		String name = fld.getName();
-		if (fld.isAnnotationPresent(YamlNodeName.class)){
+		if (fld.isAnnotationPresent(YamlNodeName.class)) {
 			name = fld.getAnnotation(YamlNodeName.class).value();
 		}
 		return name;
+	}
+
+	private static void addArrayElemsAsSubNodes(Object array, Class type, Field field, YamlNode dest) throws IllegalArgumentException, IllegalAccessException {
+		int size = Array.getLength(array);
+		for (int i = 0; i < size; i++) {
+			YamlNode elem = new YamlNode(new YamlListElement());
+			addValueToNode(elem, null, type.getComponentType(), field, Array.get(array, i));
+			dest.addChild(elem);
+		}
 	}
 
 	private static void addValueToNode(YamlNode n, String key, Class type, Field field, Object value) throws IllegalArgumentException, IllegalAccessException {
 		if (value == null) {
 			return; //will be set to null during deserialization anyway, pointless to write
 		}
+		type = BinarySerialization.getUnboxedClass(type);
 		if (type.isPrimitive() || type.isEnum() || value == null || type == String.class) {
 			if (key != null) {
 				n.addChild(FormattingUtils.camelToPascal(key), value);
@@ -181,19 +205,14 @@ public class YamlReflectUtil {
 		} else if (type.isArray()) {
 			YamlNode list = n.addChildKey(FormattingUtils.camelToPascal(key));
 
-			int size = Array.getLength(value);
-			for (int i = 0; i < size; i++) {
-				YamlNode elem = new YamlNode(new YamlListElement());
-				addValueToNode(elem, null, type.getComponentType(), field, Array.get(value, i));
-				list.addChild(elem);
-			}
+			addArrayElemsAsSubNodes(value, type, field, list);
 		} else if (Collection.class.isAssignableFrom(type)) {
 			YamlNode list = n.addChildKey(FormattingUtils.camelToPascal(key));
 
 			for (Object o : (Collection) value) {
 				YamlNode elem = new YamlNode(new YamlListElement());
 				Type genType = field.getGenericType();
-				if (!(genType instanceof ParameterizedType)){
+				if (!(genType instanceof ParameterizedType)) {
 					System.err.println("WARN: Collection field " + field + " has to be parameterized for serialization!");
 				}
 				addValueToNode(elem, null, o.getClass(), field, o);

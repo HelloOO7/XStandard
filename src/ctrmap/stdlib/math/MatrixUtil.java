@@ -21,8 +21,6 @@ public class MatrixUtil {
 		mrx.rotateZ(z);
 		mrx.rotateY(y);
 		mrx.rotateX(x);
-
-		//return multiplyRight(multiplyRight(multiplyRight(new Matrix4(), mrx), mry), mrz);
 		return mrx;
 	}
 
@@ -32,7 +30,7 @@ public class MatrixUtil {
 
 	public static Matrix4 createTranslation(float x, float y, float z) {
 		Matrix4 mtx = new Matrix4();
-		mtx.translate(x, y, z);
+		mtx.translation(x, y, z);
 		return mtx;
 	}
 
@@ -43,7 +41,7 @@ public class MatrixUtil {
 
 	public static Matrix4 createScale(float x, float y, float z) {
 		Matrix4 mtx = new Matrix4();
-		mtx.scale(x, y, z);
+		mtx.scaling(x, y, z);
 		return mtx;
 	}
 
@@ -172,10 +170,10 @@ public class MatrixUtil {
 		} else {
 			z = 0;
 			if (mtx[6] == -1) {
-				y = Math.PI / 2.0;
+				y = MathEx.HALF_PI;
 				x = Math.atan2(mtx[1], mtx[2]);
 			} else {
-				y = -Math.PI / 2.0;
+				y = MathEx.HALF_PI_NEG;
 				x = Math.atan2(-mtx[1], -mtx[2]);
 			}
 			r.x = (float) x;

@@ -32,6 +32,10 @@ public class VFSFile extends FSFile {
 
 	public VFSFile(String path, VFS fs, FSFile baseFile) {
 		FSManager fsm = fs.getFS();
+		
+		if (path.contains("..")) {
+			throw new RuntimeException("Relative paths are forbidden in VFS.");
+		}
 
 		this.fs = fs;
 		this.path = fsm.getWildCardManager().getWildCardedPath(path);

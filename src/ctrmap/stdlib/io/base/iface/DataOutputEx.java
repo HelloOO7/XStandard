@@ -6,14 +6,15 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
-public interface DataOutputEx extends DataOutput, WriteableBase {
+public interface DataOutputEx extends DataStream, DataOutput, WriteableBase {
 
 	public void writeInt24(int value) throws IOException;
+	public void writeSized(int value, int size) throws IOException;
 
 	public default void writeString(String str) throws IOException {
 		StringIO.writeString(this, str);
 	}
-	
+
 	public default void writeByteLengthString(String str) throws IOException {
 		StringIO.writeByteLengthString(this, str);
 	}
@@ -57,6 +58,12 @@ public interface DataOutputEx extends DataOutput, WriteableBase {
 	public default void writeBytes(byte... bytes) throws IOException {
 		write(bytes);
 	}
+	
+	public default void writeBytes(int... bytes) throws IOException {
+		for (int b : bytes) {
+			write(b);
+		}
+	}
 
 	public default void writeShorts(int... shorts) throws IOException {
 		for (int val : shorts) {
@@ -75,19 +82,19 @@ public interface DataOutputEx extends DataOutput, WriteableBase {
 			writeFloat(val);
 		}
 	}
-	
+
 	public default void writeBytes(List<Byte> list) throws IOException {
 		for (byte val : list) {
 			write(val);
 		}
 	}
-	
+
 	public default void writeUnsignedBytes(int... ubytes) throws IOException {
 		for (int val : ubytes) {
 			write(val);
 		}
 	}
-	
+
 	public default void writeShorts(List<Short> list) throws IOException {
 		for (short val : list) {
 			writeShort(val);

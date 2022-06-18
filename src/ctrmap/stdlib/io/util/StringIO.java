@@ -168,8 +168,12 @@ public class StringIO {
 		return checkMagic(data, 0, magic);
 	}
 	
+	public static String getMagic(byte[] data, int off, int len) {
+		return new String(data, off, len, StandardCharsets.US_ASCII);
+	}
+	
 	public static boolean checkMagic(byte[] data, int position, String magic) {
-		String compare = new String(Arrays.copyOfRange(data, position, position + magic.length()), StandardCharsets.US_ASCII);
+		String compare = getMagic(data, position, magic.length());
 		IOCommon.debugPrint("Compare magic " + compare + " to " + magic);
 		return compare.equals(magic);
 	}

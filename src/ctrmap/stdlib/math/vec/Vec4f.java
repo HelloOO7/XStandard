@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import org.joml.Vector4f;
 
-public class Vec4f extends Vector4f {
+public class Vec4f extends Vector4f implements AbstractVector {
 
 	public Vec4f(float x, float y, float z, float w) {
 		super(x, y, z, w);

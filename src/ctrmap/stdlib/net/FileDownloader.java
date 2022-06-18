@@ -56,7 +56,7 @@ public class FileDownloader {
 		try {
 			FileOutputStream fstrm = new FileOutputStream(f);
 			InputStream urlStream = getNetworkStream(url).getInputStream();
-			fstrm.getChannel().transferFrom(Channels.newChannel(urlStream), 0, urlStream.available());
+			fstrm.getChannel().transferFrom(Channels.newChannel(urlStream), 0, Long.MAX_VALUE);
 		} catch (IOException ex) {
 			Logger.getLogger(FileDownloader.class.getName()).log(Level.SEVERE, null, ex);
 		}

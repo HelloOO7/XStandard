@@ -11,6 +11,7 @@ import java.util.List;
  * An entry inside an ArcFile.
  */
 public class ArcFileMember extends FSFile{
+	
 	private ArcFile arc;
 	private String path;
 	private ArcFileAccessor accessor;
@@ -43,7 +44,12 @@ public class ArcFileMember extends FSFile{
 
 	@Override
 	public boolean exists() {
-		return true;
+		for (FSFile mem : accessor.getArcFiles(arc)) {
+			if (mem.equals(this)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

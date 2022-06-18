@@ -97,6 +97,10 @@ public class ComboBoxAndSpinner extends javax.swing.JPanel {
 	public void loadComboBoxValues(String... values) {
 		comboBox.loadValues(values);
 	}
+	
+	public void addItem(String item) {
+		comboBox.addItem(item);
+	}
 
 	public void makeComboBoxValuesInt(int max) {
 		makeComboBoxValuesInt(max, null);

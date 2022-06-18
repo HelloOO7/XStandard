@@ -1,6 +1,6 @@
 package ctrmap.stdlib.io.serialization;
 
-enum FieldTypeGroup {
+public enum FieldTypeGroup {
     PRIMITIVE,
     ARRAY,
     ENUM,

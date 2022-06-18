@@ -19,18 +19,43 @@ public class IOUtils {
 		return arr;
 	}
 
+	public static byte[] integer16ToByteArrayBE(int i, byte[] arr, int off) {
+		arr[off + 0] = (byte) (i >>> 8);
+		arr[off + 1] = (byte) i;
+		return arr;
+	}
+
+	public static byte[] integer16ToByteArrayLE(int i, byte[] arr, int off) {
+		arr[off + 1] = (byte) (i >>> 8);
+		arr[off + 0] = (byte) i;
+		return arr;
+	}
+
+	public static byte[] floatToByteArrayLE(float f, byte[] arr, int off) {
+		integerToByteArrayLE(Float.floatToRawIntBits(f), arr, off);
+		return arr;
+	}
+
 	public static byte[] floatArrayToByteArray(float[] floats, int floatsOff, byte[] bytes, int bytesOff, int count) {
 		for (int fIdx = floatsOff, bIdx = bytesOff; fIdx < count && fIdx < floats.length; fIdx++, bIdx += 4) {
-			if (bIdx + 3 >= bytes.length){
+			if (bIdx + 3 >= bytes.length) {
 				break;
 			}
-			int reinterpretFloat = Float.floatToIntBits(floats[fIdx]);
-			
-			integerToByteArrayLE(reinterpretFloat, bytes, bIdx);
+			floatToByteArrayLE(floats[fIdx], bytes, bIdx);
+
 		}
 		return bytes;
 	}
 	
+	public static byte[] intToBytesLE(int value, byte[] b, int offs, int count) {
+		for (int i = 0; i < count; i++, offs++) {
+			b[offs] = (byte)(value & 0xFF);
+			value >>= 8;
+		}
+			
+		return b;
+	}
+
 	public static int bytesToInt(byte[] b, int offs, int count) {
 		int value = 0;
 		for (int i = 0, j = offs; i < count; i++, j++) {
@@ -50,41 +75,45 @@ public class IOUtils {
 		x = (x << 8) | (b[offs + 3] & 255);
 		return x;
 	}
+	
+	public static float byteArrayToFloatLE(byte[] b, int offs) {
+		return Float.intBitsToFloat(byteArrayToIntegerLE(b, offs));
+	}
 
 	public static int byteArrayToIntegerLE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
-	
-	public static int byteArrayToInteger16LE(byte[] b, int offs) {
-		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8);
+
+	public static short byteArrayToInteger16LE(byte[] b, int offs) {
+		return (short) ((b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8));
 	}
-	
+
 	public static int byteArrayToInteger24LE(byte[] b, int offs) {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16);
 	}
-	
+
 	public static long byteArrayToLongLE(byte[] b, int offs) {
-		return (((long)b[offs + 7] << 56) +
-                ((long)(b[offs + 6] & 255) << 48) +
-                ((long)(b[offs + 5] & 255) << 40) +
-                ((long)(b[offs + 4] & 255) << 32) +
-                ((long)(b[offs + 3] & 255) << 24) +
-                ((b[offs + 2] & 255) << 16) +
-                ((b[offs + 1] & 255) <<  8) +
-                ((b[offs + 0] & 255) <<  0));
+		return (((long) b[offs + 7] << 56)
+			+ ((long) (b[offs + 6] & 255) << 48)
+			+ ((long) (b[offs + 5] & 255) << 40)
+			+ ((long) (b[offs + 4] & 255) << 32)
+			+ ((long) (b[offs + 3] & 255) << 24)
+			+ ((b[offs + 2] & 255) << 16)
+			+ ((b[offs + 1] & 255) << 8)
+			+ ((b[offs + 0] & 255) << 0));
 	}
 
 	public static long byteArrayToLongBE(byte[] b, int offs) {
-		return (((long)b[offs] << 56) +
-                ((long)(b[offs + 1] & 255) << 48) +
-                ((long)(b[offs + 2] & 255) << 40) +
-                ((long)(b[offs + 3] & 255) << 32) +
-                ((long)(b[offs + 4] & 255) << 24) +
-                ((b[offs + 5] & 255) << 16) +
-                ((b[offs + 6] & 255) <<  8) +
-                ((b[offs + 7] & 255) <<  0));
+		return (((long) b[offs] << 56)
+			+ ((long) (b[offs + 1] & 255) << 48)
+			+ ((long) (b[offs + 2] & 255) << 40)
+			+ ((long) (b[offs + 3] & 255) << 32)
+			+ ((long) (b[offs + 4] & 255) << 24)
+			+ ((b[offs + 5] & 255) << 16)
+			+ ((b[offs + 6] & 255) << 8)
+			+ ((b[offs + 7] & 255) << 0));
 	}
-	
+
 	public static byte[] getTrimmedArray(byte[] in) {
 		for (int i = in.length - 1; i > 0; i--) {
 			if (in[i] != 0) {

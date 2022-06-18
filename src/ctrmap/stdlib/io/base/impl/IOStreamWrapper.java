@@ -37,7 +37,7 @@ public class IOStreamWrapper implements IOStream {
     }
 
     @Override
-    public void seek(int position) throws IOException {
+    public void seek(long position) throws IOException {
         io.seek(position);
     }
 
@@ -64,5 +64,10 @@ public class IOStreamWrapper implements IOStream {
 	@Override
 	public byte[] toByteArray(){
 		return io.toByteArray();
+	}
+
+	@Override
+	public void setLength(long length) throws IOException {
+		io.setLength(length);
 	}
 }

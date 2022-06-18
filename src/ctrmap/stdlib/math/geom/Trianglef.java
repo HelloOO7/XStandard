@@ -22,6 +22,12 @@ public class Trianglef {
 		this.y = y;
 		this.z = z;
 	}
+	
+	public void setPoint(int vertex, Vec3f pos) {
+		x[vertex] = pos.x;
+		y[vertex] = pos.y;
+		z[vertex] = pos.z;
+	}
 
 	public void setX(int vertex, float value) {
 		x[vertex] = value;
@@ -102,16 +108,19 @@ public class Trianglef {
 	}
 
 	public Vec3f normal() {
+		return normal(new Vec3f());
+	}
+	
+	public Vec3f normal(Vec3f dest) {
 		/*
 		https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
 		 */
-		Vec3f n = new Vec3f();
 		Vec3f a = vector(1).sub(vector(0));
 		Vec3f b = vector(2).sub(vector(0));
-		n.x = a.y * b.z - a.z * b.y;
-		n.y = a.z * b.x - a.x * b.z;
-		n.z = a.x * b.y - a.y * b.x;
-		return n;
+		dest.x = a.y * b.z - a.z * b.y;
+		dest.y = a.z * b.x - a.x * b.z;
+		dest.z = a.x * b.y - a.y * b.x;
+		return dest;
 	}
 	
 	public AABB6f getAABB(){

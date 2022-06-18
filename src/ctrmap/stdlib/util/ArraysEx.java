@@ -93,12 +93,37 @@ public class ArraysEx {
 	 * @param toAdd Collection to add from.
 	 * @return True if the collection has changed as a result of this operation.
 	 */
-	public static <T> boolean addAllIfNotNullOrContains(Collection<T> list, Collection<T> toAdd) {
+	public static <T> boolean addAllIfNotNullOrContains(Collection<T> list, Collection<? extends T> toAdd) {
 		boolean r = false;
 		for (T e : toAdd) {
 			r |= addIfNotNullOrContains(list, e);
 		}
 		return r;
+	}
+	
+	public static <T> int elementCount(Iterable<T[]> arrays, boolean countNullAs1Size) {
+		int count = 0;
+		for (T[] arr : arrays) {
+			if (arr == null && countNullAs1Size) {
+				count++;
+			} else {
+				count += arr.length;
+			}
+		}
+		return count;
+	}
+	
+	public static <T> T[] join(Iterable<T[]> arrays, T[] out, boolean addNull) {
+		int outIndex = 0;
+		for (T[] arr : arrays) {
+			if (arr == null && addNull) {
+				out[outIndex++] = null;
+			} else {
+				System.arraycopy(arr, 0, out, outIndex, arr.length);
+				outIndex += arr.length;
+			}
+		}
+		return out;
 	}
 
 	/**

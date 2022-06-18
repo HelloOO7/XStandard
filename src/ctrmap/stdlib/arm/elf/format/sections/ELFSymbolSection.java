@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ELFSymbolSection extends ELFSection {
 	
-	public List<ELFSymbol> symbols = new ArrayList<>();
+	public final List<ELFSymbol> symbols = new ArrayList<>();
 	
 	public ELFSymbolSection(){
 		super(new ELFSectionHeader());
@@ -125,6 +125,10 @@ public class ELFSymbolSection extends ELFSection {
 			return ELFSymbolType.values()[info & 0xF];
 		}
 		
+		public ELFSymbolVisibility getVisibility() {
+			return ELFSymbolVisibility.values()[other & 3];
+		}
+		
 		public void setSpecialSectionIndex(ELFSpecialSectionIndex idx){
 			sectionIndex = idx.getOrdinal();
 		}
@@ -175,5 +179,12 @@ public class ELFSymbolSection extends ELFSection {
 		FUNC,
 		SECTION,
 		FILE
+	}
+	
+	public static enum ELFSymbolVisibility {
+		DEFAULT,
+		INTERNAL,
+		HIDDEN,
+		PROTECTED
 	}
 }

@@ -8,7 +8,7 @@ import java.io.IOException;
  */
 public class TemporaryValue {
 
-	private int position;
+	protected int position;
 
 	protected DataIOStream dosref;
 	

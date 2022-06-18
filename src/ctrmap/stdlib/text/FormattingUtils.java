@@ -105,15 +105,26 @@ public class FormattingUtils {
 	 * @return String representation of 'size', in bytes, kB or MB.
 	 */
 	public static String getFriendlySize(int size) {
+		boolean neg = size < 0;
+		if (neg) {
+			size = -size;
+		}
 		if (size < 1000) {
 			return size + " bytes";
 		}
+		String out;
 		DecimalFormat f = new DecimalFormat();
 		f.setMaximumFractionDigits(2);
 		if (size < 1000000) {
-			return f.format(size / (double) 1000) + "kB";
+			out = f.format(size / (double) 1000) + "kB";
 		}
-		return f.format(size / (double) 1000000) + "MB";
+		else {
+			out = f.format(size / (double) 1000000) + "MB";
+		}
+		if (neg) {
+			out = "-" + out;
+		}
+		return out;
 	}
 	
 	public static String getStrForValidFileName(String str) {
@@ -131,13 +142,16 @@ public class FormattingUtils {
 	 * @return The String with each block of non-alphanumeric characters replaced with an underscore.
 	 */
 	public static String getStrWithoutNonAlphanumeric(String str, char... charWhitelist){
+		if (str == null) {
+			return null;
+		}
 		StringBuilder sb = new StringBuilder();
 		boolean appendNextUnderscore = false;
 		charWhitelist = Arrays.copyOf(charWhitelist, charWhitelist.length);
 		Arrays.sort(charWhitelist);
 		for (int i = 0; i < str.length(); i++){
 			char c = str.charAt(i);
-			if (Character.isLetterOrDigit(c) || Arrays.binarySearch(charWhitelist, c) != -1){
+			if (Character.isLetterOrDigit(c) || Arrays.binarySearch(charWhitelist, c) >= 0){
 				if (appendNextUnderscore){
 					sb.append('_');
 					appendNextUnderscore = false;

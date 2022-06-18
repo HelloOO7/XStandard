@@ -1,25 +1,94 @@
 package ctrmap.stdlib.gui.components;
 
+import ctrmap.stdlib.gui.components.listeners.ToggleableActionListener;
+import java.awt.event.ActionEvent;
 import javax.swing.event.ChangeListener;
 
 public class TimePeriodSelector extends javax.swing.JPanel {
 
+	private static final int BOXIDX_MINUTES = 0;
+	private static final int BOXIDX_HOURS = 1;
+	private static final int BOXIDX_DAYS = 2;
+	private static final int BOXIDX_WEEKS = 3;
+	
+	private int units = -1;
+	
+	private ToggleableActionListener timeUnitListener = new ToggleableActionListener() {
+		@Override
+		public void actionPerformedImpl(ActionEvent e) {
+			float val = 0;
+			
+			int curVal = getMinutes(units, ((Number)value.getValue()).intValue());
+			
+			switch (timeUnit.getSelectedIndex()) {
+				case BOXIDX_DAYS:
+					val = curVal / (24f * 60f);
+					break;
+				case BOXIDX_WEEKS:
+					val = curVal / (168f * 60f);
+					break;
+				case BOXIDX_HOURS:
+					val = curVal / (60f);
+					break;
+				case BOXIDX_MINUTES:
+					val = curVal;
+					break;
+			}
+			
+			int iVal = Math.round(val);
+			
+			if (iVal == 0) {
+				iVal = 1;
+			}
+			value.setValue(iVal);
+			
+			updateNowUnits();
+		}
+	};
+
 	public TimePeriodSelector() {
 		initComponents();
-	}
-
-	public long getSelectedMillisValue(){
-		return getSelectedHourValue() * 60 * 60 * 1000;
+		
+		units = timeUnit.getSelectedIndex();
+		
+		timeUnit.addActionListener(timeUnitListener);
 	}
 	
+	private void updateNowUnits() {
+		units = timeUnit.getSelectedIndex();
+	}
+
+	public long getSelectedMillisValue() {
+		return getSelectedMinuteValue() * 60 * 1000;
+	}
+	
+	private int getMinutes(int unit, int val) {
+		switch (unit) {
+			case BOXIDX_MINUTES:
+				return val;
+			case BOXIDX_HOURS:
+				return val * 60;
+			case BOXIDX_DAYS:
+				return val * 24 * 60;
+			case BOXIDX_WEEKS:
+				return val * 168 * 60;
+		}
+		return 0;
+	}
+
+	public int getSelectedMinuteValue() {
+		int val = ((Number) value.getValue()).intValue();
+		return getMinutes(timeUnit.getSelectedIndex(), val);
+	}
+
 	public int getSelectedHourValue() {
 		int val = ((Number) value.getValue()).intValue();
 		switch (timeUnit.getSelectedIndex()) {
-			case 0:
+			case BOXIDX_HOURS:
 				return val;
-			case 1:
+			case BOXIDX_DAYS:
 				return val * 24;
-			case 2:
+			case BOXIDX_WEEKS:
 				return val * 168;
 		}
 		return 0;
@@ -30,22 +99,30 @@ public class TimePeriodSelector extends javax.swing.JPanel {
 	}
 
 	public void setMillisValue(long millis) {
-		int hours = Math.round(millis / (60f * 60f * 1000f));
+		int minutes = Math.round(millis / (60f * 1000f));
+		int hours = Math.round(minutes / 60f);
 		int days = Math.round(hours / 24f);
-		if (hours != 0 && hours % 168 == 0) {
+
+		timeUnitListener.setAllowEvents(false);
+		if (minutes != 0 && minutes % (168 * 60) == 0) {
 			int weeks = Math.round(days / 7f);
-			timeUnit.setSelectedIndex(2);
+			timeUnit.setSelectedIndex(BOXIDX_WEEKS);
 			value.setValue(weeks);
-		} else if (hours != 0 && hours % 7 == 0) {
-			timeUnit.setSelectedIndex(1);
+		} else if (minutes != 0 && minutes % (24 * 60) == 0) {
+			timeUnit.setSelectedIndex(BOXIDX_DAYS);
 			value.setValue(days);
-		} else {
-			timeUnit.setSelectedIndex(0);
+		} else if (minutes != 0 && minutes % 60 == 0) {
+			timeUnit.setSelectedIndex(BOXIDX_HOURS);
 			value.setValue(hours);
+		} else {
+			timeUnit.setSelectedIndex(BOXIDX_MINUTES);
+			value.setValue(minutes);
 		}
+		timeUnitListener.setAllowEvents(true);
+		updateNowUnits();
 	}
-	
-	public void addChangeListener(ChangeListener cl){
+
+	public void addChangeListener(ChangeListener cl) {
 		value.addChangeListener(cl);
 	}
 
@@ -68,7 +145,7 @@ public class TimePeriodSelector extends javax.swing.JPanel {
 
         value.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
 
-        timeUnit.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Hours", "Days", "Weeks" }));
+        timeUnit.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Minutes", "Hours", "Days", "Weeks" }));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

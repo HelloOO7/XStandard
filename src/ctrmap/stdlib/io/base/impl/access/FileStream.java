@@ -27,20 +27,25 @@ public class FileStream extends RandomAccessFile implements IOStream {
 			throw new RuntimeException("Could not find file " + file + "; FileStream can not be created!");
 		}
 	}
-	
+
 	@Override
 	public synchronized int read() throws IOException {
 		return super.read();
 	}
-	
+
 	@Override
 	public synchronized int read(byte[] b, int off, int len) throws IOException {
 		return super.read(b, off, len);
 	}
-	
+
 	@Override
 	public synchronized int skipBytes(int amount) throws IOException {
-		return super.skipBytes(amount);
+		if (amount < 0) {
+			super.seek(super.getFilePointer() + amount);
+			return amount;
+		} else {
+			return super.skipBytes(amount);
+		}
 	}
 
 	@Override
@@ -49,7 +54,7 @@ public class FileStream extends RandomAccessFile implements IOStream {
 	}
 
 	@Override
-	public synchronized void seek(int position) throws IOException {
+	public synchronized void seek(long position) throws IOException {
 		super.seek(position);
 	}
 
@@ -62,5 +67,10 @@ public class FileStream extends RandomAccessFile implements IOStream {
 			Logger.getLogger(FileStream.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return 0;
+	}
+
+	@Override
+	public synchronized void setLength(long length) throws IOException {
+		super.setLength(length);
 	}
 }

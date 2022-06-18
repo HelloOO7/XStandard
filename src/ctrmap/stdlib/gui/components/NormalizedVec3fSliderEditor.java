@@ -1,5 +1,6 @@
 package ctrmap.stdlib.gui.components;
 
+import ctrmap.stdlib.math.vec.RGBA;
 import ctrmap.stdlib.math.vec.Vec3f;
 import ctrmap.stdlib.util.ArraysEx;
 import java.util.ArrayList;
@@ -78,6 +79,14 @@ public class NormalizedVec3fSliderEditor extends javax.swing.JPanel {
 			this.vec = vec;
 		}
 		refresh();
+	}
+	
+	public Vec3f getVector() {
+		return vec;
+	}
+	
+	public RGBA getVecAsColor() {
+		return new RGBA(vec.toVec4());
 	}
 	
 	private void callListeners() {

@@ -26,6 +26,8 @@ public class StringTable {
 	private boolean isOffsetU16 = false;
 	private boolean isOffsRelToTable = false;
 
+	private boolean writingFinished = false;
+	
 	public StringTable(DataIOStream out) {
 		this(out, false, false);
 	}
@@ -43,6 +45,10 @@ public class StringTable {
 		this.out = out;
 		this.isOffsetU16 = isOffsetU16;
 		this.isOffsRelToTable = isOffsRelToTable;
+	}
+	
+	public void forbidFurtherWriting() {
+		writingFinished = true;
 	}
 
 	/**
@@ -113,7 +119,7 @@ public class StringTable {
 	 * @param str A String.
 	 */
 	public void putString(String str) {
-		if (!(writtenStringOffsets.containsKey(str) || registOffsets.containsKey(str))) {
+		if (str != null && (!(writtenStringOffsets.containsKey(str) || registOffsets.containsKey(str)))) {
 			registOffsets.put(str, new ArrayList<>());
 		}
 	}
@@ -134,6 +140,9 @@ public class StringTable {
 					out.writeInt(off);
 				}
 			} else {
+				if (writingFinished) {
+					throw new RuntimeException("This string table is now read-only.");
+				}
 				List<TemporaryOffset> l = registOffsets.get(str);
 				if (l == null) {
 					l = new ArrayList<>();
@@ -192,7 +201,7 @@ public class StringTable {
 			for (TemporaryValue o : e.getValue()) {
 				o.set(io.getPosition() - baseOfs);
 			}
-			writtenStringOffsets.put(e.getKey(), io.getPosition());
+			writtenStringOffsets.put(e.getKey(), io.getPosition() - baseOfs);
 			StringIO.writeString(io, e.getKey());
 		}
 		registOffsets.clear();

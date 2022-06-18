@@ -5,6 +5,8 @@ package ctrmap.stdlib.math;
  * @author x4u
  */
 public class HalfFloat {
+	public static final int BYTES = 2;
+	
 	// ignores the higher 16 bits
 
 	public static float toFloat(int hbits) {

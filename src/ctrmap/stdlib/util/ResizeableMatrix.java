@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A resizeable 2D array.
@@ -75,6 +76,15 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		return r;
 	}
 	
+	public boolean isRowEmpty(int idx) {
+		for (T elem : getRow(idx)) {
+			if (!Objects.equals(elem, defaultValue)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	/**
 	 * Returns the entire matrix row-wise.
 	 * @return A list of lists containing all of the matrix's rows. Changes to the lists will not be reflected in the matrix.
@@ -100,6 +110,15 @@ public class ResizeableMatrix<T> implements Iterable<T> {
 		}
 		r.addAll(list.get(relocIdx));
 		return r;
+	}
+	
+	public boolean isColumnEmpty(int idx) {
+		for (T elem : getColumn(idx)) {
+			if (!Objects.equals(elem, defaultValue)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

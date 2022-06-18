@@ -38,4 +38,12 @@ public class TemporaryOffset extends TemporaryValue {
 	public void setHere() throws IOException {
 		set(dosref.getPosition() + base);
 	}
+	
+	public void setHereSelfRelative() throws IOException {
+		set(dosref.getPositionUnbased() - position + base);
+	}
+	
+	public void setHereSelfRelativeInv() throws IOException {
+		set(-(dosref.getPositionUnbased()- position + base));
+	}
 }

@@ -13,15 +13,20 @@ public interface WriteableBase extends Positioned, Closeable {
     public void write(int i) throws IOException;
     public void write(byte[] b, int off, int len) throws IOException;
 
+	public default void writePadding(int amount, int value) throws IOException {
+		for (int i = 0; i < amount; i++) {
+			write(value);
+		}
+	}
+	
     public default void pad(int align) throws IOException {
-        while (getPosition() % align != 0) {
-            write(0);
-        }
+		pad(align, 0);
     }
 	
 	public default void pad(int align, int fillByte) throws IOException {
-        while (getPosition() % align != 0) {
-            write(fillByte);
-        }
+        int mod = getPosition() % align;
+		if (mod != 0) {
+			writePadding(align - mod, fillByte);
+		}
     }
 }

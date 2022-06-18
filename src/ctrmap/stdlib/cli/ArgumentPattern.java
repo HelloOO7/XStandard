@@ -96,7 +96,7 @@ public class ArgumentPattern {
 		String[] cntArr = ArgumentBuilder.getSplitAtSpacesWithQuotationMarks(substr);
 		List<String> cnt = new ArrayList<>();
 		for (String c : cntArr){
-			String t = c.trim();
+			String t = ArgumentBuilder.trim(c);
 			if (c.length() > 0){
 				cnt.add(t);
 			}

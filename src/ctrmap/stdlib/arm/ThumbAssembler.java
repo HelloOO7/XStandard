@@ -11,6 +11,7 @@ public class ThumbAssembler {
 	public static final int BL_MASK = (0b11111 << 11);
 	public static final int BL_HIGH_IDENT = (0b11110 << 11);
 	public static final int BL_LOW_IDENT = (0b11111 << 11);
+	public static final int BLX_LOW_IDENT = (0b11101 << 11);
 	
 	public static void writePushPopInstruction(DataIOStream out, boolean isPop, boolean changeLRPC, int... registers) throws IOException {
 		int bits = (0b10110100 << 8) | ((isPop ? 1 : 0) << 11) | ((changeLRPC ? 1 : 0) << 8);
@@ -21,6 +22,10 @@ public class ThumbAssembler {
 	}
 
 	public static void writeBranchLinkInstruction(DataIOStream out, int branchTarget) throws IOException {
+		writeBranchLinkInstruction(out, branchTarget, false);
+	}
+	
+	public static void writeBranchLinkInstruction(DataIOStream out, int branchTarget, boolean exchange) throws IOException {
 		int currentOffset = out.getPosition() + 4;
 		int diff = branchTarget - currentOffset;
 		int value = diff >> 1;
@@ -28,7 +33,7 @@ public class ThumbAssembler {
 		int highbits = (value >> 11) & 0x7FF;
 
 		int first = BL_HIGH_IDENT | highbits;
-		int second = BL_LOW_IDENT | lowbits;
+		int second = (exchange ? BLX_LOW_IDENT : BL_LOW_IDENT) | lowbits;
 
 		out.writeShort(first);
 		out.writeShort(second);
@@ -36,7 +41,7 @@ public class ThumbAssembler {
 	
 	public static void writeBXInstruction(DataIOStream out, int register) throws IOException {
 		int byte0 = 0b01000111;
-		int byte1 = ((register > 7 ? 1 : 0) << 6) | ((register % 7) << 3);
+		int byte1 = ((register > 7 ? 1 : 0) << 6) | ((register & 7) << 3);
 		out.write(byte1);
 		out.write(byte0);
 	}
@@ -46,7 +51,7 @@ public class ThumbAssembler {
 		int diff = branchTarget - currentOffset;
 		int value = diff >> 1;
 
-		int instruction = 0b11100 | (value & 0x7FF);
+		int instruction = (0b11100 << 11) | (value & 0x7FF);
 
 		out.writeShort(instruction);
 	}
@@ -73,6 +78,10 @@ public class ThumbAssembler {
 		int byte1 = (imm << 6) | (srcReg << 3) | destReg;
 		out.write(byte1);
 		out.write(byte0);
+	}
+	
+	public static void writeHiMovInstruction(DataOutput out, int dest, int src) throws IOException{
+		out.writeShort((0b01000110 << 8) | (((dest >> 3) & 1) << 7) | (((src >> 3) & 1) << 6) | ((src & 7) << 3) | ((dest & 7) << 0));
 	}
 
 	public static void writeImmDPInstruction(DataOutput out, ThumbDPOpCode opCode, int srcDestReg, int imm) throws IOException {

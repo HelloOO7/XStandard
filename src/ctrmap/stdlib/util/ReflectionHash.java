@@ -3,6 +3,7 @@ package ctrmap.stdlib.util;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -72,6 +73,11 @@ public class ReflectionHash {
 			int len = Array.getLength(o);
 			for (int i = 0; i < len; i++) {
 				hash = fnv64Update(hash, hashObj(Array.get(o, i), cache));
+			}
+		} else if (o instanceof Collection) {
+			Collection coll = (Collection)o;
+			for (Object elem : coll) {
+				hash = fnv64Update(hash, hashObj(elem, cache));
 			}
 		} else {
 			for (Field f : getAllFields(cls)) {

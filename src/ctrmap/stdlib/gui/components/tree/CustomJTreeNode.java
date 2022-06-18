@@ -22,7 +22,7 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 		renderer = rnd;
 	}
 
-	protected CustomJTreeCellRenderer getTreeCellComponent() {
+	public CustomJTreeCellRenderer getTreeCellComponent() {
 		return renderer;
 	}
 
@@ -36,6 +36,10 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	}
 
 	public void onNodeSelected() {
+
+	}
+	
+	public void onNodeDeselected() {
 
 	}
 

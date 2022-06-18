@@ -69,8 +69,9 @@ public class Vec2f extends Vector2f implements AbstractVector {
 	public void rotate(float anglerad) {
 		double cos = Math.cos(anglerad);
 		double sin = Math.sin(anglerad);
-		x = (float) (x * cos - y * sin);
-		y = (float) (y * cos - x * sin);
+		float xf = (float) (x * cos - y * sin);
+		y = (float) (y * cos + x * sin);
+		x = xf;
 	}
 
 	public Vec2f swapComponents() {

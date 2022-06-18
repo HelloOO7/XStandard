@@ -7,6 +7,11 @@ package ctrmap.stdlib.gui.components;
 
 import ctrmap.stdlib.gui.components.listeners.DocumentAdapterEx;
 import ctrmap.stdlib.math.vec.Vec3f;
+import ctrmap.stdlib.util.ArraysEx;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.event.DocumentEvent;
 
 public class Vec3fEditor extends javax.swing.JPanel {
@@ -14,6 +19,8 @@ public class Vec3fEditor extends javax.swing.JPanel {
 	private Vec3f vec = new Vec3f();
 
 	private boolean allowChanges = false;
+	
+	private List<ActionListener> listeners = new ArrayList<>();
 
 	public Vec3fEditor() {
 		initComponents();
@@ -24,9 +31,10 @@ public class Vec3fEditor extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				if (allowChanges) {
-					float val = ComponentUtils.getFloatFromDocument(x);
+					float val = ComponentUtils.getFloatFromDocument(x, vec.x);
 					if (Math.abs(vec.x - val) >= 0.001f) {
 						vec.x = val;
+						callActionListeners();
 					}
 				}
 			}
@@ -35,9 +43,10 @@ public class Vec3fEditor extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				if (allowChanges) {
-					float val = ComponentUtils.getFloatFromDocument(y);
+					float val = ComponentUtils.getFloatFromDocument(y, vec.y);
 					if (Math.abs(vec.y - val) >= 0.001f) {
 						vec.y = val;
+						callActionListeners();
 					}
 				}
 			}
@@ -46,13 +55,25 @@ public class Vec3fEditor extends javax.swing.JPanel {
 			@Override
 			public void textChangedUpdate(DocumentEvent e) {
 				if (allowChanges) {
-					float val = ComponentUtils.getFloatFromDocument(z);
+					float val = ComponentUtils.getFloatFromDocument(z, vec.z);
 					if (Math.abs(vec.z - val) >= 0.001f) {
 						vec.z = val;
+						callActionListeners();
 					}
 				}
 			}
 		});
+	}
+	
+	public void addActionListener(ActionListener l) {
+		ArraysEx.addIfNotNullOrContains(listeners, l);
+	}
+	
+	private void callActionListeners() {
+		ActionEvent e = new ActionEvent(this, 0, null);
+		for (ActionListener l : listeners) {
+			l.actionPerformed(e);
+		}
 	}
 
 	public void loadVec(Vec3f vec) {

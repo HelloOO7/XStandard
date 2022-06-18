@@ -7,6 +7,16 @@ public class AABB6f {
 	public Vec3f min = new Vec3f(Float.MAX_VALUE);
 	public Vec3f max = new Vec3f(-Float.MAX_VALUE);
 
+	public void reset() {
+		min.set(Float.MAX_VALUE);
+		max.set(Float.MIN_VALUE);
+	}
+
+	public void update(Vec3f vec) {
+		min.min(vec);
+		max.max(vec);
+	}
+
 	public boolean contains(Vec3f point) {
 		return containsIgnoreY(point) && point.y >= min.y && point.y <= max.y;
 	}
@@ -22,7 +32,16 @@ public class AABB6f {
 
 	public void minmax(AABB6f aabb) {
 		min.min(aabb.min);
-		max.min(aabb.max);
+		max.max(aabb.max);
+	}
+
+	public void grow(float inc) {
+		grow(inc, inc, inc);
+	}
+
+	public void grow(float incX, float incY, float incZ) {
+		min.sub(incX, incY, incZ);
+		max.add(incX, incY, incZ);
 	}
 
 	public void add(float x, float y, float z) {
@@ -51,6 +70,51 @@ public class AABB6f {
 		diff.add(max);
 		diff.mul(0.5f);
 		return diff;
+	}
+	
+	public Vec3f[] corners() {
+		return new Vec3f[] {
+			cornerXnYnZn(),
+			cornerXnYnZp(),
+			cornerXnYpZn(),
+			cornerXnYpZp(),
+			cornerXpYnZn(),
+			cornerXpYnZp(),
+			cornerXpYpZn(),
+			cornerXpYpZp()
+		};
+	}
+
+	public Vec3f cornerXnYnZn() {
+		return min.clone();
+	}
+
+	public Vec3f cornerXnYnZp() {
+		return new Vec3f(min.x, min.y, max.z);
+	}
+
+	public Vec3f cornerXnYpZp() {
+		return new Vec3f(min.x, max.y, max.z);
+	}
+	
+	public Vec3f cornerXnYpZn() {
+		return new Vec3f(min.x, max.y, min.z);
+	}
+
+	public Vec3f cornerXpYpZp() {
+		return max.clone();
+	}
+
+	public Vec3f cornerXpYnZp() {
+		return new Vec3f(max.x, min.y, max.z);
+	}
+
+	public Vec3f cornerXpYpZn() {
+		return new Vec3f(max.x, max.y, min.z);
+	}
+
+	public Vec3f cornerXpYnZn() {
+		return new Vec3f(max.x, min.y, min.z);
 	}
 
 	public void divUnsigned(float x, float y, float z) {

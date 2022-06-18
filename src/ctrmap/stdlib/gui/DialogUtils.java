@@ -79,6 +79,9 @@ public class DialogUtils {
 		if (ex.getCause() != null) {
 			ex.getCause().printStackTrace(new PrintWriter(writer));
 		}
+		else {
+			ex.printStackTrace(new PrintWriter(writer));
+		}
 		try {
 			writer.close();
 			DialogUtils.showErrorMessage("Fatal error - contact a dev", writer.toString());

@@ -9,11 +9,12 @@ import java.awt.Frame;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -59,6 +60,16 @@ public class ComponentUtils {
 	public static void setNFValueClass(Class<?> clazz, JFormattedTextField... fields) {
 		for (int i = 0; i < fields.length; i++) {
 			((NumberFormatter) fields[i].getFormatter()).setValueClass(clazz);
+		}
+	}
+	
+	public static void setSelectedIndexSafe(JList list, int index) {
+		int size = list.getModel().getSize();
+		if (index >= 0 && index < size) {
+			list.setSelectedIndex(index);
+		}
+		else {
+			list.clearSelection();
 		}
 	}
 	
@@ -114,6 +125,12 @@ public class ComponentUtils {
 	public static void addActionListener(ActionListener listener, JComboBox... boxes){
 		for (JComboBox cb : boxes){
 			cb.addActionListener(listener);
+		}
+	}
+	
+	public static void addActionListener(ActionListener listener, AbstractButton... buttons){
+		for (AbstractButton button : buttons){
+			button.addActionListener(listener);
 		}
 	}
 	

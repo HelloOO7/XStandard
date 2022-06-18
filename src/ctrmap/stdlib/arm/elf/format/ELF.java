@@ -1,6 +1,6 @@
 package ctrmap.stdlib.arm.elf.format;
 
-import ctrmap.stdlib.arm.elf.format.sections.ELFAnonymousRelocationSection;
+import ctrmap.stdlib.arm.elf.format.sections.ELFAddendRelocationSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFFuncArraySection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFGroupSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFNullSection;
@@ -9,17 +9,12 @@ import ctrmap.stdlib.arm.elf.format.sections.ELFRelocationSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFSection;
 import ctrmap.stdlib.arm.elf.format.sections.ELFSymbolSection;
 import ctrmap.stdlib.arm.elf.format.sections.ElfNoBitsSection;
-import ctrmap.stdlib.formats.yaml.Yaml;
-import ctrmap.stdlib.formats.yaml.YamlNode;
-import ctrmap.stdlib.formats.yaml.YamlReflectUtil;
 import ctrmap.stdlib.fs.FSFile;
-import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.io.base.iface.IOStream;
 import ctrmap.stdlib.io.base.impl.ext.data.DataIOStream;
 import ctrmap.stdlib.io.serialization.BinaryDeserializer;
 import ctrmap.stdlib.io.serialization.BinarySerializer;
 import ctrmap.stdlib.io.serialization.ReferenceType;
-import ctrmap.stdlib.io.serialization.annotations.Ignore;
 import ctrmap.stdlib.util.ArraysEx;
 import java.io.IOException;
 import java.nio.ByteOrder;
@@ -70,7 +65,7 @@ public class ELF {
 						sections.add(new ELFRelocationSection(deserializer, shdr));
 						break;
 					case RELA:
-						sections.add(new ELFAnonymousRelocationSection(deserializer, shdr));
+						sections.add(new ELFAddendRelocationSection(deserializer, shdr));
 						break;
 					case STRTAB:
 						sections.add(new ELFStringTable(deserializer.baseStream, shdr));
@@ -177,7 +172,7 @@ public class ELF {
 		l.addAll(sectionsByClass(ELFGroupSection.class));
 		l.addAll(sectionsByClass(ELFFuncArraySection.class));
 		l.add(strTab);
-		l.addAll(sectionsByClass(ELFAnonymousRelocationSection.class));
+		l.addAll(sectionsByClass(ELFAddendRelocationSection.class));
 		l.addAll(sectionsByClass(ELFRelocationSection.class));
 		l.add(shStrTab);
 		

@@ -22,7 +22,8 @@ import java.util.logging.Logger;
 public class BinarySerializer extends BinarySerialization {
 
 	private Stack<Integer> pointerBaseStack = new Stack<>();
-	private RefValue refValue;
+
+	private Map<Object, RefValue> refValueCache = new HashMap<>();
 
 	public BinarySerializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType) {
 		this(baseStream, bo, referenceType, DecimalType.FLOATING_POINT);
@@ -201,25 +202,39 @@ public class BinarySerializer extends BinarySerialization {
 			size = field.getAnnotation(ArraySize.class).value();
 		}
 
-		for (int i = 0; i < size; i++) {
-			children.add(writeValue(Array.get(value, i), field));
+		if (value instanceof byte[]) {
+			//faster
+			baseStream.write((byte[]) value, 0, size);
+		} else {
+			for (int i = 0; i < size; i++) {
+				children.add(writeValue(Array.get(value, i), field));
+			}
 		}
 
 		return children;
 	}
 
 	private RefValue writeFieldPointer(Object value, Field field) throws IOException {
-		refValue = new RefValue();
-		refValue.pointerPosition = baseStream.getPosition();
-		refValue.pointerBase = pointerBaseStack.peek();
-		refValue.value = value;
-		refValue.field = field;
+		RefValue refValue = refValueCache.get(value);
+		if (refValue == null) {
+			refValue = new RefValue();
+			refValue.value = value;
+			refValue.field = field;
+			refValueCache.put(value, refValue);
+		}
+
+		PointerFuture pf = new PointerFuture();
+
+		pf.position = baseStream.getPosition();
+		pf.base = pointerBaseStack.peek();
 
 		int pointerSize = Integer.BYTES;
 
 		if (field.isAnnotationPresent(PointerSize.class)) {
 			pointerSize = field.getAnnotation(PointerSize.class).value();
 		}
+		pf.size = pointerSize;
+		refValue.pointersToHere.add(pf);
 
 		writeSizedInt(0, null, pointerSize);
 
@@ -324,7 +339,7 @@ public class BinarySerializer extends BinarySerialization {
 			int posAfterObj = baseStream.getPosition();
 
 			int objSizePos = posAfterObj - posBeforeObj;
-			int objSizeAll = baseStream.getMaxSeekSinceTrace() - posBeforeObj;
+			int objSizeAll = (int) (baseStream.getMaxSeekSinceTrace() - posBeforeObj);
 
 			for (Map.Entry<Integer, Field> osf : objSizeFields.entrySet()) {
 				baseStream.seek(osf.getKey());
@@ -399,39 +414,44 @@ public class BinarySerializer extends BinarySerialization {
 
 	private void writeRefValue(RefValue value) throws InstantiationException, IllegalAccessException, IOException {
 		if (value != null) {
+			boolean notYetWritten = false;
+			baseStream.align(4);
 			int position = baseStream.getPosition();
+			if (value.myPointer == -1) {
+				value.myPointer = position;
+				notYetWritten = true;
+			}
 
-			if (value.pointerPosition != 0) {
-				baseStream.seek(value.pointerPosition);
+			for (PointerFuture pf : value.pointersToHere) {
+				if (pf.position != 0) {
+					baseStream.seek(pf.position);
 
-				int ptr = position;
+					int ptr = value.myPointer;
 
-				if (value.value == null) {
-					ptr = 0;
-				} else {
-					if (refType == ReferenceType.SELF_RELATIVE_POINTER) {
-						ptr -= value.pointerPosition;
+					if (value.value == null) {
+						ptr = 0;
 					} else {
-						ptr -= value.pointerBase;
+						if (refType == ReferenceType.SELF_RELATIVE_POINTER) {
+							ptr -= pf.position;
+						} else {
+							ptr -= pf.base;
+						}
 					}
+
+					writeSizedInt(ptr, null, pf.size);
+				} else {
+					//Inline object - already written
 				}
-
-				int pointerSize = Integer.BYTES;
-
-				if (value.field.isAnnotationPresent(PointerSize.class)) {
-					pointerSize = value.field.getAnnotation(PointerSize.class).value();
-				}
-
-				writeSizedInt(ptr, null, pointerSize);
-			} else {
-				//Inline object - already written
 			}
 
 			baseStream.seek(position);
-			value.children.addAll(writeInlineObject(value.value, value.field));
 
-			for (RefValue child : value.children) {
-				writeRefValue(child);
+			if (notYetWritten) {
+				value.children.addAll(writeInlineObject(value.value, value.field));
+
+				for (RefValue child : value.children) {
+					writeRefValue(child);
+				}
 			}
 		}
 	}
@@ -472,11 +492,19 @@ public class BinarySerializer extends BinarySerialization {
 
 	static class RefValue {
 
-		public int pointerPosition;
-		public int pointerBase;
-		public Field field;
+		public int myPointer = -1;
+
+		public List<PointerFuture> pointersToHere = new ArrayList<>();
 		public Object value;
+		public Field field;
 
 		public List<RefValue> children = new ArrayList<>();
+	}
+
+	static class PointerFuture {
+
+		public int position;
+		public int base;
+		public int size;
 	}
 }

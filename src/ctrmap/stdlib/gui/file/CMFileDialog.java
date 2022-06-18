@@ -2,6 +2,7 @@ package ctrmap.stdlib.gui.file;
 
 import com.sun.javafx.application.PlatformImpl;
 import ctrmap.stdlib.CMStdLibPrefs;
+import ctrmap.stdlib.fs.accessors.DiskFile;
 import ctrmap.stdlib.util.ArraysEx;
 import java.io.File;
 import java.util.ArrayList;
@@ -17,76 +18,76 @@ public class CMFileDialog {
 
 	private static Preferences prefs = CMStdLibPrefs.node("CMFileDialog");
 
-	public static File openDirectoryDialog() {
-		return openDirectoryDialog((String)null);
+	public static DiskFile openDirectoryDialog() {
+		return openDirectoryDialog((String) null);
 	}
 
-	public static File openDirectoryDialog(String title) {
+	public static DiskFile openDirectoryDialog(String title) {
 		return openDirectoryDialog(title, null);
 	}
 
-	public static File openDirectoryDialog(File initDirectory) {
+	public static DiskFile openDirectoryDialog(DiskFile initDirectory) {
 		return openDirectoryDialog(null, initDirectory);
 	}
-	
-	public static File openDirectoryDialog(String title, File initDirectory) {
-		List<File> r = openFileDialog(title, false, true, false, initDirectory, null, new ExtensionFilter[0]);
+
+	public static DiskFile openDirectoryDialog(String title, DiskFile initDirectory) {
+		List<DiskFile> r = openFileDialog(title, false, true, false, initDirectory, null, new ExtensionFilter[0]);
 		if (r.isEmpty()) {
 			return null;
 		}
 		return r.get(0);
 	}
 
-	public static File openSaveFileDialog() {
+	public static DiskFile openSaveFileDialog() {
 		return openSaveFileDialog((String) null);
 	}
 
-	public static File openSaveFileDialog(String title) {
+	public static DiskFile openSaveFileDialog(String title) {
 		return openSaveFileDialog(title, (String) null);
 	}
 
-	public static File openSaveFileDialog(String title, String defaultName) {
+	public static DiskFile openSaveFileDialog(String title, String defaultName) {
 		return openFileDialog(title, true, null, defaultName, new ExtensionFilter[0]);
 	}
 
-	public static File openSaveFileDialog(ExtensionFilter... filters) {
+	public static DiskFile openSaveFileDialog(ExtensionFilter... filters) {
 		return openSaveFileDialog(null, filters);
 	}
 
-	public static File openSaveFileDialog(String title, ExtensionFilter... filters) {
+	public static DiskFile openSaveFileDialog(String title, ExtensionFilter... filters) {
 		return openSaveFileDialog(title, null, filters);
 	}
 
-	public static File openSaveFileDialog(String title, String defaultName, ExtensionFilter... filters) {
+	public static DiskFile openSaveFileDialog(String title, String defaultName, ExtensionFilter... filters) {
 		return openFileDialog(title, true, null, defaultName, filters);
 	}
 
-	public static File openFileDialog() {
+	public static DiskFile openFileDialog() {
 		return openFileDialog((String) null);
 	}
 
-	public static List<File> openMultiFileDialog() {
+	public static List<DiskFile> openMultiFileDialog() {
 		return openMultiFileDialog(new ExtensionFilter[0]);
 	}
-	
-	public static List<File> openMultiFileDialog(ExtensionFilter... filters) {
+
+	public static List<DiskFile> openMultiFileDialog(ExtensionFilter... filters) {
 		return openFileDialog(null, false, false, true, null, null, filters);
 	}
 
-	public static File openFileDialog(String title) {
+	public static DiskFile openFileDialog(String title) {
 		return openFileDialog(title, false, null, null, new ExtensionFilter[0]);
 	}
 
-	public static File openFileDialog(ExtensionFilter... filters) {
+	public static DiskFile openFileDialog(ExtensionFilter... filters) {
 		return openFileDialog(null, false, null, null, filters);
 	}
 
-	public static File openFileDialog(String title, ExtensionFilter... filters) {
+	public static DiskFile openFileDialog(String title, ExtensionFilter... filters) {
 		return openFileDialog(title, false, null, null, filters);
 	}
 
-	public static File openFileDialog(String title, boolean isSave, File initDirectory, String initFileName, ExtensionFilter... extensionFilters) {
-		List<File> r = openFileDialog(title, isSave, false, false, initDirectory, initFileName, extensionFilters);
+	public static DiskFile openFileDialog(String title, boolean isSave, DiskFile initDirectory, String initFileName, ExtensionFilter... extensionFilters) {
+		List<DiskFile> r = openFileDialog(title, isSave, false, false, initDirectory, initFileName, extensionFilters);
 		if (!r.isEmpty()) {
 			return r.get(0);
 		}
@@ -109,10 +110,10 @@ public class CMFileDialog {
 
 	private static final Object JFX_LOCK = new Object();
 
-	public static List<File> openFileDialog(String title, boolean isSave, boolean isDirectory, boolean allowMultiple, File initDirectory, String initFileName, ExtensionFilter... extensionFilters) {
+	public static List<DiskFile> openFileDialog(String title, boolean isSave, boolean isDirectory, boolean allowMultiple, DiskFile initDirectory, String initFileName, ExtensionFilter... extensionFilters) {
 		tryInitJFX();
 		synchronized (JFX_LOCK) {
-			final List<File> rsl = new ArrayList<>();
+			final List<DiskFile> rsl = new ArrayList<>();
 
 			//We could use PlatformImpl from the newer JFX SDK which allows dynamic startup/runlater, but this would break compat with JDK 8
 			Platform.runLater(new Runnable() {
@@ -120,7 +121,7 @@ public class CMFileDialog {
 				public void run() {
 					synchronized (JFX_LOCK) {
 						if (isDirectory) {
-							List<File> dir = openDirectoryDialogInternal(title, initDirectory);
+							List<DiskFile> dir = openDirectoryDialogInternal(title, initDirectory);
 							if (dir != null) {
 								rsl.addAll(dir);
 							}
@@ -131,9 +132,11 @@ public class CMFileDialog {
 							}
 
 							FileChooser fc = new FileChooser();
-							File finalInitDir = initDirectory;
+							File finalInitDir;
 							if (initDirectory == null) {
 								finalInitDir = new File(prefs.get("FC_LAST_DIR", ""));
+							} else {
+								finalInitDir = initDirectory.getFile();
 							}
 							if (finalInitDir.exists()) {
 								fc.setInitialDirectory(finalInitDir);
@@ -163,31 +166,37 @@ public class CMFileDialog {
 								if (r != null) {
 									FileChooser.ExtensionFilter ef = fc.getSelectedExtensionFilter();
 									String ext = ef.getExtensions().get(0).replaceAll("\\*", "");
+									DiskFile df;
 									if (!r.getName().endsWith(ext)) {
-										r = new File(r.getAbsolutePath() + ext);
+										df = new DiskFile(r.getAbsolutePath() + ext);
 									}
-									rsl.add(r);
+									else {
+										df = new DiskFile(r);
+									}
+									rsl.add(df);
 								}
 							} else {
 								if (allowMultiple) {
 									List<File> files = fc.showOpenMultipleDialog(null);
 									if (files != null) {
-										rsl.addAll(files);
+										for (File f : files) {
+											rsl.add(new DiskFile(f));
+										}
 									}
 								} else {
 									File r = fc.showOpenDialog(null);
 									if (r != null) {
-										rsl.add(r);
+										rsl.add(new DiskFile(r));
 									}
 								}
 							}
 
 							if (!rsl.isEmpty()) {
 								if (isDirectory) {
-									prefs.put("FC_LAST_DIR", rsl.get(0).getAbsolutePath());
+									prefs.put("FC_LAST_DIR", rsl.get(0).getFile().getAbsolutePath());
 
 								} else {
-									prefs.put("FC_LAST_DIR", rsl.get(0).getParentFile().getAbsolutePath());
+									prefs.put("FC_LAST_DIR", rsl.get(0).getFile().getParentFile().getAbsolutePath());
 								}
 							}
 						}
@@ -205,22 +214,22 @@ public class CMFileDialog {
 		}
 	}
 
-	private static List<File> openDirectoryDialogInternal(String title, File initDirectory) {
+	private static List<DiskFile> openDirectoryDialogInternal(String title, DiskFile initDirectory) {
 		if (title == null) {
 			title = "Select a directory";
 		}
 		DirectoryChooser dc = new DirectoryChooser();
 		if (initDirectory == null) {
-			initDirectory = new File(prefs.get("DC_LAST_DIR", ""));
+			initDirectory = new DiskFile(prefs.get("DC_LAST_DIR", ""));
 		}
 		if (initDirectory.exists()) {
-			dc.setInitialDirectory(initDirectory);
+			dc.setInitialDirectory(initDirectory.getFile());
 		}
 		dc.setTitle(title);
 		File rsl = dc.showDialog(null);
 		if (rsl != null) {
 			prefs.put("DC_LAST_DIR", rsl.getAbsolutePath());
-			return ArraysEx.asList(rsl);
+			return ArraysEx.asList(new DiskFile(rsl));
 		} else {
 			return null;
 		}

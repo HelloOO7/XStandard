@@ -1,6 +1,6 @@
 package ctrmap.stdlib.gui.file;
 
-import ctrmap.stdlib.fs.FSUtil;
+import ctrmap.stdlib.fs.FSFile;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,24 +10,31 @@ public class ExtensionFilter {
 	public final String formatName;
 	public final String[] filters;
 
-	public ExtensionFilter(String fmtName, String... filter) {
+	public ExtensionFilter(String fmtName, String... filters) {
 		formatName = fmtName;
-		this.filters = filter;
+		this.filters = filters;
+	}
+
+	public static ExtensionFilter findByFileName(File f, ExtensionFilter... filters) {
+		return findByFileName(f == null ? null : f.getPath(), filters);
 	}
 	
-	public static ExtensionFilter findByFileName(File f, ExtensionFilter... filters){
-		if (filters == null || f == null){
+	public static ExtensionFilter findByFileName(FSFile f, ExtensionFilter... filters) {
+		return findByFileName(f == null ? null : f.getPath(), filters);
+	}
+	
+	public static ExtensionFilter findByFileName(String path, ExtensionFilter... filters) {
+		if (filters == null || path == null) {
 			return null;
 		}
-		String ext = FSUtil.getFileExtensionWithDot(f.getName());
-		for (ExtensionFilter flt : filters){
-			if (flt.getExtensions().contains(ext)){
+		for (ExtensionFilter flt : filters) {
+			if (flt.accepts(path)) {
 				return flt;
 			}
 		}
 		return null;
 	}
-	
+
 	public String getDisplayText() {
 		StringBuilder sb = new StringBuilder(formatName);
 		sb.append(" ");
@@ -49,14 +56,20 @@ public class ExtensionFilter {
 	public List<String> getExtensions() {
 		List<String> extensions = new ArrayList<>();
 		for (String f : filters) {
-			extensions.add(f.substring(f.indexOf(".")));
+			int dotIndex = f.indexOf('.');
+			if (dotIndex != -1) {
+				extensions.add(f.substring(dotIndex));
+			}
+			else {
+				extensions.add("");
+			}
 		}
 		return extensions;
 	}
-	
-	public boolean accepts(String filePath){
-		for (String flt : filters){
-			if (filePath.matches(createRegexFromGlob(flt))){
+
+	public boolean accepts(String filePath) {
+		for (String flt : filters) {
+			if (filePath.matches(createRegexFromGlob(flt))) {
 				return true;
 			}
 		}
@@ -73,10 +86,15 @@ public class ExtensionFilter {
 		ExtensionFilter f = new ExtensionFilter("Supported files", extensions.toArray(new String[extensions.size()]));
 		return f;
 	}
+	
+	@Override
+	public String toString() {
+		return getDisplayText();
+	}
 
 	/*
 	https://stackoverflow.com/questions/45321050/java-string-matching-with-wildcards
-	*/
+	 */
 	private static String createRegexFromGlob(String glob) {
 		StringBuilder out = new StringBuilder("^");
 		for (int i = 0; i < glob.length(); ++i) {

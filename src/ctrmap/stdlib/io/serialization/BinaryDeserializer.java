@@ -163,7 +163,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 		
 		int expectedObjSizePos = baseStream.getPositionUnbased() - objStartAddress;
-		int expectedObjSizeAll = baseStream.getMaxSeekSinceTrace() - objStartAddress;
+		int expectedObjSizeAll = (int)(baseStream.getMaxSeekSinceTrace() - objStartAddress);
 		
 		for (Field objSizeFld : objSizeFields) {
 			Object fldValue = objSizeFld.get(obj);
@@ -403,7 +403,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private int readPointer(Field field, boolean isListElem, AnnotatedElement... ant) throws IOException {
 		int posBeforePtr = baseStream.getPosition();
-		if ((field != null || isListElem) && !hasAnnotation(Inline.class, ant) && refType != ReferenceType.NONE) {
+		if ((field != null || isListElem) && refType != ReferenceType.NONE && !hasAnnotation(Inline.class, ant) && !hasAnnotation(MagicStr.class, ant)) {
 			debugPrint("Object " + field + " is noninline !!");
 			int ptr = 0;
 

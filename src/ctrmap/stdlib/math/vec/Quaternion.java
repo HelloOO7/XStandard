@@ -45,12 +45,34 @@ public class Quaternion extends Quaternionf {
 	public Quaternion clone() {
 		return new Quaternion(this);
 	}
+	
+	public float getComponent(int index) {
+		switch (index) {
+			case 0:
+				return x;
+			case 1:
+				return y;
+			case 2:
+				return z;
+			case 3:
+				return w;
+		}
+		throw new ArrayIndexOutOfBoundsException();
+	}
 
 	public Quaternion mul(Quaternion q) {
 		super.mul(q);
 		return this;
 	}
 
+	public Quaternion mulScalar(float s) {
+		x *= s;
+		y *= s;
+		z *= s;
+		w *= s;
+		return this;
+	}
+	
 	public void write(DataOutput out) throws IOException {
 		out.writeFloat(x);
 		out.writeFloat(y);
@@ -71,6 +93,26 @@ public class Quaternion extends Quaternionf {
 	public Quaternion rotateZYXDeg(float z, float y, float x) {
 		super.rotateZYX(MathEx.toRadiansf(z), MathEx.toRadiansf(y), MathEx.toRadiansf(x));
 		return this;
+	}
+	
+	public int getGimbalPole () {
+		final float t = y * x + z * w;
+		return t > 0.499f ? 1 : (t < -0.499f ? -1 : 0);
+	}
+	
+	public float getRollRad () {
+		final int pole = getGimbalPole();
+		return pole == 0 ? FAtan.atan2(2f * (w * z + y * x), 1f - 2f * (x * x + z * z))
+			: (float)pole * 2f * FAtan.atan2(y, w);
+	}
+
+	public float getPitchRad () {
+		final int pole = getGimbalPole();
+		return pole == 0 ? (float)Math.asin(MathEx.clamp(-1f, 1f, 2f * (w * x - z * y))) : (float)pole * MathEx.PI * 0.5f;
+	}
+
+	public float getYawRad () {
+		return getGimbalPole() == 0 ? FAtan.atan2(2f * (y * w + x * z), 1f - 2f * (y * y + x * x)) : 0f;
 	}
 
 	public Vec3f toEulerAnglesAllocFree(Vec3f dest) {
@@ -96,11 +138,14 @@ public class Quaternion extends Quaternionf {
 	}
 
 	public Vec3f getEulerRotation(Vec3f dest) {
-		return MatrixUtil.getQuatEuler(this, dest);
+		//return MatrixUtil.getQuatEuler(this, dest);
+		return toEulerAnglesAllocFree(dest);
 	}
 
 	public Vec3f getEulerRotation() {
-		return MatrixUtil.getQuatEuler(this);
+		//return MatrixUtil.getQuatEuler(this);
+		return toEulerAnglesAllocFree(new Vec3f());
+		//return MatrixUtil.rotationFromMatrix(getRotationMatrix(), Vec3f.ONE());
 		/*Vec3f v = new Vec3f();
 		getEulerAnglesXYZ(v);
 		return v;*/

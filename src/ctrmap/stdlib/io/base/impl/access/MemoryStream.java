@@ -29,8 +29,12 @@ public class MemoryStream implements IOStream {
 		if (cap > buffer.length) {
 			int newCapacity = buffer.length;
 
-			while (newCapacity < cap) {
-				newCapacity *= 2;
+			if (newCapacity != 0) {
+				while (newCapacity < cap) {
+					newCapacity *= 2;
+				}
+			} else {
+				newCapacity = cap;
 			}
 
 			buffer = Arrays.copyOf(buffer, newCapacity);
@@ -59,12 +63,19 @@ public class MemoryStream implements IOStream {
 
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
-		if (position + len <= limit) {
+		int end = position + len;
+		if (end <= limit) {
 			System.arraycopy(buffer, position, b, off, len);
 			position += len;
 			return len;
+		} else if (position != limit) {
+			int diff = limit - position;
+			System.arraycopy(buffer, position, b, off, diff);
+			position = limit;
+			return diff;
 		} else {
-			throw new EOFException("Tried to read " + len + " bytes at position " + Integer.toHexString(position) + ", but buffer is only " + Integer.toHexString(buffer.length) + " bytes!");
+			//throw new EOFException("Tried to read 0x" + Integer.toHexString(len) + " bytes at position 0x" + Integer.toHexString(position) + ", but buffer is only " + Integer.toHexString(buffer.length) + " bytes!");
+			return -1;
 		}
 	}
 
@@ -81,8 +92,7 @@ public class MemoryStream implements IOStream {
 		try {
 			System.arraycopy(b, off, buffer, position, len);
 			position += len;
-		}
-		catch (ArrayIndexOutOfBoundsException ex){
+		} catch (ArrayIndexOutOfBoundsException ex) {
 			System.err.println("FUCK ! Could not arraycopy to MemoryStream !! off " + off + ", len " + len + ", buffer pos " + (position - len) + " input cap " + b.length + " buffer cap " + buffer.length);
 		}
 		updateLimit();
@@ -94,11 +104,11 @@ public class MemoryStream implements IOStream {
 	}
 
 	@Override
-	public void seek(int position) throws IOException {
-		if (position < 0){
-			throw new EOFException("Negative seek offset ! ! " + Integer.toHexString(position));
+	public void seek(long position) throws IOException {
+		if (position < 0) {
+			throw new EOFException("Negative seek offset ! ! " + Long.toHexString(position));
 		}
-		this.position = position;
+		this.position = (int) position;
 	}
 
 	@Override
@@ -115,5 +125,12 @@ public class MemoryStream implements IOStream {
 	@Override
 	public void close() throws IOException {
 
+	}
+
+	@Override
+	public void setLength(long length) throws IOException {
+		int ilength = (int) length;
+		limit = ilength;
+		ensureCapacity(ilength);
 	}
 }

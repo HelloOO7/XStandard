@@ -29,12 +29,12 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * Indicates that the file can be executed.
 	 */
 	public static final int FSF_ATT_EXECUTE = 4;
-	
+
 	public void tree(PrintStream out) {
 		out.println(getName());
 		printChildren(out, 0, listFiles());
 	}
-	
+
 	private static void printChildren(PrintStream out, int indent, List<? extends FSFile> children) {
 		StringBuilder id = new StringBuilder();
 		for (int i = 0; i < indent; i++) {
@@ -53,7 +53,7 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return
 	 */
 	public abstract FSFile getChild(String forName);
-	
+
 	public FSFile getAnyChild(String... names) {
 		if (names.length == 0) {
 			return null;
@@ -111,7 +111,7 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return True if the file exists, false if otherwise.
 	 */
 	public abstract boolean exists();
-	
+
 	public static boolean exists(FSFile file) {
 		return file != null && file.exists();
 	}
@@ -131,16 +131,14 @@ public abstract class FSFile implements Comparable<FSFile> {
 	public abstract ReadableStream getInputStream();
 
 	/**
-	 * Creates a WriteableStream from the file. Any bytes written into the
-	 * stream must sooner or later be reflected in the file.
+	 * Creates a WriteableStream from the file. Any bytes written into the stream must sooner or later be reflected in the file.
 	 *
 	 * @return
 	 */
 	public abstract WriteableStream getOutputStream();
 
 	/**
-	 * Creates an IOStream from the file. Any bytes written into the stream must
-	 * sooner or later be reflected in the file.
+	 * Creates an IOStream from the file. Any bytes written into the stream must sooner or later be reflected in the file.
 	 *
 	 * @return
 	 */
@@ -149,16 +147,14 @@ public abstract class FSFile implements Comparable<FSFile> {
 	/**
 	 * Lists all child files in this directory.
 	 *
-	 * @return A list of all child files, or an empty list if this is not a
-	 * directory.
+	 * @return A list of all child files, or an empty list if this is not a directory.
 	 */
 	public abstract List<? extends FSFile> listFiles();
 
 	/**
 	 * Gets the permission atributes of the file.
 	 *
-	 * @return A bitfield of the permissions. See FSF_ATT_READ, FSF_ATT_WRITE
-	 * and FSF_ATT_EXECUTE.
+	 * @return A bitfield of the permissions. See FSF_ATT_READ, FSF_ATT_WRITE and FSF_ATT_EXECUTE.
 	 */
 	public abstract int getPermissions();
 
@@ -201,8 +197,7 @@ public abstract class FSFile implements Comparable<FSFile> {
 	/**
 	 * Checks for multiple file permissions.
 	 *
-	 * @param flags The permissions to check. Can be either FSF_ATT_READ,
-	 * FSF_ATT_WRITE or FSF_ATT_EXECUTE.
+	 * @param flags The permissions to check. Can be either FSF_ATT_READ, FSF_ATT_WRITE or FSF_ATT_EXECUTE.
 	 * @return True if the file has all of the permissions.
 	 */
 	//privilege check sounds better but does not look good in code
@@ -243,6 +238,10 @@ public abstract class FSFile implements Comparable<FSFile> {
 		FSUtil.writeBytesToFile(this, bytes);
 	}
 
+	public void touch() {
+		setBytes(new byte[0]);
+	}
+	
 	/**
 	 * Creates a DataInStream from the file.
 	 *
@@ -289,8 +288,7 @@ public abstract class FSFile implements Comparable<FSFile> {
 	}
 
 	/**
-	 * Gets the number of visible files in this directory. A hidden file is any
-	 * whose file name begins with '.'.
+	 * Gets the number of visible files in this directory. A hidden file is any whose file name begins with '.'.
 	 *
 	 * @return
 	 */
@@ -300,8 +298,7 @@ public abstract class FSFile implements Comparable<FSFile> {
 	}
 
 	/**
-	 * Gets the number of hidden files in this directory. A hidden file is any
-	 * whose file name begins with '.'.
+	 * Gets the number of hidden files in this directory. A hidden file is any whose file name begins with '.'.
 	 *
 	 * @return
 	 */
@@ -370,6 +367,10 @@ public abstract class FSFile implements Comparable<FSFile> {
 		return false;
 	}
 	
+	public void copyTo(FSFile dest) {
+		FSUtil.copy(this, dest);
+	}
+
 	@Override
 	public int compareTo(FSFile fsf) {
 		return getPath().compareTo(fsf.getPath());
@@ -393,20 +394,48 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return 'path' relative to 'relPath'.
 	 */
 	public static String getPathRelativeTo(String path, String relPath) {
+		path = path.replace('\\', '/');
+		relPath = relPath.replace('\\', '/');
+		if (relPath.isEmpty()) {
+			return path;
+		}
 		if (path.equals(relPath)) {
 			return "";
 		}
-		relPath += "/";
 		if (path.startsWith(relPath)) {
 			String str = StringEx.deleteAllString(path, relPath);
+			if (str.startsWith("/")) {
+				str = str.substring(1);
+			}
 			return str;
+		}
+		String[] elems = StringEx.splitOnecharFastNoBlank(path, '/');
+		String[] relElems = StringEx.splitOnecharFastNoBlank(relPath, '/');
+		boolean isReltoDir = relPath.endsWith("/");
+		int commonElemsCount = 0;
+		for (; commonElemsCount < Math.min(elems.length, relElems.length); commonElemsCount++) {
+			if (!elems[commonElemsCount].equals(relElems[commonElemsCount])) {
+				break;
+			}
+		}
+		if (commonElemsCount > 0) {
+			StringBuilder out = new StringBuilder();
+			for (int i = 0; i < relElems.length - commonElemsCount - (isReltoDir ? 0 : 1); i++) {
+				out.append("../");
+			}
+			for (int i = commonElemsCount; i < elems.length; i++) {
+				if (i != commonElemsCount) {
+					out.append("/");
+				}
+				out.append(elems[i]);
+			}
+			return out.toString();
 		}
 		return path;
 	}
 
 	/**
-	 * Creates a directory denoted by this file, and all parent directories
-	 * required for this operation to succeed.
+	 * Creates a directory denoted by this file, and all parent directories required for this operation to succeed.
 	 */
 	public void mkdirs() {
 		Stack<FSFile> parentStack = new Stack<>();
@@ -425,12 +454,13 @@ public abstract class FSFile implements Comparable<FSFile> {
 
 	/**
 	 * Gets an existing child file with wild card support.
+	 *
 	 * @param childPath Path of the child file.
 	 * @param mng A WildCard manager.
 	 * @return The child file, or null if it could not be matched.
 	 */
 	public FSFile getMatchingChild(String childPath, FSWildCardManager mng) {
-		if (childPath == null || childPath.isEmpty()){
+		if (childPath == null || childPath.isEmpty()) {
 			return null;
 		}
 		int slashIdx = childPath.indexOf("/");
@@ -453,7 +483,8 @@ public abstract class FSFile implements Comparable<FSFile> {
 
 	/**
 	 * Lists the child files as a String array.
-	 * @return 
+	 *
+	 * @return
 	 */
 	public List<String> list() {
 		List<? extends FSFile> files = listFiles();

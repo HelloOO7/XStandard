@@ -5,7 +5,8 @@ import ctrmap.stdlib.io.util.StringIO;
 import java.io.DataInput;
 import java.io.IOException;
 
-public interface DataInputEx extends DataInput, ReadableStream {
+public interface DataInputEx extends DataStream, DataInput, ReadableStream {
+
 	public int readInt24() throws IOException;
 	
     public default String readString() throws IOException {

@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +30,11 @@ import java.util.logging.Logger;
 public class DiskFile extends FSFile {
 
 	private File file;
+	private File canonicalFile;
+
+	private final CachedBool exists = new CachedBool();
+	private final CachedBool isDirectory = new CachedBool();
+	private final CachedBool isFile = new CachedBool();
 
 	/**
 	 * Creates a DiskFile from a path in the file-system.
@@ -45,7 +51,7 @@ public class DiskFile extends FSFile {
 	 * @param f A File.
 	 */
 	public DiskFile(File f) {
-		file = f;
+		file = f.getAbsoluteFile();
 	}
 
 	@Override
@@ -79,7 +85,11 @@ public class DiskFile extends FSFile {
 	@Override
 	public BufferedOutputStream getNativeOutputStream() {
 		try {
-			return new BufferedOutputStream(new FileOutputStream(file));
+			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+			exists.set(true);
+			isDirectory.set(false);
+			isFile.set(true);
+			return out;
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(DiskFile.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -105,12 +115,36 @@ public class DiskFile extends FSFile {
 
 	@Override
 	public boolean isDirectory() {
-		return file.isDirectory();
+		if (isDirectory.exists) {
+			return isDirectory.value; //0 native calls
+		}
+		if (exists.exists && isFile.exists) {
+			isDirectory.set(exists() && !isFile()); //0 native calls
+		}
+		if (!isDirectory.exists) {
+			isDirectory.set(file.isDirectory()); //1 native call
+		}
+		if (isDirectory.value) {
+			exists.set(true);
+		}
+		return isDirectory.value;
 	}
 
 	@Override
 	public boolean isFile() {
-		return file.isFile();
+		if (isFile.exists) {
+			return isFile.value;
+		}
+		if (exists.exists && isDirectory.exists) {
+			isFile.set(exists() && !isDirectory());
+		}
+		if (!isFile.exists) {
+			isFile.set(file.isFile());
+		}
+		if (isFile.value) {
+			exists.set(true);
+		}
+		return isFile.value;
 	}
 
 	public File getFile() {
@@ -119,7 +153,10 @@ public class DiskFile extends FSFile {
 
 	@Override
 	public boolean exists() {
-		return file.exists();
+		if (!exists.exists) {
+			exists.set(file.exists());
+		}
+		return exists.value;
 	}
 
 	/*@Override
@@ -139,6 +176,9 @@ public class DiskFile extends FSFile {
 	@Override
 	public void mkdir() {
 		file.mkdir();
+		isDirectory.set(true);
+		isFile.set(false);
+		exists.set(true);
 	}
 
 	@Override
@@ -165,6 +205,9 @@ public class DiskFile extends FSFile {
 			}
 		}
 		file.delete();
+		exists.set(false);
+		isDirectory.set(false);
+		isFile.set(false);
 	}
 
 	@Override
@@ -187,12 +230,53 @@ public class DiskFile extends FSFile {
 		return 0;
 	}
 
+	private File getEnsureCanonicalFile() {
+		if (canonicalFile == null) {
+			try {
+				canonicalFile = file.getCanonicalFile();
+			} catch (IOException ex) {
+			}
+		}
+		return canonicalFile;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o != null && o instanceof DiskFile) {
+			return Objects.equals(getEnsureCanonicalFile(), ((DiskFile) o).getEnsureCanonicalFile());
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		File canonFile = getEnsureCanonicalFile();
+		if (canonFile != null) {
+			return canonFile.hashCode();
+		}
+		return file.hashCode();
+	}
+
 	@Override
 	public int getPermissions() {
 		int att = 0;
 		att |= file.canRead() ? FSF_ATT_READ : 0;
 		att |= file.canWrite() ? FSF_ATT_WRITE : 0;
+		if (!exists()) {
+			att |= FSF_ATT_WRITE; //nonexistent files can be written to as well
+		}
 		att |= file.canExecute() ? FSF_ATT_EXECUTE : 0;
 		return att;
+	}
+
+	private static class CachedBool {
+
+		public boolean exists = false;
+		public boolean value = false;
+
+		public void set(boolean val) {
+			exists = true;
+			value = val;
+		}
 	}
 }

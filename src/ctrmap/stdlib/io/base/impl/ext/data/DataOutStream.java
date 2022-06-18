@@ -88,6 +88,11 @@ public class DataOutStream extends WriteableWrapper implements DataOutputEx {
 	public void writeUTF(String s) throws IOException {
 		throw new UnsupportedOperationException();
 	}
+	
+	@Override
+	public void writeSized(int value, int size) throws IOException {
+		interpreter.writeSized(out, value, size);
+	}
 
 	@Override
 	public int getPosition() throws IOException {

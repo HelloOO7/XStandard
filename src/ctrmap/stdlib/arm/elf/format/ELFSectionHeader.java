@@ -3,6 +3,8 @@ package ctrmap.stdlib.arm.elf.format;
 import ctrmap.stdlib.io.serialization.ISerializableEnum;
 import ctrmap.stdlib.io.serialization.annotations.Ignore;
 import ctrmap.stdlib.io.serialization.annotations.Inline;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ELFSectionHeader {
 
@@ -74,7 +76,7 @@ public class ELFSectionHeader {
 		}
 
 		public ELFSectionType getSectionType() {
-			return ELFSectionType.values()[value & ~SHF_MASKPROC];
+			return ELFSectionType.valueOf(value & ~SHF_MASKPROC);
 		}
 		
 		public void setSectionType(ELFSectionType t){
@@ -119,6 +121,18 @@ public class ELFSectionHeader {
 		SYMTAB_SHNDX(18);
 		
 		public final int ordinal;
+		
+		private static final Map<Integer, ELFSectionType> TYPE_MAP = new HashMap<>();
+		
+		static {
+			for (ELFSectionType t : values()) {
+				TYPE_MAP.put(t.getOrdinal(), t);
+			}
+		}
+		
+		public static ELFSectionType valueOf(int index) {
+			return TYPE_MAP.get(index);
+		}
 		
 		private ELFSectionType(){
 			ordinal = -1;

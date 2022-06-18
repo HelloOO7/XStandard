@@ -185,7 +185,7 @@ public class Yaml {
 				child.content.print(out);
 				childBeginAsList = child.content instanceof YamlListElement;
 			}
-			if (!childBeginAsList) {
+			if (!childBeginAsList || child.children.isEmpty()) {
 				out.println();
 			}
 

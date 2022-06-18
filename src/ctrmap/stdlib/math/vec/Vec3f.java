@@ -83,6 +83,10 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 		arr[off + 2] = z;
 		return arr;
 	}
+	
+	public boolean isZero() {
+		return x == 0f && y == 0f && z == 0f;
+	}
 
 	public static Vec3f parseVec3f(String src) {
 		src = src.trim();
@@ -275,17 +279,7 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 
 		return matrix;
 	}
-
-	public static void main(String[] args) {
-		Vec3f p1 = new Vec3f(0, 0, 0);
-		Vec3f p2 = new Vec3f(2, 0, 0);
-		Vec3f d1 = new Vec3f(2f, 2f, 0);
-		Vec3f d2 = new Vec3f(0, 1f, 0);
-		Vec3f dest = new Vec3f();
-		findShortestDistance(p1, d1, p2, d2, dest, new Vec3f());
-		System.out.println(dest);
-	}
-
+	
 	public float getHighestAbsComponent() {
 		return Math.max(Math.abs(x), Math.max(Math.abs(y), Math.abs(z)));
 	}

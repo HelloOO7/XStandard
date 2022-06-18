@@ -48,7 +48,41 @@ public class BlenLibMath {
 	}
 
 	public static void copy_v3_v3(float[] dst, float[] src) {
-		System.arraycopy(src, 0, dst, 0, 3);
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+	}
+	
+	public static void mat3_to_eul_2(float[][] mat,
+		float[] eul1,
+		float[] eul2) {
+		short i = 2, j = 1, k = 0;
+		float cy;
+
+		if (Math.abs(1f - Math.abs(mat[2][0])) > Float.MIN_VALUE * 16f) {
+			eul1[1] = -(float)Math.asin(mat[2][0]);
+			eul2[1] = MathEx.PI - eul1[1];
+			double icos1 = 1.0 / Math.cos(eul1[0]);
+			double icos2 = 1.0 / Math.cos(eul2[0]);
+			eul1[0] = (float)Math.atan2(mat[2][1] * icos1, mat[2][2] * icos1);
+			eul2[0] = (float)Math.atan2(mat[2][1] * icos2, mat[2][2] * icos2);
+			eul1[2] = (float)Math.atan2(mat[1][0] * icos1, mat[0][0] * icos1);
+			eul2[2] = (float)Math.atan2(mat[1][0] * icos2, mat[0][0] * icos2);
+		}
+		else {
+			eul1[2] = 0f;
+			eul2[2] = 0f;
+			if (Math.abs(-1f - mat[2][0]) < Float.MIN_VALUE * 16f) {
+				eul1[1] = MathEx.HALF_PI;
+				eul1[0] = (float)Math.atan2(mat[0][1], mat[0][2]);
+			}
+			else {
+				eul1[1] = MathEx.HALF_PI_NEG;
+				eul1[0] = (float)Math.atan2(-mat[0][1], -mat[0][2]);
+			}
+			eul2[1] = eul1[1];
+				eul2[0] = eul1[0];
+		}
 	}
 
 	public static void mat3_normalized_to_eulo2(float[][] mat,
@@ -74,5 +108,11 @@ public class BlenLibMath {
 
 			copy_v3_v3(eul2, eul1);
 		}
+	}
+	
+	private static void swap_yz(float[] vec) {
+		float temp = vec[2];
+		vec[2] = vec[1];
+		vec[1] = temp;
 	}
 }

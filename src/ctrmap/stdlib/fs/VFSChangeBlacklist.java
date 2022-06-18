@@ -64,6 +64,9 @@ public class VFSChangeBlacklist {
 		if (path == null) {
 			throw new IllegalArgumentException("Path can not be null.");
 		}
+		if (path.contains("..")) {
+			throw new IllegalArgumentException("Relative paths are forbidden in VFS.");
+		}
 		path = fs.getFS().getWildCardManager().getWildCardedPath(path);
 		if (!blacklistedPaths.contains(path)) {
 			blacklistedPaths.add(path);

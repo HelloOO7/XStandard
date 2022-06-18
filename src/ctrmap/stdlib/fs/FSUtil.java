@@ -123,7 +123,7 @@ public class FSUtil {
 	 */
 	public static void copy(File source, File target) {
 		try {
-			Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
 		} catch (IOException ex) {
 			Logger.getLogger(FSUtil.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -143,18 +143,40 @@ public class FSUtil {
 		}
 	}
 
+	public static void transferStreams(ReadableStream in, WriteableStream out) throws IOException {
+		transferStreams(in, out, 0x10000);
+	}
+
+	public static void transferStreams(ReadableStream in, WriteableStream out, int bufSize) throws IOException {
+		byte[] buffer = new byte[bufSize];
+
+		int read;
+		while ((read = in.read(buffer)) != -1) {
+			out.write(buffer, 0, read);
+		}
+	}
+
 	/**
 	 * Copies an FSFile to any writable FSFile. The FSFile can be either a directory or a file.
 	 *
-	 * The method will use a faster, native routine if both files are on the disk. The method will clone the backing array of the first file into the other if they are both MemoryFiles.
+	 * The method will use a faster, native routine if both files are on the disk. The method will clone the
+	 * backing array of the first file into the other if they are both MemoryFiles.
 	 *
 	 * @param source The file or directory to copy from.
 	 * @param target The file or directory to copy to.
 	 */
 	public static void copy(FSFile source, FSFile target) {
-		if (source.isDirectory() && (target.isDirectory() || !target.exists())) {
+		boolean srcIsDir = source.isDirectory();
+		boolean tgtIsDir = target.isDirectory();
+		
+		if (srcIsDir && (tgtIsDir || !target.exists())) {
 			copyDirectory(source, target);
 			return;
+		}
+		
+		if (tgtIsDir && !srcIsDir) {
+			//copy file to withiin directory
+			target = target.getChild(source.getName());
 		}
 
 		if (transferFileIfClass(DiskFile.class, source, target, (DiskFile src, DiskFile tgt) -> {
@@ -177,7 +199,9 @@ public class FSUtil {
 	/**
 	 * Moves an FSFile to any writable FSFile. The FSFile can be either a directory or a file.
 	 *
-	 * The method will use a faster, native routine if both files are on the disk. The method will clone the backing array of the first file into the other if they are both MemoryFiles. Otherwise, a copy operation is performed, followed by the source file being deleted.
+	 * The method will use a faster, native routine if both files are on the disk. The method will clone the
+	 * backing array of the first file into the other if they are both MemoryFiles. Otherwise, a copy
+	 * operation is performed, followed by the source file being deleted.
 	 *
 	 * @param source The file or directory to move.
 	 * @param target The file or directory to move to.
@@ -253,7 +277,8 @@ public class FSUtil {
 	 *
 	 * @param f1 The LHS of the comparison.
 	 * @param f2 The RHS of the comparison.
-	 * @param bufferThreshold The file size threshold below which the files should be compared in memory instead of their streams.
+	 * @param bufferThreshold The file size threshold below which the files should be compared in memory
+	 * instead of their streams.
 	 * @return True if the files are equal, byte-by-byte.
 	 */
 	public static boolean fileCmp(FSFile f1, FSFile f2, int bufferThreshold) {
@@ -304,7 +329,8 @@ public class FSUtil {
 	}
 
 	/**
-	 * Writes an array of bytes into a disk File. Note that the non-native operation usually turns out to be faster.
+	 * Writes an array of bytes into a disk File. Note that the non-native operation usually turns out to be
+	 * faster.
 	 *
 	 * @param f File to write into.
 	 * @param bytes The data to write.
@@ -384,7 +410,9 @@ public class FSUtil {
 	}
 
 	/**
-	 * Safely reads an InputStream to bytes, using a default 32kB buffer. Unlike the "fast and dangerous" method, this operation does not require knowing the allocation size beforehand, but comes at the disadvantage of being slightly slower because of that.
+	 * Safely reads an InputStream to bytes, using a default 32kB buffer. Unlike the "fast and dangerous"
+	 * method, this operation does not require knowing the allocation size beforehand, but comes at the
+	 * disadvantage of being slightly slower because of that.
 	 *
 	 * @param strm Stream to read from.
 	 * @return Array of all remaining bytes in the stream.
@@ -405,7 +433,8 @@ public class FSUtil {
 	}
 
 	/**
-	 * Reads an InputStream to a byte array in the fastest way possible. May result in undefined behavior if the stream's available() method does not produce accurate results (as it is permitted not to do so).
+	 * Reads an InputStream to a byte array in the fastest way possible. May result in undefined behavior if
+	 * the stream's available() method does not produce accurate results (as it is permitted not to do so).
 	 *
 	 * @param strm An InputStream with an eligible available() method.
 	 * @return A byte array containing all the remaining data in the input stream.
@@ -423,7 +452,9 @@ public class FSUtil {
 	}
 
 	/**
-	 * Reads a ReadableStream to a byte array in the fastest way possible. May result in undefined behavior if the stream's getLength() method does not produce accurate results (implementations reliant on InputStream.available()).
+	 * Reads a ReadableStream to a byte array in the fastest way possible. May result in undefined behavior if
+	 * the stream's getLength() method does not produce accurate results (implementations reliant on
+	 * InputStream.available()).
 	 *
 	 * @param strm An ReadableStream with an eligible getLength() method.
 	 * @return A byte array containing all the remaining data in the input stream.
@@ -542,8 +573,19 @@ public class FSUtil {
 	 */
 	public static String getFileNameWithoutExtension(String fileName) {
 		fileName = getFileName(fileName);
+		return getFilePathWithoutExtension(fileName);
+	}
+
+	public static String getFilePathWithoutExtension(String fileName) {
 		int lioDot = getLastDotIndexInName(fileName);
 		return lioDot != -1 ? fileName.substring(0, lioDot) : fileName;
+	}
+
+	public static String getFileNameWithoutExtension(String fileName, String extension) {
+		if (fileName.endsWith(extension)) {
+			return fileName.substring(0, fileName.length() - extension.length());
+		}
+		return fileName;
 	}
 
 	private static int getLastDotIndexInName(String fileName) {

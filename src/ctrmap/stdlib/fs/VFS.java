@@ -307,8 +307,14 @@ public class VFS {
 	 * @return The input path, relative.
 	 */
 	public String getRelativePath(String path) {
-		path = FSFile.getPathRelativeTo(path, overlay.getPath());
-		path = FSFile.getPathRelativeTo(path, root.getPath());
+		String rootPath = root.getPath();
+		if (path.startsWith(rootPath)) {
+			return FSFile.getPathRelativeTo(path, rootPath);
+		}
+		String ovlPath = overlay.getPath();
+		if (path.startsWith(ovlPath)) {
+			return FSFile.getPathRelativeTo(path, ovlPath);
+		}
 		return path;
 	}
 }

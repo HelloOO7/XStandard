@@ -30,11 +30,11 @@ public class DataInterpreterLE implements IDataInterpreter {
 	}
 
 	@Override
-	public int readSized(ReadableStream strm, int bytes) throws IOException {
+	public int readSized(ReadableStream stm, int bytes) throws IOException {
 		if (bytes == 1) {
-			return strm.read();
+			return stm.read();
 		}
-		readTemp(strm, bytes);
+		readTemp(stm, bytes);
 		int val = 0;
 		for (int i = 0; i < bytes; i++) {
 			val |= (b[i] & 0xFF) << (i << 3);
@@ -102,5 +102,19 @@ public class DataInterpreterLE implements IDataInterpreter {
 	@Override
 	public void writeByte(WriteableStream stm, int value) throws IOException {
 		stm.write(value);
+	}
+	
+		
+	@Override
+	public void writeSized(WriteableStream stm, int value, int size) throws IOException {
+		if (size == 1) {
+			stm.write(value);
+			return;
+		}
+		for (int i = 0; i < size; i++) {
+			temp[i] = (byte)(value & 0xFF);
+			value >>= 8;
+		}
+		stm.write(temp, 0, size);
 	}
 }

@@ -7,6 +7,10 @@ public class ArgumentContent {
 	public String key;
 	public List<Object> contents = new ArrayList<>();
 	
+	public int valueCount() {
+		return contents.size();
+	}
+	
 	public boolean booleanValue(){
 		return booleanValue(0);
 	}

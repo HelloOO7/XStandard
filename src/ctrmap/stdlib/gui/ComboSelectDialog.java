@@ -2,68 +2,62 @@ package ctrmap.stdlib.gui;
 
 import ctrmap.stdlib.CMStdLibPrefs;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.prefs.Preferences;
-import javax.swing.JRadioButton;
 
-public class ActionSelector extends javax.swing.JDialog {
+public class ComboSelectDialog extends javax.swing.JDialog {
 
-	private Preferences lastOptPrefs = CMStdLibPrefs.node("CTRMapActionSelector");
+	private Preferences lastOptPrefs = CMStdLibPrefs.node("CTRMapComboSelector");
 
-	private Map<String, Object> acmdUserDataMap = new HashMap<>();
-	private Map<String, Integer> acmdIndexMap = new HashMap<>();
+	private Map<String, Object> userDataMap = new HashMap<>();
+	
 	private boolean dialogStateCancelled = false;
-	private int actionHash = 131;
+	private int elementsHash = 131;
 
-	public ActionSelector(java.awt.Dialog parent, boolean modal, ASelAction... actions) {
+	public ComboSelectDialog(java.awt.Frame parent, boolean modal, String title, List<?> options) {
 		super(parent, modal);
-		aSelInit(actions);
-		setLocationRelativeTo(parent);
-	}
-
-	public ActionSelector(java.awt.Frame parent, boolean modal, String title, ASelAction... actions) {
-		super(parent, modal);
-		aSelInit(actions);
+		cbSelInit(options);
 		setLocationRelativeTo(parent);
 		if (title != null) {
 			setTitle(title);
 		}
 	}
 
-	public ActionSelector(java.awt.Frame parent, boolean modal, ASelAction... actions) {
-		this(parent, modal, null, actions);
+	public ComboSelectDialog(java.awt.Frame parent, boolean modal, List<?> options) {
+		this(parent, modal, null, options);
 	}
 
-	private void aSelInit(ASelAction... actions) {
+	private void cbSelInit(List<?> options) {
 		initComponents();
 
 		getRootPane().setDefaultButton(btnConfirm);
 
-		for (ASelAction act : actions) {
-			actionHash = 31 * actionHash + act.actionName.hashCode();
+		for (Object opt : options) {
+			elementsHash = 31 * elementsHash + Objects.hashCode(Objects.toString(opt));
 		}
 
-		int targetSelectionIndex = lastOptPrefs.getInt(String.valueOf(actionHash), 0);
+		String lastSelectedItem = lastOptPrefs.get(String.valueOf(elementsHash), null);
 
-		int idx = 0;
-		for (ASelAction act : actions) {
-			JRadioButton btn = new JRadioButton(act.actionName);
-			btn.setActionCommand(act.actionName);
-			acmdUserDataMap.put(act.actionName, act.actionObj);
-			acmdIndexMap.put(act.actionName, idx);
-			actionsGroup.add(btn);
-			actionsPanel.add(btn);
-			if (idx == targetSelectionIndex) {
-				btn.setSelected(true);
-			}
-			idx++;
+		selectionBox.removeAllItems();
+		
+		for (Object opt : options) {
+			String val = Objects.toString(opt);
+			selectionBox.addItem(val);
+			userDataMap.put(val, opt);
 		}
+		
+		if (lastSelectedItem != null && userDataMap.keySet().contains(lastSelectedItem)) {
+			selectionBox.setSelectedItem(lastSelectedItem);
+		}
+		
 		setSize(getPreferredSize());
 	}
 
 	public Object getSelectedUserObj() {
 		if (!dialogStateCancelled) {
-			return acmdUserDataMap.get(actionsGroup.getSelection().getActionCommand());
+			return userDataMap.get(Objects.toString(selectionBox.getSelectedItem()));
 		}
 		return null;
 	}
@@ -75,13 +69,12 @@ public class ActionSelector extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        actionsGroup = new javax.swing.ButtonGroup();
         btnConfirm = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
-        actionsPanel = new javax.swing.JPanel();
+        selectionBox = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Choose an action");
+        setTitle("Choose an element");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
@@ -102,29 +95,29 @@ public class ActionSelector extends javax.swing.JDialog {
             }
         });
 
-        actionsPanel.setLayout(new javax.swing.BoxLayout(actionsPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        selectionBox.setMaximumRowCount(20);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(15, 15, 15)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 81, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 116, Short.MAX_VALUE)
                         .addComponent(btnCancel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnConfirm))
-                    .addComponent(actionsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(selectionBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(actionsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap()
+                .addComponent(selectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnConfirm)
                     .addComponent(btnCancel))
@@ -140,7 +133,7 @@ public class ActionSelector extends javax.swing.JDialog {
     }//GEN-LAST:event_btnCancelActionPerformed
 
     private void btnConfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmActionPerformed
-		lastOptPrefs.putInt(String.valueOf(actionHash), acmdIndexMap.get(actionsGroup.getSelection().getActionCommand()));
+		lastOptPrefs.put(String.valueOf(elementsHash), Objects.toString(selectionBox.getSelectedItem()));
 		dispose();
     }//GEN-LAST:event_btnConfirmActionPerformed
 
@@ -148,21 +141,9 @@ public class ActionSelector extends javax.swing.JDialog {
 		btnCancelActionPerformed(null);
     }//GEN-LAST:event_formWindowClosing
 
-	public static class ASelAction {
-
-		private String actionName;
-		private Object actionObj;
-
-		public ASelAction(String actionName, Object actionObj) {
-			this.actionName = actionName;
-			this.actionObj = actionObj;
-		}
-	}
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup actionsGroup;
-    private javax.swing.JPanel actionsPanel;
     protected javax.swing.JButton btnCancel;
     protected javax.swing.JButton btnConfirm;
+    private javax.swing.JComboBox<String> selectionBox;
     // End of variables declaration//GEN-END:variables
 }

@@ -82,4 +82,17 @@ public class PointerTable {
 		dis.seek(pointers[idx]);
 		idx++;
 	}
+	
+	public void forEach(PointerTableCallback cb) throws IOException {
+		if (cb != null) {
+			while (hasNext()) {
+				next();
+				cb.read(dis);
+			}
+		}
+	}
+	
+	public static interface PointerTableCallback {
+		public void read(DataIOStream io) throws IOException;
+	}
 }
