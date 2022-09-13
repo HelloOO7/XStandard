@@ -14,6 +14,7 @@ public class ActionSelector extends javax.swing.JDialog {
 	private Map<String, Integer> acmdIndexMap = new HashMap<>();
 	private boolean dialogStateCancelled = false;
 	private int actionHash = 131;
+	private boolean disposeOnSelected;
 
 	public ActionSelector(java.awt.Dialog parent, boolean modal, ASelAction... actions) {
 		super(parent, modal);
@@ -59,6 +60,14 @@ public class ActionSelector extends javax.swing.JDialog {
 			idx++;
 		}
 		setSize(getPreferredSize());
+	}
+	
+	public void setDisposeOnSelected(boolean value) {
+		this.disposeOnSelected = value;
+	}
+	
+	public boolean getDisposeOnSelected() {
+		return disposeOnSelected;
 	}
 
 	public Object getSelectedUserObj() {
@@ -141,7 +150,9 @@ public class ActionSelector extends javax.swing.JDialog {
 
     private void btnConfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmActionPerformed
 		lastOptPrefs.putInt(String.valueOf(actionHash), acmdIndexMap.get(actionsGroup.getSelection().getActionCommand()));
-		dispose();
+		if (disposeOnSelected) {
+			dispose();
+		}
     }//GEN-LAST:event_btnConfirmActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing

@@ -1,11 +1,8 @@
 package xstandard.math.geom;
 
 import xstandard.math.AABB6f;
-import xstandard.math.vec.Vec2f;
 import xstandard.math.vec.Vec3f;
-import java.awt.Polygon;
 import java.util.Arrays;
-import java.util.Collection;
 
 public class Trianglef {
 
