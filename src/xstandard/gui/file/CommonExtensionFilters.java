@@ -5,6 +5,7 @@ public class CommonExtensionFilters {
 	public static final ExtensionFilter JPG = new ExtensionFilter("JPEG File Interchange Format", "*.jpg", "*.jfif");
 	public static final ExtensionFilter BMP = new ExtensionFilter("Bitmap", "*.bmp");
 	public static final ExtensionFilter BITMAP_COMMON = new ExtensionFilter("Bitmap", "*.png", "*.jpg", "*.jpeg", "*.jfif", "*.bmp");
+	public static final ExtensionFilter JAR = new ExtensionFilter("Java Archive", "*.jar");
 	public static final ExtensionFilter EXE = new ExtensionFilter("Win32 executable", "*.exe");
 	public static final ExtensionFilter DLL = new ExtensionFilter("Dynamically linked library", "*.dll");
 	public static final ExtensionFilter LINUX_EXE = new ExtensionFilter("Unix executable", "*");

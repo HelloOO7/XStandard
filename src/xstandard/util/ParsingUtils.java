@@ -32,10 +32,13 @@ public class ParsingUtils {
 			return Integer.parseUnsignedInt(str.substring(2), 16);
 		}
 		if (str.startsWith("-0x")){
-			return Integer.parseInt(str.substring(2), 16);
+			return Integer.parseInt(str.substring(3), 16);
 		}
 		if (str.startsWith("0b")){
-			return Integer.parseInt(str.substring(2), 2);
+			return Integer.parseUnsignedInt(str.substring(2), 2);
+		}
+		if (str.startsWith("-0b")){
+			return Integer.parseInt(str.substring(3), 2);
 		}
 		return Integer.parseInt(str);
 	}
@@ -45,10 +48,13 @@ public class ParsingUtils {
 			return Long.parseUnsignedLong(str.substring(2), 16);
 		}
 		if (str.startsWith("-0x")){
-			return Long.parseLong(str.substring(2), 16);
+			return Long.parseLong(str.substring(3), 16);
 		}
 		if (str.startsWith("0b")){
-			return Long.parseLong(str.substring(2), 2);
+			return Long.parseUnsignedLong(str.substring(2), 2);
+		}
+		if (str.startsWith("-0b")){
+			return Long.parseLong(str.substring(3), 2);
 		}
 		return Long.parseLong(str);
 	}

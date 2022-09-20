@@ -44,7 +44,7 @@ public class ArcFile extends FSFileAdapter {
 		return true;
 	}*/
 	@Override
-	public List<FSFile> listFiles() {
+	public List<? extends FSFile> listFiles() {
 		return accessor.getArcFiles(this);
 	}
 

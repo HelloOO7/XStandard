@@ -20,29 +20,25 @@ public class VFSFile extends FSFile {
 	private FSFile ovFile;
 
 	public VFSFile(String path, VFS fs) {
-		FSManager fsm = fs.getFS();
-
 		this.fs = fs;
-		this.path = fsm.getWildCardManager().getWildCardedPath(path);
+		this.path = fs.wildCards.getWildCardedPath(path);
 		this.rootfs = fs.getBaseFSRoot();
 		this.ovfs = fs.getOvFSRoot();
-		baseFile = fsm.getFileFromRefPath(rootfs, path);
-		ovFile = fsm.getFileFromRefPath(ovfs, path);
+		baseFile = fs.seekFile(rootfs, path);
+		ovFile = fs.seekFile(ovfs, path);
 	}
 
-	public VFSFile(String path, VFS fs, FSFile baseFile) {
-		FSManager fsm = fs.getFS();
-		
+	public VFSFile(String path, VFS fs, FSFile baseFile) {		
 		if (path.contains("..")) {
 			throw new RuntimeException("Relative paths are forbidden in VFS.");
 		}
 
 		this.fs = fs;
-		this.path = fsm.getWildCardManager().getWildCardedPath(path);
+		this.path = fs.wildCards.getWildCardedPath(path);
 		this.rootfs = fs.getBaseFSRoot();
 		this.ovfs = fs.getOvFSRoot();
 		this.baseFile = baseFile;
-		ovFile = fsm.getFileFromRefPath(ovfs, path);
+		ovFile = fs.seekFile(ovfs, path);
 	}
 
 	/**
@@ -218,7 +214,7 @@ public class VFSFile extends FSFile {
 
 	@Override
 	public void setPath(String newPath) {
-		FSWildCardManager wcm = fs.getFS().getWildCardManager();
+		FSWildCardManager wcm = fs.wildCards;
 
 		newPath = wcm.getWildCardedPath(newPath);
 

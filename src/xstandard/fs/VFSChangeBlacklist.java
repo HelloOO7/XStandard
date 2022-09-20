@@ -67,7 +67,7 @@ public class VFSChangeBlacklist {
 		if (path.contains("..")) {
 			throw new IllegalArgumentException("Relative paths are forbidden in VFS.");
 		}
-		path = fs.getFS().getWildCardManager().getWildCardedPath(path);
+		path = fs.wildCards.getWildCardedPath(path);
 		if (!blacklistedPaths.contains(path)) {
 			blacklistedPaths.add(path);
 			writeToIO();
@@ -120,7 +120,7 @@ public class VFSChangeBlacklist {
 	public void doRemoveFiles(FSFile root) {
 		for (String blPath : blacklistedPaths) {
 			System.out.println("Removing file " + blPath);
-			FSFile victim = root.getMatchingChild(blPath, fs.getFS().getWildCardManager());
+			FSFile victim = root.getMatchingChild(blPath, fs.wildCards);
 			if (victim != null) {
 				victim.delete();
 			} else {
