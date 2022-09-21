@@ -19,26 +19,32 @@ public class VFSFile extends FSFile {
 	private FSFile baseFile;
 	private FSFile ovFile;
 
-	public VFSFile(String path, VFS fs) {
+	private void init(String path, VFS fs) {
 		this.fs = fs;
 		this.path = fs.wildCards.getWildCardedPath(path);
 		this.rootfs = fs.getBaseFSRoot();
 		this.ovfs = fs.getOvFSRoot();
+	}
+	
+	public VFSFile(String path, VFS fs) {
+		init(path, fs);
 		baseFile = fs.seekFile(rootfs, path);
 		ovFile = fs.seekFile(ovfs, path);
 	}
 
-	public VFSFile(String path, VFS fs, FSFile baseFile) {		
+	public VFSFile(String path, VFS fs, FSFile baseFile) {
+		init(path, fs);
+		this.baseFile = baseFile;
+		this.ovFile = fs.seekFile(ovfs, path);
+	}
+	
+	public VFSFile(String path, VFS fs, FSFile baseFile, FSFile ovFile) {
 		if (path.contains("..")) {
 			throw new RuntimeException("Relative paths are forbidden in VFS.");
 		}
-
-		this.fs = fs;
-		this.path = fs.wildCards.getWildCardedPath(path);
-		this.rootfs = fs.getBaseFSRoot();
-		this.ovfs = fs.getOvFSRoot();
+		init(path, fs);
 		this.baseFile = baseFile;
-		ovFile = fs.seekFile(ovfs, path);
+		this.ovFile = ovFile;
 	}
 
 	/**

@@ -291,6 +291,7 @@ public class VFS {
 			//If it does not exist, we will create empty files on the overlay, also expand ArcFiles with an accessor
 			String[] splitPath = StringEx.splitOnecharFastNoBlank(path, '/');
 			result = overlay;
+			boolean isNonVFS = false;
 			for (int t = 0; t < splitPath.length; t++) {
 				String token = splitPath[t];
 				if (token.startsWith(":") && token.endsWith(":")) {
@@ -305,6 +306,7 @@ public class VFS {
 					//System.out.println("Expanding ArcFile " + origin.getPath());
 					ArcFile af = new ArcFile(origin, afa);
 					result = af;
+					isNonVFS = true;
 
 					StringBuilder pathInArc = new StringBuilder();
 					for (int t2 = t + 1; t2 < splitPath.length; t2++) {
@@ -316,6 +318,9 @@ public class VFS {
 						break;
 					}
 				}
+			}
+			if (!isNonVFS) {
+				result = new VFSFile(path, this, null, result);
 			}
 		}
 		//System.out.println("Got file " + result + " for request " + path);
