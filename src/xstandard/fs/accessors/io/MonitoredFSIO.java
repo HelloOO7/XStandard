@@ -43,7 +43,7 @@ public class MonitoredFSIO extends IOStreamWrapper {
 
 		if (everWritten) {
 			if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
-				if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
+				if (vfsf.getBaseFile() == null || !FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
 					vfsf.getVFS().notifyFileChange(vfsf.getPath());
 				}
 			}

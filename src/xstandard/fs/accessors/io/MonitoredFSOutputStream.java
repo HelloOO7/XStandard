@@ -44,13 +44,8 @@ public class MonitoredFSOutputStream extends WriteableWrapper {
 		if (everWritten) {
 			if (vfsf.getVFS().isFileChangeBlacklisted(vfsf.getPath())) {
 				System.out.println("File " + vfsf + " is in the blacklist, checking for changes.");
-				if (!FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
+				if (vfsf.getBaseFile() == null || !FSUtil.fileCmp(vfsf.getBaseFile(), vfsf.getOvFile())) {
 					System.out.println("File " + vfsf + " has changed. Removing from blacklist.");
-					int baseLen = vfsf.getBaseFile().length();
-					int ovLen = vfsf.getOvFile().length();
-					if (baseLen != ovLen) {
-						System.out.println("(Length difference - BaseFS: " + baseLen + " / OvFS: " + ovLen + ")");
-					}
 					vfsf.getVFS().notifyFileChange(vfsf.getPath());
 				}
 			}

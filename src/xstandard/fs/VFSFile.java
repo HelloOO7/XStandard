@@ -25,7 +25,7 @@ public class VFSFile extends FSFile {
 		this.rootfs = fs.getBaseFSRoot();
 		this.ovfs = fs.getOvFSRoot();
 	}
-	
+
 	public VFSFile(String path, VFS fs) {
 		init(path, fs);
 		baseFile = fs.seekFile(rootfs, path);
@@ -37,7 +37,7 @@ public class VFSFile extends FSFile {
 		this.baseFile = baseFile;
 		this.ovFile = fs.seekFile(ovfs, path);
 	}
-	
+
 	public VFSFile(String path, VFS fs, FSFile baseFile, FSFile ovFile) {
 		if (path.contains("..")) {
 			throw new RuntimeException("Relative paths are forbidden in VFS.");
@@ -75,8 +75,8 @@ public class VFSFile extends FSFile {
 	}
 
 	/**
-	 * Gets either the linked OvFS or BaseFS file, depending on whichever
-	 * exists. The OvFS file takes priority.
+	 * Gets either the linked OvFS or BaseFS file, depending on whichever exists. The OvFS file takes
+	 * priority.
 	 *
 	 * @return
 	 */
@@ -84,7 +84,7 @@ public class VFSFile extends FSFile {
 		if (ovFile.exists() && !ovFile.isDirectory()) {
 			return ovFile;
 		}
-		if (baseFile == null){
+		if (baseFile == null) {
 			return ovFile;
 		}
 		return baseFile;
@@ -156,7 +156,9 @@ public class VFSFile extends FSFile {
 	public IOStream getIO() {
 		if (!ovFile.exists()) {
 			ensureOvParentExists();
-			FSUtil.copy(baseFile, ovFile);
+			if (baseFile != null) {
+				FSUtil.copy(baseFile, ovFile);
+			}
 			fs.notifyOvFsNewFileInit(getPath());
 		}
 		return new MonitoredFSIO(this);
