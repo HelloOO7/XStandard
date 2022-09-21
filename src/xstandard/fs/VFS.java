@@ -276,7 +276,7 @@ public class VFS {
 		}
 		boolean isExistingBase = false;
 		FSFile existing = seekFile(overlay, path);
-		if (existing != null && !existing.exists()) {
+		if (existing == null || !existing.exists()) {
 			isExistingBase = true;
 			existing = seekFile(root, path);
 		}
