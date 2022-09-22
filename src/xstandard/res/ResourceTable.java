@@ -18,6 +18,7 @@ import java.util.logging.Logger;
  */
 public class ResourceTable {
 
+	ClassLoader classLoader;
 	private String rootClasspath;
 	private List<ResourceInfo> data = new ArrayList<>();
 
@@ -45,9 +46,11 @@ public class ResourceTable {
 
 	/**
 	 * Reads a resource table from a stream.
+	 * @param cldr ClassLoader for accessing the files.
 	 * @param in InputStream of the table data.
 	 */
-	public ResourceTable(InputStream in) {
+	public ResourceTable(ClassLoader cldr, InputStream in) {
+		this.classLoader = cldr;
 		try (DataInputEx dis = new DataInStream(in)) {
 			rootClasspath = dis.readString();
 			int size = dis.readInt();
@@ -184,6 +187,10 @@ public class ResourceTable {
 		
 		public String getClasspath() {
 			return table.rootClasspath + "/" + getResourcePath();
+		}
+		
+		public InputStream getStream() {
+			return ResourceAccess.getStream(table.classLoader, getClasspath());
 		}
 
 		/**

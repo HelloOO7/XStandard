@@ -19,10 +19,8 @@ import java.util.UUID;
 public class ResourceAccess {
 
 	private static final Set<String> loadedTableNames = new HashSet<>();
-	private static List<ResourceTable> mountedResTables = new ArrayList<>();
+	private static final List<ResourceTable> mountedResTables = new ArrayList<>();
 	
-	private static final ClassLoader classLoader = ResourceAccess.class.getClassLoader();
-
 	/**
 	 * Constructs a ResourceFile object with a pathname.
 	 * @param pathname Path of the resource file.
@@ -48,7 +46,11 @@ public class ResourceAccess {
 	 * @return An array of bytes containing the entire resource's data.
 	 */
 	public static byte[] getByteArray(String name) {
-		return FSUtil.readStreamToBytesFastAndDangerous(getStream(name));
+		InputStream strm = getStream(name);
+		if (strm == null) {
+			return null;
+		}
+		return FSUtil.readStreamToBytes(strm);
 	}
 
 	/**
@@ -57,7 +59,17 @@ public class ResourceAccess {
 	 * @return An InputStream of the resource data.
 	 */
 	public static InputStream getStream(String name) {
-		return classLoader.getResourceAsStream(name);
+		for (ResourceTable t : mountedResTables) {
+			InputStream stream;
+			if ((stream = t.classLoader.getResourceAsStream(name)) != null) {
+				return stream;
+			}
+		}
+		return null;
+	}
+	
+	public static InputStream getStream(ClassLoader cldr, String name) {
+		return cldr.getResourceAsStream(name);
 	}
 
 	/**
@@ -101,18 +113,21 @@ public class ResourceAccess {
 	/**
 	 * Loads a resource table from a program resource location.
 	 * If the table was already loaded, nothing is done.
+	 * 
+	 * @param classLoader The class loader to access the resource table.
 	 * @param tableName Path to the table in program resources.
 	 */
-	public static void loadResourceTable(String tableName) {
+	public static void loadResourceTable(ClassLoader classLoader, String tableName) {
 		if (!loadedTableNames.contains(tableName)) {
-			InputStream stm = getStream(tableName);
 			try {
+				InputStream stm = getStream(classLoader, tableName);
 				stm.available();
-				ResourceTable tbl = new ResourceTable(stm);
+				ResourceTable tbl = new ResourceTable(classLoader, stm);
 				mountedResTables.add(tbl);
 				loadedTableNames.add(tableName);
 			} catch (Exception ex) {
-
+				System.err.println("Failed to load resource table " + tableName);
+				ex.printStackTrace();
 			}
 		}
 	}

@@ -46,7 +46,7 @@ public class ResourceFile extends FSFile{
 		if (isDirectory()){
 			return null;
 		}
-		return new InputStreamReadable(ResourceAccess.getStream(info.getClasspath()));
+		return new InputStreamReadable(info.getStream());
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class ResourceFile extends FSFile{
 	@Override
 	public int length() {
 		try {
-			InputStream in = ResourceAccess.getStream(info.getClasspath());
+			InputStream in = info.getStream();
 			int l = in.available();
 			in.close();
 			return l;
