@@ -7,6 +7,7 @@ import xstandard.io.base.iface.ReadableStream;
 import xstandard.io.base.iface.WriteableStream;
 import java.util.ArrayList;
 import java.util.List;
+import xstandard.fs.accessors.arc.ArcFile;
 
 public class VFSFile extends FSFile {
 
@@ -81,10 +82,14 @@ public class VFSFile extends FSFile {
 	 * @return
 	 */
 	public FSFile getExistingFile() {
-		if (ovFile.exists() && !ovFile.isDirectory()) {
+		if (baseFile == null || ovFile.exists()) {
 			return ovFile;
 		}
-		if (baseFile == null) {
+		return baseFile;
+	}
+	
+	public FSFile getExistingRWFile() {
+		if (baseFile == null || (ovFile.exists() && !ovFile.isDirectory())) {
 			return ovFile;
 		}
 		return baseFile;
@@ -117,7 +122,7 @@ public class VFSFile extends FSFile {
 
 	@Override
 	public int length() {
-		return getExistingFile().length();
+		return getExistingRWFile().length();
 	}
 
 	@Override
@@ -137,7 +142,7 @@ public class VFSFile extends FSFile {
 
 	@Override
 	public ReadableStream getInputStream() {
-		return getExistingFile().getInputStream();
+		return getExistingRWFile().getInputStream();
 	}
 
 	@Override
@@ -165,14 +170,17 @@ public class VFSFile extends FSFile {
 	}
 
 	@Override
-	public List<FSFile> listFiles() {
+	public List<VFSFile> listFiles() {
 		List<? extends FSFile> ovChildren = ovFile.listFiles();
 		List<? extends FSFile> baseChildren = baseFile.listFiles();
 
-		List<FSFile> vfsChildren = new ArrayList<>();
+		List<VFSFile> vfsChildren = new ArrayList<>();
 
 		for (FSFile base : baseChildren) {
 			//doesn't HAVE to exist
+			if (fs.getArcFileAccessor().isArcFile(base)) {
+				base = new ArcFile(base, fs.getArcFileAccessor());
+			}
 			vfsChildren.add(new VFSFile(path + "/" + base.getName(), fs, base));
 		}
 

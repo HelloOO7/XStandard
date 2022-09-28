@@ -55,4 +55,8 @@ public class ArrayListModel<E> extends AbstractListModel<E> implements ComboBoxM
 	public Object getSelectedItem() {
 		return selectedItem;
 	}
+
+	public int indexOf(E element) {
+		return list.indexOf(element);
+	}
 }

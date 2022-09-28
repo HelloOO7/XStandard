@@ -91,6 +91,10 @@ public class VFS {
 	FSFile seekFile(FSFile root, String refPath) {
 		return wildCards.getFileFromRefPath(root, refPath, arcAccessor);
 	}
+	
+	public VFSFile getVFSRoot() {
+		return new VFSFile("", this, root, overlay);
+	}
 
 	/**
 	 * Gets the root file of the base layer.
@@ -116,6 +120,10 @@ public class VFS {
 
 	public FSFile getOvFSFile(String path) {
 		return seekFile(overlay, getRelativePath(path));
+	}
+	
+	public ArcFileAccessor getArcFileAccessor() {
+		return arcAccessor;
 	}
 
 	/**
@@ -166,7 +174,7 @@ public class VFS {
 					}
 					if (!isFileChangeBlacklisted(path)) {
 						System.out.println("Write " + path + " to " + target.getPath());
-						FSUtil.writeBytesToFile(target, FSUtil.readFileToBytes(ovFile));
+						ovFile.copyTo(target);
 					}
 				}
 			}
@@ -179,9 +187,9 @@ public class VFS {
 		}
 	}
 
-	private void applyToArcFile(FSFile root, FSFile fsf, ArcFile arc, ProgressMonitor monitor) {
-		List<ArcInput> inputs = getArcInputs(root, fsf);
-		ensureDotArcExistence(inputs, root);
+	private void applyToArcFile(FSFile srcDirRoot, FSFile srcDir, ArcFile arc, ProgressMonitor monitor) {
+		List<ArcInput> inputs = getArcInputs(srcDirRoot, srcDir);
+		ensureDotArcExistence(inputs, srcDirRoot);
 		arcAccessor.writeToArcFile(arc, monitor, inputs.toArray(new ArcInput[inputs.size()]));
 	}
 
@@ -195,15 +203,15 @@ public class VFS {
 		inputs.add(dotArc);
 	}
 
-	private List<ArcInput> getArcInputs(FSFile root, FSFile fsf) {
+	public List<ArcInput> getArcInputs(FSFile root, FSFile ovArcDir) {
 		List<ArcInput> inputs = new ArrayList<>();
-		if (fsf.isDirectory()) {
-			for (FSFile sub : fsf.listFiles()) {
+		if (ovArcDir.isDirectory()) {
+			for (FSFile sub : ovArcDir.listFiles()) {
 				inputs.addAll(getArcInputs(root, sub));
 			}
 		} else {
-			ArcInput thisInput = new ArcInput(fsf.getPathRelativeTo(root), fsf);
-			String fsPath = wildCards.getWildCardedPath(getRelativePath(fsf.getPath()));
+			ArcInput thisInput = new ArcInput(ovArcDir.getPathRelativeTo(root), ovArcDir);
+			String fsPath = wildCards.getWildCardedPath(getRelativePath(ovArcDir.getPath()));
 			if (!isFileChangeBlacklisted(fsPath)) {
 				System.out.println("Include ArcInput " + fsPath);
 				inputs.add(thisInput);
