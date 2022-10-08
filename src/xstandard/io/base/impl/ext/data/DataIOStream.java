@@ -194,7 +194,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	@Override
 	public void seek(long position) throws IOException {
 		if (position == 0 && currentBase > 0) {
-			throw new NullPointerException("Tried to seek to a null pointer ! !");
+//			throw new NullPointerException("Tried to seek to a null pointer ! !");
 		}
 		super.seek(position - currentBase);
 	}
