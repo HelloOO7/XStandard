@@ -6,10 +6,23 @@ public class AABB6f {
 
 	public Vec3f min = new Vec3f(Float.MAX_VALUE);
 	public Vec3f max = new Vec3f(-Float.MAX_VALUE);
+	
+	public AABB6f() {
+		
+	}
+	
+	public AABB6f(AABB6f src) {
+		set(src);
+	}
+	
+	public void zero() {
+		min.zero();
+		max.zero();
+	}
 
 	public void reset() {
 		min.set(Float.MAX_VALUE);
-		max.set(Float.MIN_VALUE);
+		max.set(-Float.MAX_VALUE);
 	}
 
 	public void update(Vec3f vec) {
@@ -47,6 +60,21 @@ public class AABB6f {
 	public void add(float x, float y, float z) {
 		min.add(x, y, z);
 		max.add(x, y, z);
+	}
+	
+	public void add(Vec3f vec) {
+		min.add(vec);
+		max.add(vec);
+	}
+	
+	public void mul(float value) {
+		min.mul(value);
+		max.mul(value);
+	}
+
+	public void mul(float x, float y, float z) {
+		min.mul(x, y, z);
+		max.mul(x, y, z);
 	}
 
 	public void div(float value) {
