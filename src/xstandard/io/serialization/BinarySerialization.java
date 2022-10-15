@@ -170,4 +170,27 @@ public class BinarySerialization {
 	protected static boolean isBitfieldStart(Field field) {
 		return field.getAnnotation(BitField.class).startBit() == 0;
 	}
+	
+	protected boolean isIfVersionPass(IfVersion ifv) {
+		return checkIfVersion(ifv, fileVersion);
+	}
+	
+	public static boolean checkIfVersion(IfVersion ifv, int fileVersion) {
+		int rhs = ifv.rhs();
+		switch (ifv.op()) {
+			case EQUAL:
+				return fileVersion == rhs;
+			case GEQUAL:
+				return fileVersion >= rhs;
+			case GREATER:
+				return fileVersion > rhs;
+			case LEQUAL:
+				return fileVersion <= rhs;
+			case LESS:
+				return fileVersion < rhs;
+			case NOTEQUAL:
+				return fileVersion != rhs;
+		}
+		return false;
+	}
 }

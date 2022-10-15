@@ -6,13 +6,16 @@ import xstandard.fs.accessors.DiskFile;
 import xstandard.util.ArraysEx;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javafx.application.Platform;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import xstandard.fs.FSUtil;
 
 public class XFileDialog {
 
@@ -143,34 +146,50 @@ public class XFileDialog {
 							}
 							fc.setInitialFileName(initFileName);
 							fc.setTitle(finalTitle);
+							
+							Map<ExtensionFilter, FileChooser.ExtensionFilter> filterMap = new HashMap<>();
+							Map<FileChooser.ExtensionFilter, ExtensionFilter> filterMapInv = new HashMap<>();
+							List<FileChooser.ExtensionFilter> nativeFilters = new ArrayList<>();
+							
 							int realFilterCount = 0;
 							if (extensionFilters != null) {
 								if (extensionFilters.length > 1 && !isSave) {
 									ExtensionFilter combined = ExtensionFilter.combine(extensionFilters);
-									fc.getExtensionFilters().add(new FileChooser.ExtensionFilter(combined.formatName, combined.filters));
+									nativeFilters.add(new FileChooser.ExtensionFilter(combined.formatName, combined.filters));
 								}
 
 								for (ExtensionFilter f : extensionFilters) {
 									if (f != null) {
-										fc.getExtensionFilters().add(new FileChooser.ExtensionFilter(f.formatName, f.filters));
+										FileChooser.ExtensionFilter nativeFilter = new FileChooser.ExtensionFilter(f.formatName, f.filters);
+										filterMap.put(f, nativeFilter);
+										filterMapInv.put(nativeFilter, f);
+										nativeFilters.add(nativeFilter);
 										realFilterCount++;
 									}
 								}
 							}
 							if (!isSave || extensionFilters == null || realFilterCount == 0) {
-								fc.getExtensionFilters().add(new FileChooser.ExtensionFilter(CommonExtensionFilters.ALL.formatName, CommonExtensionFilters.ALL.filters));
+								nativeFilters.add(new FileChooser.ExtensionFilter(CommonExtensionFilters.ALL.formatName, CommonExtensionFilters.ALL.filters));
 							}
+							fc.getExtensionFilters().addAll(nativeFilters);
 
 							if (isSave) {
+								fc.setSelectedExtensionFilter(filterMap.get(getInitialSelectedFilter(extensionFilters)));
 								File r = fc.showSaveDialog(null);
 								if (r != null) {
 									FileChooser.ExtensionFilter ef = fc.getSelectedExtensionFilter();
-									String ext = ef.getExtensions().get(0).replaceAll("\\*", "");
-									DiskFile df;
-									if (!r.getName().endsWith(ext)) {
-										df = new DiskFile(r.getAbsolutePath() + ext);
+									ExtensionFilter selectedXstd = filterMapInv.get(ef);
+									if (selectedXstd != null) {
+										saveSelectedExtensionFilter(extensionFilters, selectedXstd);
 									}
-									else {
+									List<String> saveExtensions = new ArrayList<>();
+									for (String ext : ef.getExtensions()) {
+										saveExtensions.add(ext.replace("*.", ""));
+									}
+									DiskFile df;
+									if (!saveExtensions.isEmpty() && !saveExtensions.contains(FSUtil.getFileExtension(r.getName()))) {
+										df = new DiskFile(r.getAbsolutePath() + saveExtensions.get(0));
+									} else {
 										df = new DiskFile(r);
 									}
 									rsl.add(df);
@@ -233,5 +252,35 @@ public class XFileDialog {
 		} else {
 			return null;
 		}
+	}
+
+	private static void saveSelectedExtensionFilter(ExtensionFilter[] filters, ExtensionFilter filter) {
+		int indexOf = 0;
+		for (ExtensionFilter ef : filters) {
+			if (ef == filter) {
+				break;
+			}
+			indexOf++;
+		}
+		prefs.putInt("filters_" + makeFilterHash(filters), indexOf);
+	}
+
+	private static ExtensionFilter getInitialSelectedFilter(ExtensionFilter[] filters) {
+		if (filters.length == 0) {
+			return null;
+		}
+		int index = prefs.getInt("filters_" + makeFilterHash(filters), 0);
+		if (index >= 0 && index < filters.length) {
+			return filters[index];
+		}
+		return null;
+	}
+
+	private static int makeFilterHash(ExtensionFilter[] filters) {
+		int hash = 7;
+		for (ExtensionFilter f : filters) {
+			hash = 37 * hash + f.hashCode();
+		}
+		return hash;
 	}
 }

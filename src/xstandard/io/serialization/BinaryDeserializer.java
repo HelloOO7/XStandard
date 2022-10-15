@@ -95,25 +95,6 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 	}
 
-	private boolean isIfVersionPass(IfVersion ifv) {
-		int rhs = ifv.rhs();
-		switch (ifv.op()) {
-			case EQUAL:
-				return fileVersion == rhs;
-			case GEQUAL:
-				return fileVersion >= rhs;
-			case GREATER:
-				return fileVersion > rhs;
-			case LEQUAL:
-				return fileVersion <= rhs;
-			case LESS:
-				return fileVersion < rhs;
-			case NOTEQUAL:
-				return fileVersion != rhs;
-		}
-		return false;
-	}
-
 	private void readObjectFields(Object obj, Class cls, int objStartAddress) throws InstantiationException, IllegalAccessException, IOException {
 		baseStream.resetSeekTrace();
 

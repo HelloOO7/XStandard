@@ -3,7 +3,9 @@ package xstandard.gui.file;
 import xstandard.fs.FSFile;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class ExtensionFilter {
 
@@ -90,6 +92,26 @@ public class ExtensionFilter {
 	@Override
 	public String toString() {
 		return getDisplayText();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj != null && obj instanceof ExtensionFilter) {
+			final ExtensionFilter other = (ExtensionFilter) obj;
+			return Objects.equals(other.formatName, this.formatName) && Arrays.equals(filters, other.filters);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 7;
+		hash = 37 * hash + Objects.hashCode(this.formatName);
+		hash = 37 * hash + Arrays.deepHashCode(this.filters);
+		return hash;
 	}
 
 	/*
