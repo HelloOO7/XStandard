@@ -83,6 +83,13 @@ public class Trianglef {
 	public Vec3f vector(int index) {
 		return new Vec3f(x[index], y[index], z[index]);
 	}
+	
+	public Vec3f vector(int index, Vec3f dest) {
+		dest.x = x[index];
+		dest.y = y[index];
+		dest.z = z[index];
+		return dest;
+	}
 
 	public float getYAtXZ(Vec3f point) {
 		return Trianglef.this.getYAtXZ(point.x, point.z);
@@ -114,9 +121,8 @@ public class Trianglef {
 		 */
 		Vec3f a = vector(1).sub(vector(0));
 		Vec3f b = vector(2).sub(vector(0));
-		dest.x = a.y * b.z - a.z * b.y;
-		dest.y = a.z * b.x - a.x * b.z;
-		dest.z = a.x * b.y - a.y * b.x;
+		a.cross(b, dest);
+		dest.normalize();
 		return dest;
 	}
 	

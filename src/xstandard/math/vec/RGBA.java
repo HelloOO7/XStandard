@@ -63,10 +63,14 @@ public class RGBA implements ICustomSerialization {
 	}
 
 	public RGBA(byte[] bytes) {
-		r = (short) (bytes[0] & 0xFF);
-		g = (short) (bytes[1] & 0xFF);
-		b = (short) (bytes[2] & 0xFF);
-		a = (short) (bytes[3] & 0xFF);
+		this(bytes, 0);
+	}
+	
+	public RGBA(byte[] bytes, int offset) {
+		r = (short) (bytes[offset + 0] & 0xFF);
+		g = (short) (bytes[offset + 1] & 0xFF);
+		b = (short) (bytes[offset + 2] & 0xFF);
+		a = (short) (bytes[offset + 3] & 0xFF);
 	}
 
 	public RGBA(DataInput dis) throws IOException {
