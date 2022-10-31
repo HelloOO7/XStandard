@@ -118,7 +118,7 @@ public class ExtensionFilter {
 	https://stackoverflow.com/questions/45321050/java-string-matching-with-wildcards
 	 */
 	private static String createRegexFromGlob(String glob) {
-		StringBuilder out = new StringBuilder("^");
+		StringBuilder out = new StringBuilder("(?i)^");
 		for (int i = 0; i < glob.length(); ++i) {
 			final char c = glob.charAt(i);
 			switch (c) {
