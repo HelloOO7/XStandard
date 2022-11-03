@@ -28,6 +28,10 @@ public class ThumbAssembler {
 	public static void writeBranchLinkInstruction(DataIOStream out, int branchTarget, boolean exchange) throws IOException {
 		int currentOffset = out.getPosition() + 4;
 		int diff = branchTarget - currentOffset;
+		if (exchange & diff < 0) {
+			//ceil the target
+			diff = (diff + 3) & 0xFFFFFFFC;
+		}
 		int value = diff >> 1;
 		int lowbits = value & 0x7FF;
 		int highbits = (value >> 11) & 0x7FF;

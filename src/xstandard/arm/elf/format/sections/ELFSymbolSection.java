@@ -141,6 +141,11 @@ public class ELFSymbolSection extends ELFSection {
 			}
 			return null;
 		}
+		
+		@Override
+		public String toString() {
+			return name + ": 0x" + Integer.toHexString(value) + "@ Section " + sectionIndex + " [0x" + Integer.toHexString(size) + "] (" + getSymType() + ")";
+		}
 	}
 	
 	public static enum ELFSpecialSectionIndex implements ISerializableEnum {

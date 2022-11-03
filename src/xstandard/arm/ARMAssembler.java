@@ -153,7 +153,7 @@ public class ARMAssembler {
 	}
 	
 	public static void writeBXInstruction(DataIOStream out, int reg, ARMCondition cond) throws IOException {
-		out.writeInt((cond.ordinal() << 28) | (0b000100101111111111110001 << 4) | (reg & 0xf));
+		out.writeInt((cond.bits << 28) | (0b000100101111111111110001 << 4) | (reg & 0xf));
 	}
 	
 	public static void writeBLXInstruction(DataIOStream out, int branchTarget) throws IOException{
