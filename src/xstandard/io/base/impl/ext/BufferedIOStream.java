@@ -101,8 +101,11 @@ public class BufferedIOStream extends IOStreamWrapper {
 		int availForReadBuf = streamLimit - bIdx;
 		//An accumulator for the return value
 		int readTotal = availForReadBuf;
-		if (availForReadBuf <= 0 || streamLimit == -1) {
-			throw new EOFException("Can not read " + len + " bytes at " + getPosition() + " - out of bounds!!");
+		if (availForReadBuf == 0 || streamLimit == -1) {
+			return -1;
+		}		
+		if (availForReadBuf < 0) {
+			throw new EOFException("Can not read " + len + " bytes at 0x" + Integer.toHexString(getPosition()) + " - out of bounds!!");
 		}
 
 		if (len <= availForReadBuf) {

@@ -48,6 +48,7 @@ public class IntList extends AbstractPrimitiveList {
 			ensureCapacity(index + 1);
 			System.arraycopy(array, index, array, index + 1, size - index);
 			array[index] = i;
+			size++;
 		}
 	}
 
