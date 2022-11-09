@@ -140,24 +140,21 @@ public class IOUtils {
 	}
 
 	public static SearchResult searchForBytes(DataIOStream in, int startPos, int endPos, SearchPattern... patterns) throws IOException {
+		return searchForBytes(in, startPos, endPos, 1, patterns);
+	}
+	
+	public static SearchResult searchForBytes(DataIOStream in, int startPos, int endPos, int align, SearchPattern... patterns) throws IOException {
 		if (patterns.length == 0) {
 			throw new IllegalArgumentException("At least one pattern has to be provided.");
 		}
-		int pos = in.getPosition();
-		int inLength = in.getLength();
-		if (endPos != -1) {
-			inLength = endPos;
-		}
+		int pos = startPos == -1 ? in.getPosition() : startPos;
+		int inLength = endPos == -1 ? in.getLength() : endPos;
 
 		int[] ptnCaps = new int[patterns.length];
 		int ptnLengthMax = 0;
 		for (int i = 0; i < patterns.length; i++) {
 			ptnCaps[i] = inLength - patterns[i].patternBytes.length;
 			ptnLengthMax = Math.max(ptnLengthMax, patterns[i].patternBytes.length);
-		}
-
-		if (startPos != -1) {
-			pos = startPos;
 		}
 
 		byte[] buffer = new byte[ptnLengthMax];
@@ -185,7 +182,7 @@ public class IOUtils {
 				}
 			}
 
-			pos++;
+			pos += align;
 		}
 
 		return null;

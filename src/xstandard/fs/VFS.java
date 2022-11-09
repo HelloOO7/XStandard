@@ -213,7 +213,7 @@ public class VFS {
 			ArcInput thisInput = new ArcInput(ovArcDir.getPathRelativeTo(root), ovArcDir);
 			String fsPath = wildCards.getWildCardedPath(getRelativePath(ovArcDir.getPath()));
 			if (!isFileChangeBlacklisted(fsPath)) {
-				System.out.println("Include ArcInput " + fsPath);
+				//System.out.println("Include ArcInput " + fsPath);
 				inputs.add(thisInput);
 			}
 		}
