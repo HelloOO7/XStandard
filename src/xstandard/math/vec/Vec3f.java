@@ -309,7 +309,7 @@ public class Vec3f extends Vector3f implements AbstractVector, Cloneable {
 	}
 
 	public Vec3f invert() {
-		return mul(-1);
+		return mul(-1f);
 	}
 
 	public Vec3f recip() {
