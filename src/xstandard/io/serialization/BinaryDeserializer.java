@@ -15,6 +15,7 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import xstandard.fs.FSFile;
 
 public class BinaryDeserializer extends BinarySerialization {
 
@@ -24,9 +25,29 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private Map<String, Object> definitions = new HashMap<>();
 
-	private Map<Integer, Object> objectsAtAddresses = new HashMap<>();
+	private Map<Integer, List<Object>> objectsAtAddresses = new HashMap<>();
 
 	private Map<Field, BitFieldReader> bitFieldStates = new HashMap<>();
+
+	public BinaryDeserializer() {
+		this(DEFAULT_BYTE_ORDER);
+	}
+
+	public BinaryDeserializer(ByteOrder bo) {
+		this(bo, ReferenceType.ABSOLUTE_POINTER);
+	}
+
+	public BinaryDeserializer(ReferenceType referenceType) {
+		this(DEFAULT_BYTE_ORDER, referenceType);
+	}
+
+	public BinaryDeserializer(ByteOrder bo, ReferenceType referenceType) {
+		this(bo, referenceType, DecimalType.FLOATING_POINT);
+	}
+
+	public BinaryDeserializer(ByteOrder bo, ReferenceType referenceType, DecimalType decimalType) {
+		this(null, bo, referenceType, decimalType);
+	}
 
 	public BinaryDeserializer(IOStream baseStream, ByteOrder bo, ReferenceType referenceType) {
 		this(baseStream, bo, referenceType, DecimalType.FLOATING_POINT);
@@ -47,6 +68,14 @@ public class BinaryDeserializer extends BinarySerialization {
 				Logger.getLogger(BinaryDeserializer.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
+	}
+
+	public <T> T deserializeFile(Class<T> cls, FSFile fsf) {
+		setStream(fsf.getIO());
+		T retval = deserialize(cls);
+		closeStream();
+		setStream(null);
+		return retval;
 	}
 
 	public <T> T deserialize(Class<T> cls) {
@@ -104,6 +133,11 @@ public class BinaryDeserializer extends BinarySerialization {
 		if (cls == null) {
 			cls = obj.getClass();
 		}
+
+		if (cls.isAnnotationPresent(PointerBase.class)) {
+			updatePointerBase(((PointerBase) cls.getAnnotation(PointerBase.class)).addend());
+		}
+
 		Field lastBitfieldLockField = null;
 		for (Field fld : getSortedFields(cls)) {
 			if (fld.isAnnotationPresent(IfVersion.class)) {
@@ -169,6 +203,10 @@ public class BinaryDeserializer extends BinarySerialization {
 		for (String def : localDefinitions) {
 			definitions.remove(def);
 		}
+
+		if (cls.isAnnotationPresent(PointerBase.class)) {
+			resetPointerBase();
+		}
 	}
 
 	public Object getDefinition(String name) {
@@ -207,10 +245,6 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 
 		cls = getUnboxedClass(cls);
-
-		if (cls.isAnnotationPresent(PointerBase.class)) {
-			updatePointerBase(((PointerBase) cls.getAnnotation(PointerBase.class)).addend());
-		}
 
 		Object value = null;
 
@@ -264,10 +298,6 @@ public class BinaryDeserializer extends BinarySerialization {
 			typeParameterStack.popTPS();
 		}
 
-		if (cls.isAnnotationPresent(PointerBase.class)) {
-			resetPointerBase();
-		}
-
 		return value;
 	}
 
@@ -282,7 +312,10 @@ public class BinaryDeserializer extends BinarySerialization {
 		if (bfr != null && bfr.isInitialized()) {
 			retval = decodeBitfieldPrimitive(cls, field);
 		} else {
-			if (cls == Integer.TYPE) {
+			if (hasAnnotation(PointerValue.class, cls, field)) {
+				retval = readPointer();
+			}
+			else if (cls == Integer.TYPE) {
 				retval = readSizedInt(field);
 			} else if (cls == Short.TYPE) {
 				retval = baseStream.readShort();
@@ -296,7 +329,7 @@ public class BinaryDeserializer extends BinarySerialization {
 						retval = baseStream.readFloat();
 						break;
 					case FIXED_POINT_NNFX:
-						int intValue = readSizedInt(field);
+						int intValue = readSizedSignedInt(field);
 						retval = intValue / 4096f;
 						break;
 				}
@@ -360,6 +393,27 @@ public class BinaryDeserializer extends BinarySerialization {
 			return (Enum) constants[ordinal];
 		}
 	}
+	
+	private void saveObjectAddress(int addr, Object o) {
+		List<Object> l = objectsAtAddresses.get(addr);
+		if (l == null) {
+			l = new ArrayList<>();
+			objectsAtAddresses.put(addr, l);
+		}
+		l.add(o);
+	}
+	
+	private Object getExistObject(int addr, Class cls) {
+		List<Object> l = objectsAtAddresses.get(addr);
+		if (l != null) {
+			for (Object o : l) {
+				if (cls.isAssignableFrom(o.getClass())) {
+					return o;
+				}
+			}
+		}
+		return null;
+	}
 
 	private Object readArray(Class cls, Field field) throws InstantiationException, IllegalAccessException, IOException {
 		debugPrint("array " + field + " at " + Integer.toHexString(baseStream.getPosition()));
@@ -386,7 +440,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		seekPointer(ptr);
 		int absPtr = baseStream.getPositionUnbased();
-		Object existObj = objectsAtAddresses.get(absPtr);
+		Object existObj = getExistObject(absPtr, cls);
 		Object arr;
 		if (existObj != null) {
 			arr = existObj;
@@ -407,7 +461,7 @@ public class BinaryDeserializer extends BinarySerialization {
 					Array.set(arr, i, value);
 				}
 			}
-			objectsAtAddresses.put(absPtr, arr);
+			saveObjectAddress(absPtr, arr);
 		}
 		if (ptr != -1) {
 			baseStream.seek(posAfterPtr);
@@ -512,7 +566,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		Object obj = null;
 
 		int posBeforeObj = baseStream.getPositionUnbased();
-		Object existObj = objectsAtAddresses.get(posBeforeObj);
+		Object existObj = getExistObject(posBeforeObj, cls);
 		if (existObj != null) {
 			obj = existObj;
 		} else {
@@ -623,7 +677,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 				readObjectFields(obj, cls, posBeforeObj);
 			}
-			objectsAtAddresses.put(posBeforeObj, obj);
+			saveObjectAddress(posBeforeObj, obj);
 		}
 
 		if (ptr != -1) {
@@ -631,6 +685,14 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 
 		return obj;
+	}
+	
+	private int readSizedSignedInt(Field field) throws IOException {
+		return readSizedSignedInt(field, Integer.BYTES);
+	}
+
+	private int readSizedSignedInt(Field field, int defaultSize) throws IOException {
+		return readSizedSignedInt(getIntSize(defaultSize, field));
 	}
 
 	private int readSizedInt(Field field) throws IOException {
@@ -660,6 +722,19 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 
 		return readSizedInt(size);
+	}
+	
+	private int readSizedSignedInt(int size) throws IOException {
+		switch (size) {
+			case Integer.BYTES:
+				return baseStream.readInt();
+			case Short.BYTES:
+				return baseStream.readShort();
+			case Byte.BYTES:
+				return baseStream.readByte();
+		}
+
+		throw new RuntimeException("Unhandled integer size: " + size);
 	}
 
 	private int readSizedInt(int size) throws IOException {

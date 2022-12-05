@@ -136,7 +136,11 @@ public class IOUtils {
 	}
 
 	public static SearchResult searchForInt32(DataIOStream in, int startPos, int endPos, int value) throws IOException {
-		return searchForBytes(in, startPos, endPos, new SearchPattern(ByteBuffer.wrap(new byte[4]).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array()));
+		return searchForInt32(in, startPos, endPos, 1, value);
+	}
+	
+	public static SearchResult searchForInt32(DataIOStream in, int startPos, int endPos, int align, int value) throws IOException {
+		return searchForBytes(in, startPos, endPos, align, new SearchPattern(ByteBuffer.wrap(new byte[4]).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array()));
 	}
 
 	public static SearchResult searchForBytes(DataIOStream in, int startPos, int endPos, SearchPattern... patterns) throws IOException {

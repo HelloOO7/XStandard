@@ -15,6 +15,9 @@ public class SimpleColorSelector extends javax.swing.JPanel {
 	}
 	
 	public void attachColor(RGBA col){
+		if (col == null) {
+			col = RGBA.WHITE.clone();
+		}
 		this.color = col;
 		colorPreview.setBackground(getAlphadColor(col));
 	}

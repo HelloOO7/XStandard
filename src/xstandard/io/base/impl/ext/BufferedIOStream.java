@@ -125,13 +125,14 @@ public class BufferedIOStream extends IOStreamWrapper {
 				//If the byte remainder fits into a buffer, we can read the data out into it and use the rest for further reads
 				int pos = getPosition() + availForReadBuf;
 				seekBase(pos);
-				readTotal += readBase(buffer, 0, buffer.length);
-				System.arraycopy(buffer, 0, b, off + availForReadBuf, leftToRead);
+				int bufferFilled = readBase(buffer, 0, buffer.length);
+				int actuallyLeftToRead = Math.min(leftToRead, bufferFilled);
+				readTotal += actuallyLeftToRead;
+				System.arraycopy(buffer, 0, b, off + availForReadBuf, actuallyLeftToRead);
 				bStmPos = pos;
-				bIdx = leftToRead;
+				bIdx = actuallyLeftToRead;
 				bIdxMax = bIdx;
 				IOCommon.debugPrint("Reading over !! NewPos " + Long.toHexString(bStmPos));
-				return readTotal;
 			} else {
 				//Otherwise, read the data straight from the stream and impl-seek to the resulting position (which will force-refill the buffer)
 				int readAfter = readBase(b, off + availForReadBuf, len - availForReadBuf);

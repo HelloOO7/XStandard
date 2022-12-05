@@ -19,6 +19,23 @@ public class SubInputStream extends ReadableWrapper {
 			throw new RuntimeException("Could not seek to startPos of SubInputStream!");
 		}
 	}
+	
+	@Override
+	public int available() throws IOException {
+		return super.available() - startPos;
+	}
+	
+	@Override
+	public int read(byte[] b, int off, int len) throws IOException {
+		if (len == 0) {
+			return 0;
+		}
+		len = Math.min(len, getLength() - getPosition());
+		if (len == 0) {
+			return -1;
+		}
+		return super.read(b, off, len);
+	}
 
 	@Override
 	public int getPosition() throws IOException {

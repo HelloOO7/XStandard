@@ -162,7 +162,9 @@ public class BinarySerializer extends BinarySerialization {
 			BitField bf = field.getAnnotation(BitField.class);
 			bfw.writeValue(value, bf.startBit(), bf.bitCount());
 		} else {
-			if (cls == Integer.TYPE) {
+			if (hasAnnotation(PointerValue.class, cls, field)) {
+				writePointer(((Number) value).intValue(), field);
+			} else if (cls == Integer.TYPE) {
 				writeSizedInt(value, field);
 			} else if (cls == Short.TYPE) {
 				baseStream.writeShort((Short) value);
@@ -222,6 +224,15 @@ public class BinarySerializer extends BinarySerialization {
 		}
 
 		return children;
+	}
+
+	private void writePointer(int ptr, Field parentField) throws IOException {
+		if (refType == ReferenceType.SELF_RELATIVE_POINTER) {
+			ptr -= baseStream.getPosition();
+		} else {
+			ptr -= pointerBaseStack.peek();
+		}
+		writeSizedInt(ptr, parentField, Integer.BYTES);
 	}
 
 	private RefValue writeFieldPointer(Object value, Field field) throws IOException {

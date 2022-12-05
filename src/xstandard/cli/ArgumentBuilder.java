@@ -2,7 +2,6 @@ package xstandard.cli;
 
 import xstandard.util.ArraysEx;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ArgumentBuilder {

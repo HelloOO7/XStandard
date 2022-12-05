@@ -30,7 +30,7 @@ public class ComponentList<T extends JComponent> extends JPanel implements Mouse
 	public void addElement(T elem) {
 		addElement(elements.size(), elem);
 	}
-	
+
 	public void addElement(int idx, T elem) {
 		elements.add(idx, elem);
 		add(elem, idx);
@@ -44,14 +44,22 @@ public class ComponentList<T extends JComponent> extends JPanel implements Mouse
 		setSelectedElement(null);
 	}
 
+	public T getElementAt(int index) {
+		return elements.get(index);
+	}
+
+	public int getElementCount() {
+		return elements.size();
+	}
+
 	public void removeElement(T elem) {
 		remove(elem);
 		elements.remove(elem);
 		revalidate();
 		repaint();
 	}
-	
-	public void clear(){
+
+	public void clear() {
 		removeAll();
 		elements.clear();
 		repaint();
@@ -72,8 +80,8 @@ public class ComponentList<T extends JComponent> extends JPanel implements Mouse
 		}
 		setSelectedElement(selectedElement);
 	}
-	
-	public void setSelectedElement(T selectedElement){
+
+	public void setSelectedElement(T selectedElement) {
 		for (T nonSelect : elements) {
 			nonSelect.setOpaque(nonSelect == selectedElement);
 		}
@@ -93,7 +101,7 @@ public class ComponentList<T extends JComponent> extends JPanel implements Mouse
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		
+
 	}
 
 	@Override

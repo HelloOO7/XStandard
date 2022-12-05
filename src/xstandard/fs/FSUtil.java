@@ -144,15 +144,27 @@ public class FSUtil {
 	}
 
 	public static void transferStreams(ReadableStream in, WriteableStream out) throws IOException {
-		transferStreams(in, out, 0x10000);
+		transferStreams(in, out, -1);
 	}
 
-	public static void transferStreams(ReadableStream in, WriteableStream out, int bufSize) throws IOException {
+	public static void transferStreams(ReadableStream in, WriteableStream out, int maxOut) throws IOException {
+		transferStreams(in, out, maxOut, 0x10000);
+	}
+
+	public static void transferStreams(ReadableStream in, WriteableStream out, int maxOut, int bufSize) throws IOException {
 		byte[] buffer = new byte[bufSize];
 
 		int read;
-		while ((read = in.read(buffer)) != -1) {
-			out.write(buffer, 0, read);
+		if (maxOut == -1) {
+			while ((read = in.read(buffer)) != -1) {
+				out.write(buffer, 0, read);
+			}
+		}
+		else {
+			while (maxOut > 0 && (read = in.read(buffer, 0, Math.min(bufSize, maxOut))) != -1) {
+				out.write(buffer, 0, read);
+				maxOut -= read;
+			}
 		}
 	}
 
@@ -168,12 +180,12 @@ public class FSUtil {
 	public static void copy(FSFile source, FSFile target) {
 		boolean srcIsDir = source.isDirectory();
 		boolean tgtIsDir = target.isDirectory();
-		
+
 		if (srcIsDir && (tgtIsDir || !target.exists())) {
 			copyDirectory(source, target);
 			return;
 		}
-		
+
 		if (tgtIsDir && !srcIsDir) {
 			//copy file to withiin directory
 			target = target.getChild(source.getName());

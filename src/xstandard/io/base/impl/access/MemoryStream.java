@@ -51,7 +51,7 @@ public class MemoryStream implements IOStream {
 		if (position < limit) {
 			return buffer[position++] & 0xFF;
 		}
-		throw new EOFException("Tried to read at position " + Integer.toHexString(position) + ", but buffer is only " + Integer.toHexString(buffer.length) + " bytes!");
+		throw new EOFException("Tried to read at position 0x" + Integer.toHexString(position) + ", but buffer is only 0x" + Integer.toHexString(limit) + " bytes!");
 	}
 
 	@Override

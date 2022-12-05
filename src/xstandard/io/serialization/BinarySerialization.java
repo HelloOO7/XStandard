@@ -1,5 +1,6 @@
 package xstandard.io.serialization;
 
+import java.io.IOException;
 import xstandard.io.base.iface.IOStream;
 import xstandard.io.serialization.annotations.*;
 
@@ -10,6 +11,8 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BinarySerialization {
 
@@ -22,9 +25,28 @@ public class BinarySerialization {
 	public int fileVersion;
 
 	protected BinarySerialization(IOStream baseStream, ReferenceType refType, DecimalType decimalType) {
-		this.baseStream = new SerializationIOStream(baseStream);
+		setStream(baseStream);
 		this.refType = refType;
 		this.decimalType = decimalType;
+	}
+
+	public final void setStream(IOStream stream) {
+		if (stream != null) {
+			this.baseStream = new SerializationIOStream(stream);
+		}
+		else {
+			this.baseStream = null;
+		}
+	}
+	
+	protected void closeStream() {
+		if (baseStream != null) {
+			try {
+				baseStream.close();
+			} catch (IOException ex) {
+				Logger.getLogger(BinarySerialization.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
 	}
 
 	public static List<Field> getSortedFields(Class cls) {
@@ -157,7 +179,7 @@ public class BinarySerialization {
 		}
 		return clazz;
 	}
-	
+
 	protected static int getDefaultEnumSize(Class cls) {
 		Object[] constants = cls.getEnumConstants();
 		return constants.length <= 0x100 ? 1 : constants.length <= 0x10000 ? 2 : 4;
@@ -170,11 +192,11 @@ public class BinarySerialization {
 	protected static boolean isBitfieldStart(Field field) {
 		return field.getAnnotation(BitField.class).startBit() == 0;
 	}
-	
+
 	protected boolean isIfVersionPass(IfVersion ifv) {
 		return checkIfVersion(ifv, fileVersion);
 	}
-	
+
 	public static boolean checkIfVersion(IfVersion ifv, int fileVersion) {
 		int rhs = ifv.rhs();
 		switch (ifv.op()) {
