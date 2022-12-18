@@ -319,6 +319,14 @@ public class ComboBoxExInternal<T> extends JComboBox<T> {
 	public void setACPopUpOnType(boolean val) {
 		acPopUpOnType = val;
 	}
+	
+	@Override
+	public void removeAllItems() {
+        model.removeAllElements();
+        if (isEditable()) {
+            editor.setItem(null);
+        }
+	}
 
 	@Override
 	public int getSelectedIndex() {

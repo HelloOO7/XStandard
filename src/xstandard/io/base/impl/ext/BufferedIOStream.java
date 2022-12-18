@@ -126,13 +126,15 @@ public class BufferedIOStream extends IOStreamWrapper {
 				int pos = getPosition() + availForReadBuf;
 				seekBase(pos);
 				int bufferFilled = readBase(buffer, 0, buffer.length);
-				int actuallyLeftToRead = Math.min(leftToRead, bufferFilled);
-				readTotal += actuallyLeftToRead;
-				System.arraycopy(buffer, 0, b, off + availForReadBuf, actuallyLeftToRead);
-				bStmPos = pos;
-				bIdx = actuallyLeftToRead;
-				bIdxMax = bIdx;
-				IOCommon.debugPrint("Reading over !! NewPos " + Long.toHexString(bStmPos));
+				if (bufferFilled != -1) {
+					int actuallyLeftToRead = Math.min(leftToRead, bufferFilled);
+					readTotal += actuallyLeftToRead;
+					System.arraycopy(buffer, 0, b, off + availForReadBuf, actuallyLeftToRead);
+					bStmPos = pos;
+					bIdx = actuallyLeftToRead;
+					bIdxMax = bIdx;
+					IOCommon.debugPrint("Reading over !! NewPos " + Long.toHexString(bStmPos));
+				}
 			} else {
 				//Otherwise, read the data straight from the stream and impl-seek to the resulting position (which will force-refill the buffer)
 				int readAfter = readBase(b, off + availForReadBuf, len - availForReadBuf);

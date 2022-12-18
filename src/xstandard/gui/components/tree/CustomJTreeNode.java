@@ -1,6 +1,8 @@
 package xstandard.gui.components.tree;
 
 import java.awt.event.MouseEvent;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -29,7 +31,7 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	public abstract int getIconResourceID();
 
 	public abstract String getNodeName();
-	
+
 	@Override
 	public String toString() {
 		return getClass() + ":" + getNodeName();
@@ -38,7 +40,7 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	public void onNodeSelected() {
 
 	}
-	
+
 	public void onNodeDeselected() {
 
 	}
@@ -62,6 +64,30 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 			if (n instanceof CustomJTreeNode) {
 				((CustomJTreeNode) n).setParent(this);
 			}
+		}
+	}
+
+	private void recursiveFree() {
+		if (renderer != null) {
+			renderer.free();
+			renderer = null;
+		}
+		iconProvider = null;
+		for (int ch = 0; ch < getChildCount(); ch++) {
+			TreeNode n = getChildAt(ch);
+			if (n instanceof CustomJTreeNode) {
+				((CustomJTreeNode) n).recursiveFree();
+			}
+		}
+	}
+
+	@Override
+	public void remove(int childIndex) {
+		TreeNode child = getChildAt(childIndex);
+		super.remove(childIndex);
+		if (child instanceof CustomJTreeNode) {
+			CustomJTreeNode n = (CustomJTreeNode) child;
+			n.recursiveFree();
 		}
 	}
 

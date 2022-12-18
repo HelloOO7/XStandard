@@ -26,6 +26,11 @@ public class DefaultCustomJTreeCellRenderer extends DefaultTreeCellRenderer impl
 	private void setLabelIcon(Icon icn) {
 		super.setIcon(icn);
 	}
+	
+	@Override
+	public void free() {
+		getUI().uninstallUI(this);
+	}
 
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value,

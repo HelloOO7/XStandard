@@ -13,4 +13,8 @@ public interface CustomJTreeCellRenderer extends TreeCellRenderer {
 	public void repaint();
 	
 	public boolean isEditable(EventObject e);
+	
+	public default void free() {
+		
+	}
 }
