@@ -182,6 +182,7 @@ public class ZipArchive extends FSFileAdapter {
 	}
 
 	public ZipEntry getEntryForPath(String path) {
+		path = FSUtil.cleanPathFromRootSlash(path);
 		path = stripLastSlash(path);
 		for (ZipEntry e : entries) {
 			String cmpName = stripLastSlash(e.getName());

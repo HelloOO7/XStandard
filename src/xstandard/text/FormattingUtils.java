@@ -191,7 +191,11 @@ public class FormattingUtils {
 	 */
 	public static String getEnumlyString(String str){
 		str = getStrWithoutDiacritics(str.trim());
-		return getStrWithoutNonAlphanumeric(str).toUpperCase();
+		String val = getStrWithoutNonAlphanumeric(str).toUpperCase();
+		if (val.length() > 0 && Character.isDigit(val.charAt(0))) {
+			val = "_" + val; //do not allow digit as first character
+		}
+		return val;
 	}
 
 	/**

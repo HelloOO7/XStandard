@@ -21,6 +21,7 @@ public class ZipEntryFile extends FSFile {
 	private String path;
 	
 	public ZipEntryFile(ZipArchive arc, String path){
+		path = FSUtil.cleanPathFromRootSlash(path);
 		this.arc = arc;
 		this.path = ZipArchive.stripLastSlash(path);
 		this.e = arc.getEntryForPath(path);

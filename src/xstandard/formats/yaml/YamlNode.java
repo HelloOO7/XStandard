@@ -125,6 +125,11 @@ public class YamlNode {
 		}
 		return null;
 	}
+	
+	public short getChildShortValue(String name) {
+		YamlNode ch = getChildByName(name);
+		return ch != null ? ch.getValueShort() : -1;
+	}
 
 	public int getChildIntValue(String name) {
 		YamlNode ch = getChildByName(name);
@@ -223,6 +228,10 @@ public class YamlNode {
 	public int getKeyInt() {
 		return ParsingUtils.parseBasedInt(getKey());
 	}
+	
+	public short getValueShort() {
+		return ParsingUtils.parseBasedShort(getValue());
+	}
 
 	public int getValueInt() {
 		return ParsingUtils.parseBasedInt(getValue());
@@ -266,7 +275,7 @@ public class YamlNode {
 	}
 
 	public List<String> getChildValuesAsListStr() {
-		List<String> l = new ArrayList<>();
+		List<String> l = new ArrayList<>(children.size());
 		for (YamlNode n : children) {
 			l.add(n.getValue());
 		}
@@ -274,7 +283,7 @@ public class YamlNode {
 	}
 
 	public List<Integer> getChildValuesAsListInt() {
-		List<Integer> l = new ArrayList<>();
+		List<Integer> l = new ArrayList<>(children.size());
 		for (YamlNode n : children) {
 			l.add(n.getValueInt());
 		}
