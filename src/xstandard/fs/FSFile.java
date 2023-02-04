@@ -383,7 +383,13 @@ public abstract class FSFile implements Comparable<FSFile> {
 	 * @return
 	 */
 	public String getPathRelativeTo(FSFile relativeTo) {
-		return getPathRelativeTo(getPath(), relativeTo.getPath());
+		String otherPath = relativeTo.getPath();
+		if (!otherPath.endsWith("/")) {
+			if (relativeTo.isDirectory()) {
+				otherPath += "/"; //this is needed for the relativizer to handle directories properly
+			}
+		}
+		return getPathRelativeTo(getPath(), otherPath);
 	}
 
 	/**
