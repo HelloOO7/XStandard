@@ -92,10 +92,12 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	}
 
 	void loadRenderingComponents() {
-		renderer.setText(getNodeName());
-		if (iconProvider == null) {
-			throw new NullPointerException("Icon provider not set !! " + getNodeName());
+		if (renderer != null) {
+			renderer.setText(getNodeName());
+			if (iconProvider == null) {
+				throw new NullPointerException("Icon provider not set !! " + getNodeName());
+			}
+			renderer.setIcon(iconProvider.getImageIcon(getIconResourceID()));
 		}
-		renderer.setIcon(iconProvider.getImageIcon(getIconResourceID()));
 	}
 }

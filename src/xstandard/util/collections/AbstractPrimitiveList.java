@@ -88,7 +88,7 @@ public abstract class AbstractPrimitiveList {
 	@Override
 	public String toString() {
 		Object arr = getArray();
-		int count = getArrayLength();
+		int count = size;
 
 		StringBuilder sb = new StringBuilder("[");
 		for (int i = 0; i < count; i++) {
