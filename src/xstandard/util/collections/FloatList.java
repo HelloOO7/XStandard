@@ -25,10 +25,6 @@ public class FloatList extends AbstractPrimitiveList {
 		il.size = values.length;
 		return il;
 	}
-	
-	public float[] toArray() {
-		return Arrays.copyOf(array, size);
-	}
 
 	public float get(int index) {
 		rangeCheck(index);
@@ -49,9 +45,10 @@ public class FloatList extends AbstractPrimitiveList {
 			add(f);
 		} else {
 			rangeCheckAdd(index);
-			ensureCapacity(index + 1);
+			ensureCapacity(size + 1);
 			System.arraycopy(array, index, array, index + 1, size - index);
 			array[index] = f;
+			size++;
 		}
 	}
 
@@ -98,5 +95,9 @@ public class FloatList extends AbstractPrimitiveList {
 	@Override
 	protected Object getArray() {
 		return array;
+	}
+
+	public float[] toArray() {
+		return Arrays.copyOf(array, size);
 	}
 }

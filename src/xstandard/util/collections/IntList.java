@@ -45,7 +45,7 @@ public class IntList extends AbstractPrimitiveList {
 			add(i);
 		} else {
 			rangeCheckAdd(index);
-			ensureCapacity(index + 1);
+			ensureCapacity(size + 1);
 			System.arraycopy(array, index, array, index + 1, size - index);
 			array[index] = i;
 			size++;
