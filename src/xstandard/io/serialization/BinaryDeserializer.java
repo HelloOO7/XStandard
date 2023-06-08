@@ -489,7 +489,13 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private int readPointer(Field field, boolean isListElem, AnnotatedElement... ant) throws IOException {
 		int posBeforePtr = baseStream.getPosition();
-		if ((field != null || isListElem) && refType != ReferenceType.NONE && !hasAnnotation(Inline.class, ant) && !hasAnnotation(MagicStr.class, ant)) {
+		if (
+			(field != null || isListElem) 
+			&& refType != ReferenceType.NONE 
+			&& !hasAnnotation(Inline.class, ant) 
+			&& !hasAnnotation(MagicStr.class, ant)
+			&& !(!isListElem && hasAnnotation(InlineArray.class, ant))
+		) {
 			debugPrint("Object " + field + " is noninline !!");
 			int ptr = 0;
 

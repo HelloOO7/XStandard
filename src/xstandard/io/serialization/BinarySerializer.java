@@ -460,7 +460,12 @@ public class BinarySerializer extends BinarySerialization {
 			}
 		}
 
-		boolean isInline = hasAnnotation(Inline.class, cls, field) || refType == ReferenceType.NONE || field == null || hasAnnotation(MagicStr.class, cls, field);
+		boolean isInline = 
+			hasAnnotation(Inline.class, cls, field)
+			|| refType == ReferenceType.NONE 
+			|| field == null 
+			|| hasAnnotation(MagicStr.class, cls, field)
+			|| (hasAnnotation(InlineArray.class, field) && (cls.isArray() || Collection.class.isAssignableFrom(cls)));
 
 		if ((lp == LengthPos.LengthPosType.BEFORE_PTR) && obj_NeedsSize) {
 			writeArrayLength(size, field);
