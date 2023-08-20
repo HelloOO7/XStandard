@@ -85,7 +85,7 @@
         <Property name="maximumRowCount" type="int" value="20"/>
       </Properties>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;UserObjWrapper&gt;"/>
       </AuxValues>
     </Component>
   </SubComponents>

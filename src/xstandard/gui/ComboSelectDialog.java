@@ -5,19 +5,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
 
-public class ComboSelectDialog extends javax.swing.JDialog {
+public class ComboSelectDialog<T> extends javax.swing.JDialog {
 
 	private Preferences lastOptPrefs = XStandardPrefs.node("ComboSelector");
-
-	private Map<String, Object> userDataMap = new HashMap<>();
 	
 	private boolean dialogStateCancelled = false;
 	private int elementsHash = 131;
-
-	public ComboSelectDialog(java.awt.Frame parent, boolean modal, String title, List<?> options) {
+	
+	private final Function<T, String> toStringFunc;
+	
+	public ComboSelectDialog(java.awt.Frame parent, boolean modal, String title, List<T> options) {
+		this(parent, modal, title, options, new Function<T, String>() {
+			@Override
+			public String apply(T t) {
+				return Objects.toString(t);
+			}
+		});
+	}
+	
+	public ComboSelectDialog(java.awt.Frame parent, boolean modal, String title, List<T> options, Function<T, String> stringCvtr) {
 		super(parent, modal);
+		toStringFunc = stringCvtr;
 		cbSelInit(options);
 		setLocationRelativeTo(parent);
 		if (title != null) {
@@ -25,11 +36,11 @@ public class ComboSelectDialog extends javax.swing.JDialog {
 		}
 	}
 
-	public ComboSelectDialog(java.awt.Frame parent, boolean modal, List<?> options) {
+	public ComboSelectDialog(java.awt.Frame parent, boolean modal, List<T> options) {
 		this(parent, modal, null, options);
 	}
 
-	private void cbSelInit(List<?> options) {
+	private void cbSelInit(List<T> options) {
 		initComponents();
 
 		getRootPane().setDefaultButton(btnConfirm);
@@ -42,22 +53,26 @@ public class ComboSelectDialog extends javax.swing.JDialog {
 
 		selectionBox.removeAllItems();
 		
-		for (Object opt : options) {
-			String val = Objects.toString(opt);
-			selectionBox.addItem(val);
-			userDataMap.put(val, opt);
+		Map<String, Object> map = new HashMap<>();
+		for (T opt : options) {
+			UserObjWrapper<T> w = new UserObjWrapper<>(opt, toStringFunc);
+			map.put(w.toString(), opt);
+			selectionBox.addItem(w);
 		}
 		
-		if (lastSelectedItem != null && userDataMap.keySet().contains(lastSelectedItem)) {
-			selectionBox.setSelectedItem(lastSelectedItem);
+		if (lastSelectedItem != null && map.containsKey(lastSelectedItem)) {
+			selectionBox.setSelectedItem(map.get(lastSelectedItem));
 		}
 		
 		setSize(getPreferredSize());
 	}
 
-	public Object getSelectedUserObj() {
+	public T getSelectedUserObj() {
 		if (!dialogStateCancelled) {
-			return userDataMap.get(Objects.toString(selectionBox.getSelectedItem()));
+			Object item = selectionBox.getSelectedItem();
+			if (item != null && item instanceof UserObjWrapper) {
+				return ((UserObjWrapper<T>) item).obj;
+			}
 		}
 		return null;
 	}
@@ -144,6 +159,22 @@ public class ComboSelectDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     protected javax.swing.JButton btnCancel;
     protected javax.swing.JButton btnConfirm;
-    private javax.swing.JComboBox<String> selectionBox;
+    private javax.swing.JComboBox<UserObjWrapper> selectionBox;
     // End of variables declaration//GEN-END:variables
+
+	private static class UserObjWrapper<T> {
+		
+		private final T obj;
+		private final Function<T, String> toStringFunc;
+		
+		public UserObjWrapper(T obj, Function<T, String> toStringFunc) {
+			this.obj = obj;
+			this.toStringFunc = toStringFunc;
+		}
+		
+		@Override
+		public String toString() {
+			return toStringFunc.apply(obj);
+		}
+	}
 }

@@ -159,15 +159,19 @@ public class ZipArchive extends FSFileAdapter {
 	}
 
 	public List<FSFile> listFilesByParentPath(String parentPath) {
-		if (parentPath == null) {
-			return new ArrayList<>();
-		}
-		parentPath = stripLastSlash(parentPath);
 		List<FSFile> l = new ArrayList<>();
-		for (ZipEntry e : entries) {
-			String nameWithoutEndSlash = stripLastSlash(e.getName());
-			if (Objects.equals(FSUtil.getParentFilePath(nameWithoutEndSlash), parentPath)) {
+		if (parentPath == null) {
+			for (ZipEntry e : entries) {
 				l.add(new ZipEntryFile(this, e.getName()));
+			}
+		}
+		else {
+			parentPath = stripLastSlash(parentPath);
+			for (ZipEntry e : entries) {
+				String nameWithoutEndSlash = stripLastSlash(e.getName());
+				if (Objects.equals(FSUtil.getParentFilePath(nameWithoutEndSlash), parentPath)) {
+					l.add(new ZipEntryFile(this, e.getName()));
+				}
 			}
 		}
 		return l;
