@@ -54,7 +54,26 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 	}
 
 	@Override
+	public void insert(MutableTreeNode newChild, int childIndex) {
+		newChild.setParent(null);
+		super.insert(newChild, childIndex);
+	}
+
+	private boolean changingParentFlag = false;
+
+	@Override
 	public void setParent(MutableTreeNode parent) {
+		if (changingParentFlag) {
+			return;
+		}
+		TreeNode oldParent = getParent();
+		if (oldParent != parent) {
+			if (oldParent != null && oldParent.getIndex(this) != -1) {
+				changingParentFlag = true;
+				removeFromParent();
+				changingParentFlag = false;
+			}
+		}
 		if (parent instanceof CustomJTreeNode) {
 			iconProvider = ((CustomJTreeNode) parent).iconProvider;
 		}
@@ -87,7 +106,9 @@ public abstract class CustomJTreeNode extends DefaultMutableTreeNode {
 		super.remove(childIndex);
 		if (child instanceof CustomJTreeNode) {
 			CustomJTreeNode n = (CustomJTreeNode) child;
-			n.recursiveFree();
+			if (!n.changingParentFlag) {
+				n.recursiveFree();
+			}
 		}
 	}
 
