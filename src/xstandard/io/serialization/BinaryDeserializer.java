@@ -25,7 +25,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private Map<String, Object> definitions = new HashMap<>();
 
-	private Map<Integer, List<Object>> objectsAtAddresses = new HashMap<>();
+	private Map<Integer, List<GenericObjectInfo>> objectsAtAddresses = new HashMap<>();
 
 	private Map<Field, BitFieldReader> bitFieldStates = new HashMap<>();
 
@@ -314,8 +314,7 @@ public class BinaryDeserializer extends BinarySerialization {
 		} else {
 			if (hasAnnotation(PointerValue.class, cls, field)) {
 				retval = readPointer();
-			}
-			else if (cls == Integer.TYPE) {
+			} else if (cls == Integer.TYPE) {
 				retval = readSizedInt(field);
 			} else if (cls == Short.TYPE) {
 				retval = baseStream.readShort();
@@ -393,22 +392,43 @@ public class BinaryDeserializer extends BinarySerialization {
 			return (Enum) constants[ordinal];
 		}
 	}
-	
-	private void saveObjectAddress(int addr, Object o) {
-		List<Object> l = objectsAtAddresses.get(addr);
+
+	private void saveObjectAddress(int addr, Object o, Type genericType) {
+		if (o == null) {
+			return;
+		}
+		//do not cache empty (zero-byte) arrays, as there may be other data of the same type
+		//present at their address
+		//technically, these may not necessarily always be zero-byte, but it should have no practical effect apart
+		//from a couple more allocations
+		if (o.getClass().isArray()) {
+			if (Array.getLength(o) == 0) {
+				return;
+			}
+		} else if (Collection.class.isAssignableFrom(o.getClass())) {
+			if (((Collection) o).isEmpty()) {
+				return;
+			}
+		}
+
+		List<GenericObjectInfo> l = objectsAtAddresses.get(addr);
 		if (l == null) {
 			l = new ArrayList<>();
 			objectsAtAddresses.put(addr, l);
 		}
-		l.add(o);
+		l.add(new GenericObjectInfo(o, genericType));
 	}
-	
-	private Object getExistObject(int addr, Class cls) {
-		List<Object> l = objectsAtAddresses.get(addr);
+
+	private Object getExistObject(int addr, Type genericType) {
+		List<GenericObjectInfo> l = objectsAtAddresses.get(addr);
 		if (l != null) {
-			for (Object o : l) {
-				if (cls.isAssignableFrom(o.getClass())) {
-					return o;
+			for (GenericObjectInfo o : l) {
+				if (genericType instanceof Class) {
+					if (((Class) genericType).isAssignableFrom(o.object.getClass())) {
+						return o;
+					}
+				} else if (o.genericType.equals(genericType)) {
+					return o.object;
 				}
 			}
 		}
@@ -461,7 +481,7 @@ public class BinaryDeserializer extends BinarySerialization {
 					Array.set(arr, i, value);
 				}
 			}
-			saveObjectAddress(absPtr, arr);
+			saveObjectAddress(absPtr, arr, getFallbackGenericType(cls, field));
 		}
 		if (ptr != -1) {
 			baseStream.seek(posAfterPtr);
@@ -489,13 +509,11 @@ public class BinaryDeserializer extends BinarySerialization {
 
 	private int readPointer(Field field, boolean isListElem, AnnotatedElement... ant) throws IOException {
 		int posBeforePtr = baseStream.getPosition();
-		if (
-			(field != null || isListElem) 
-			&& refType != ReferenceType.NONE 
-			&& !hasAnnotation(Inline.class, ant) 
+		if ((field != null || isListElem)
+			&& refType != ReferenceType.NONE
+			&& !hasAnnotation(Inline.class, ant)
 			&& !hasAnnotation(MagicStr.class, ant)
-			&& !(!isListElem && hasAnnotation(InlineArray.class, ant))
-		) {
+			&& !(!isListElem && hasAnnotation(InlineArray.class, ant))) {
 			debugPrint("Object " + field + " is noninline !!");
 			int ptr = 0;
 
@@ -530,6 +548,10 @@ public class BinaryDeserializer extends BinarySerialization {
 		}
 	}
 
+	private Type getFallbackGenericType(Class cls, Field field) {
+		return field != null ? field.getGenericType() : cls; // not super correct, but works around some issues
+	}
+	
 	private Object readObject(Class cls, Field field, boolean isListElem) throws InstantiationException, IllegalAccessException, IOException {
 		AnnotatedElement[] ant = new AnnotatedElement[]{field, cls};
 
@@ -571,8 +593,10 @@ public class BinaryDeserializer extends BinarySerialization {
 		seekPointer(ptr);
 		Object obj = null;
 
+		Type genericType = getFallbackGenericType(cls, field);
+
 		int posBeforeObj = baseStream.getPositionUnbased();
-		Object existObj = getExistObject(posBeforeObj, cls);
+		Object existObj = getExistObject(posBeforeObj, genericType);
 		if (existObj != null) {
 			obj = existObj;
 		} else {
@@ -683,7 +707,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 				readObjectFields(obj, cls, posBeforeObj);
 			}
-			saveObjectAddress(posBeforeObj, obj);
+			saveObjectAddress(posBeforeObj, obj, genericType);
 		}
 
 		if (ptr != -1) {
@@ -692,7 +716,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		return obj;
 	}
-	
+
 	private int readSizedSignedInt(Field field) throws IOException {
 		return readSizedSignedInt(field, Integer.BYTES);
 	}
@@ -729,7 +753,7 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		return readSizedInt(size);
 	}
-	
+
 	private int readSizedSignedInt(int size) throws IOException {
 		switch (size) {
 			case Integer.BYTES:
@@ -789,6 +813,17 @@ public class BinaryDeserializer extends BinarySerialization {
 
 		public int read(int start, int length) {
 			return BitMath.getIntegerBits(sourceValue, start, length);
+		}
+	}
+
+	private static class GenericObjectInfo {
+
+		public Object object;
+		public Type genericType;
+
+		public GenericObjectInfo(Object object, Type genericType) {
+			this.object = object;
+			this.genericType = genericType;
 		}
 	}
 }

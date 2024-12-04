@@ -167,9 +167,9 @@ public class BinarySerializer extends BinarySerialization {
 			} else if (cls == Integer.TYPE) {
 				writeSizedInt(value, field);
 			} else if (cls == Short.TYPE) {
-				baseStream.writeShort((Short) value);
+				baseStream.writeShort(((Number)value).shortValue());
 			} else if (cls == Byte.TYPE) {
-				baseStream.write((Byte) value);
+				baseStream.write(((Number)value).byteValue());
 			} else if (cls == Boolean.TYPE) {
 				writeSizedInt(((Boolean) value) ? 1 : 0, field, 1);
 			} else if (cls == Float.TYPE) {
@@ -210,7 +210,7 @@ public class BinarySerializer extends BinarySerialization {
 		if (hasAnnotation(ArraySize.class, field)) {
 			size = field.getAnnotation(ArraySize.class).value();
 		}
-		if (getLengthPos(field) == LengthPos.LengthPosType.AS_FIELD) {
+		if (getLengthPos(field) == LengthPos.LengthPosType.AS_FIELD && getIsClassNeedsSize(value.getClass(), value.getClass(), field)) {
 			writeArrayLength(size, field);
 		}
 
