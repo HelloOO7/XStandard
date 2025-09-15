@@ -1,14 +1,16 @@
 package xstandard.crypto;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import xstandard.fs.FSUtil;
 
 /**
  * Modcrypt AES-CTR encryption/decryption.
@@ -30,6 +32,13 @@ public class Modcrypt {
         this.counter = new BigInteger(1, iv);
     }
 
+    /**
+     * Initializes a Modcrypt object. Automatically derives the key from the provided header data.
+     * 
+     * @param gamecode The game code as an ASCII string.
+     * @param arm9iHmac The SHA-1 HMAC of the arm9i binary.
+     * @param arm9HmacWithSecureArea The SHA-1 HMAC of the arm9 binary (including secure area).
+     */
     public Modcrypt(String gamecode, byte[] arm9iHmac, byte[] arm9HmacWithSecureArea) {
         byte[] keyBytes = deriveRetailKey(gamecode, arm9iHmac);
         key = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
@@ -39,6 +48,13 @@ public class Modcrypt {
         counter = new BigInteger(1, reverse(counterBytes));
     }
 
+    /**
+     * Generates the retail Modcrypt key from the gamecode and the SHA-1 HMAC of the arm9i binary.
+     * 
+     * @param gamecode The game code as an ASCII string.
+     * @param arm9iHmac The SHA-1 HMAC of the arm9i binary from the header.
+     * @return The key as a byte array.
+     */
     public static byte[] deriveRetailKey(String gamecode, byte[] arm9iHmac) {
         String emagcode = new StringBuilder(gamecode).reverse().toString();
         
@@ -55,30 +71,73 @@ public class Modcrypt {
 
         return toFixedLengthArray(rotatedKeyN, 16);
     }
-
-    public void transform(DataInputStream input, DataOutputStream output) throws IOException {
-        try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-
-            while (true) { 
-                byte[] block = input.readNBytes(BLOCK_SIZE);
-                if(block.length == 0)
-                    break;
-                
-                byte[] ctr = toFixedLengthArray(counter, 16);
-                byte[] pad = cipher.update(ctr);
-                counter = counter.add(BigInteger.ONE).mod(MODULUS);
-                
-                byte[] transformed = new byte[block.length];
-                for (int i = 0; i < block.length; i++) {
-                    transformed[i] = (byte) (block[i] ^ pad[BLOCK_SIZE - 1 - i]);
-                }
-                
-                output.write(transformed);
+    
+    /**
+     * Transforms an array of bytes using the current key and IV.
+     * 
+     * Modcrypt is a stream cipher, so this method performs both encryption and decryption.
+     * 
+     * @param input The array of bytes to transform.
+     * @return The transformed array.
+     */
+    public byte[] transform(byte[] input) throws IOException, GeneralSecurityException {
+        Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        
+        byte[] output = new byte[input.length];
+        
+        for (int i = 0; i < input.length; i += BLOCK_SIZE) {
+            int bytesToRead = Math.min(BLOCK_SIZE, input.length - i);
+            byte[] block = new byte[BLOCK_SIZE];
+            System.arraycopy(input, i, block, 0, bytesToRead);
+            
+            byte[] ctr = toFixedLengthArray(counter, 16);
+            byte[] pad = cipher.update(ctr);
+            counter = counter.add(BigInteger.ONE).mod(MODULUS);
+            
+            byte[] transformed = new byte[block.length];
+            for (int j = 0; j < block.length; j++) {
+                transformed[j] = (byte) (block[j] ^ pad[BLOCK_SIZE - 1 - j]);
             }
-        } catch (java.security.NoSuchAlgorithmException | javax.crypto.NoSuchPaddingException | java.security.InvalidKeyException e) {
-            throw new RuntimeException(e);
+            
+            System.arraycopy(transformed, 0, output, i, bytesToRead);
+        }
+        
+        return output;        
+    }
+
+    /** 
+     * Reads all bytes from the input stream and transforms them,
+     * then writes the result to the output stream.
+     * 
+     * @param input The input stream.
+     * @param output The output stream.
+     */
+    public void transform(InputStream input, OutputStream output) throws IOException, GeneralSecurityException {
+        byte[] inputBytes = FSUtil.readStreamToBytes(input);
+        byte[] outputBytes = transform(inputBytes);
+        output.write(outputBytes);
+    }
+    
+    /** 
+     * Reads the specified number of bytes from the input stream and transforms them,
+     * then writes the result to the output stream.
+     * 
+     * @param input The input stream.
+     * @param output The output stream.
+     * @param length The number of bytes to process. If -1, transform all bytes.
+     * @throws IllegalArgumentException If the length argument is neither positive nor -1.
+     */
+    public void transform(InputStream input, OutputStream output, int length) throws IOException, GeneralSecurityException {
+        if (length == -1) {
+            transform(input, output);
+        } else if (length > 0) {
+            byte[] inputBytes = new byte[length];
+            input.read(inputBytes, 0, length);
+            byte[] outputBytes = transform(inputBytes);
+            output.write(outputBytes);
+        } else {
+            throw new IllegalArgumentException("The length argument must be positive or -1.");
         }
     }
     
