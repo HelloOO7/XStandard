@@ -1,5 +1,6 @@
 package xstandard.io.base.impl.ext.data.interpretation;
 
+import java.io.EOFException;
 import java.io.IOException;
 import xstandard.io.base.iface.ReadableStream;
 import xstandard.io.base.iface.WriteableStream;
@@ -10,7 +11,9 @@ public class DataInterpreterLE implements IDataInterpreter {
 	private int[] b = new int[8];
 
 	private void readTemp(ReadableStream stm, int amount) throws IOException {
-		stm.read(temp, 0, amount);
+		if (stm.read(temp, 0, amount) == -1) {
+			throw new EOFException("Attempt to read " + amount + " bytes at position " + Integer.toHexString(stm.getPosition()) + " is out of range");
+		}
 		for (int i = 0; i < amount; i++) {
 			b[i] = temp[i] & 0xFF;
 		}
@@ -103,8 +106,7 @@ public class DataInterpreterLE implements IDataInterpreter {
 	public void writeByte(WriteableStream stm, int value) throws IOException {
 		stm.write(value);
 	}
-	
-		
+
 	@Override
 	public void writeSized(WriteableStream stm, int value, int size) throws IOException {
 		if (size == 1) {
@@ -112,7 +114,7 @@ public class DataInterpreterLE implements IDataInterpreter {
 			return;
 		}
 		for (int i = 0; i < size; i++) {
-			temp[i] = (byte)(value & 0xFF);
+			temp[i] = (byte) (value & 0xFF);
 			value >>= 8;
 		}
 		stm.write(temp, 0, size);

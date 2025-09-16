@@ -24,7 +24,7 @@ public class Modcrypt {
 
     private static final int BLOCK_SIZE = 16;
     private static final BigInteger ROLMASK = new BigInteger("3FFFFFFFFFF", 16);
-    private static final BigInteger MODULUS = BigInteger.TWO.pow(128);
+    private static final BigInteger MODULUS = BigInteger.valueOf(2).pow(128);
     private static final BigInteger SCRAMBLER = new BigInteger("FFFEFB4E295902582A680F5F1A4F3E79", 16);
 
     public Modcrypt(byte[] key, byte[] iv) {
