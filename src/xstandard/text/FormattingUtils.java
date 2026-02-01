@@ -222,4 +222,31 @@ public class FormattingUtils {
 		return sb.toString();
 	}
 
+	/**
+	 * Shortens a text to a maximum length, padding it with an ellipsis character if needed.
+	 * The ellipsis will be inserted as the Unicode U+2026 character at the last gap below
+	 * the length limit, or at the end of the truncated text if no gap is present. If the character
+	 * before the gap is not a letter or number, the gap itself is preserved.
+	 * <p>
+	 * Example: ellipsize("hi there", 5) will return "hi…", wherease ellipsize("hi, I'm bob", 5)
+	 * will return "hi, …".
+	 * 
+	 * @param text The text
+	 * @param maxLength Maximum allowed length
+	 * @return The shortened text, or the original text if its length does not exceed maxLength.
+	 */
+	public static String ellipsize(String text, int maxLength) {
+		if (text.length() <= maxLength) {
+			return text;
+		}
+		int lastGap = text.lastIndexOf(' ', maxLength);
+		if (lastGap == -1) {
+			lastGap = maxLength;
+		} else {
+			if (lastGap > 0 && !Character.isLetterOrDigit(text.charAt(lastGap - 1))) {
+				++lastGap;
+			}
+		}
+		return text.substring(0, lastGap) + "…";
+	}
 }
