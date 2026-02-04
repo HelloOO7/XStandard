@@ -356,7 +356,7 @@ public class XFileDialog {
 		List<String> saveExtensions = new ArrayList<>();
 		if (selectedFilter != null) {
 			for (String ext : selectedFilter.getExtensions()) {
-				saveExtensions.add(ext.replace("*.", ""));
+				saveExtensions.add(ext.replace(".", ""));
 			}
 		}
 
