@@ -26,7 +26,7 @@ public abstract class YamlContent {
 					= (str.contains(":") || str.contains("|") || str.contains("\""))
 					|| str.equals("null")
 					|| hasNewline
-					|| (str.length() > 0 && Character.isWhitespace(str.charAt(0)) || Character.isWhitespace(str.charAt(str.length() - 1))); //prevent trimming leading/trailing spaces
+					|| (str.length() > 0 && (Character.isWhitespace(str.charAt(0)) || Character.isWhitespace(str.charAt(str.length() - 1)))); //prevent trimming leading/trailing spaces
 			if (printQuotes) {
 				str = str.replace("\"", "\\\"");
 				out.print("\"");
