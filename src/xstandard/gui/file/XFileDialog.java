@@ -167,7 +167,7 @@ public class XFileDialog {
 	private static List<DiskFile> openFileDialogInternal(String title, boolean isSave, boolean allowMultiple, DiskFile initDirectory, String initFileName, ExtensionFilter... extensionFilters) {
 		FileChooser fc = new FileChooser();
 		File finalInitDir = resolveFCInitDirectory(initDirectory);
-		if (finalInitDir.exists()) {
+		if (finalInitDir != null) {
 			fc.setInitialDirectory(finalInitDir);
 		}
 		fc.setInitialFileName(initFileName);
