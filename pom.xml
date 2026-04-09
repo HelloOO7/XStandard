@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ctrmap</groupId>
+    <groupId>com.github.hello007</groupId>
     <artifactId>xstandard</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.joml</groupId>
             <artifactId>joml</artifactId>
-            <version>1.10.0</version>
+            <version>1.10.8</version>
         </dependency>
         <dependency>
             <groupId>com.frankenjfx</groupId>
@@ -39,11 +39,6 @@
             <groupId>com.frankenjfx</groupId>
             <artifactId>frankenjfx-natives-win32</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.netbeans.external</groupId>
-            <artifactId>AbsoluteLayout</artifactId>
-            <version>RELEASE180</version>
         </dependency>
     </dependencies>
 
@@ -62,7 +57,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.15.0</version>
             </plugin>
         </plugins>
     </build>
