@@ -31,13 +31,13 @@
             <version>1.10.8</version>
         </dependency>
         <dependency>
-            <groupId>com.frankenjfx</groupId>
+            <groupId>frankenjfx</groupId>
             <artifactId>frankenjfx</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
-            <groupId>com.frankenjfx</groupId>
-            <artifactId>frankenjfx-natives-win32</artifactId>
+            <groupId>frankenjfx</groupId>
+            <artifactId>natives-win</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
